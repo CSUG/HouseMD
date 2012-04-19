@@ -24,7 +24,9 @@ object Attach {
 
   private[insider] def attach(pid: String) {
     val vm = VirtualMachine.attach(pid)
-    println(vm.id)
+    println("Attached pid: " + vm.id)
+
     vm.detach()
+    println("Detached pid: " + vm.id)
   }
 }

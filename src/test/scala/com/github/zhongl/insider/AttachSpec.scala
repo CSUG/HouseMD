@@ -13,15 +13,15 @@ class AttachSpec extends FunSpec with ShouldMatchers {
     it("should attach VM") {
       val NameRE = """(\d+)@.+""".r
       val NameRE(pid) = ManagementFactory.getRuntimeMXBean().getName()
-      
       val baos =new ByteArrayOutputStream()
 
       Console.withOut(baos){
         Attach.main(Array(pid))
       }
 
-      // pending
-      baos.toString should be (pid + "\n")
+      val output = baos.toString
+      output should startWith ("Attached pid: " + pid + "\n")
+      output should endWith ("Detached pid: " + pid + "\n")
     }
   }
 

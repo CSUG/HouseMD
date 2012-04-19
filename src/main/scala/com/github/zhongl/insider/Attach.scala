@@ -13,16 +13,16 @@ object Attach {
     }
   }
 
-  def listVMsAndPrintUsage() {
+  private[insider] def listVMsAndPrintUsage() {
     val vmds = VirtualMachine.list
     println("""Usage: CMD <pid>
               |Please choose one JVM's pid detected below:""".stripMargin)
     VirtualMachine.list.foreach { vmd => println(format(vmd.id, vmd.displayName)) }
   }
 
-  def format(id: String, name: String) = "\t%1$s\t%2$s".format(id, name)
+  private[insider] def format(id: String, name: String) = "\t%1$s\t%2$s".format(id, name)
 
-  def attach(pid: String) {
+  private[insider] def attach(pid: String) {
     val vm = VirtualMachine.attach(pid)
     println(vm.id)
     vm.detach()

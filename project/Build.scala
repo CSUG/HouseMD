@@ -14,6 +14,9 @@ object ProjectBuild extends Build {
       unmanagedClasspath in Compile += Attributed.blank(
         file("/usr/lib/jvm/java-6-sun/lib/tools.jar")
       ), 
+      unmanagedClasspath in Test += Attributed.blank(
+        file("/usr/lib/jvm/java-6-sun/lib/tools.jar")
+      ), 
       libraryDependencies := Seq(
         "org.scala-lang" % "scala-library" % "2.9.2" % "runtime",
         "org.scalatest" %% "scalatest" % "1.7.2" % "test"

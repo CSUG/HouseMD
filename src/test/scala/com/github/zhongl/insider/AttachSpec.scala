@@ -1,5 +1,7 @@
 package com.github.zhongl.insider
 
+import java.io.ByteArrayOutputStream
+import java.lang.management.ManagementFactory
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 
@@ -9,8 +11,17 @@ class AttachSpec extends FunSpec with ShouldMatchers {
       Attach.format("123", "java") should be ("\t123\tjava")
     }
     it("should attach VM") {
-      // Attach.main(Array())
-      pending
+      val NameRE = """(\d+)@.+""".r
+      val NameRE(pid) = ManagementFactory.getRuntimeMXBean().getName()
+      
+      val baos =new ByteArrayOutputStream()
+
+      Console.withOut(baos){
+        Attach.main(Array(pid))
+      }
+
+      // pending
+      baos.toString should be (pid + "\n")
     }
   }
 

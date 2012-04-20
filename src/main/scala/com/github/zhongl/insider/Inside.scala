@@ -3,7 +3,7 @@ package com.github.zhongl.insider
 import com.sun.tools.attach._
 import scala.collection.JavaConversions._
 
-object Attach {
+object Inside {
   private val Index = """(\d+)""".r
 
   def main(args: Array[String]) {
@@ -25,8 +25,10 @@ object Attach {
   private[insider] def attach(pid: String) {
     val vm = VirtualMachine.attach(pid)
     println("Attached pid: " + vm.id)
-
+    // vm.loadAgent()
     vm.detach()
     println("Detached pid: " + vm.id)
+    // start up a socket server
   }
 }
+

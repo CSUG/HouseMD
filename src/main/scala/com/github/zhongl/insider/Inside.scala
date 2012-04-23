@@ -1,34 +1,51 @@
 package com.github.zhongl.insider
 
 import com.sun.tools.attach._
-import scala.collection.JavaConversions._
+import collection.JavaConversions._
+import com.beust.jcommander.{ParameterException, JCommander}
 
 object Inside {
-  private val Index = """(\d+)""".r
 
   def main(args: Array[String]) {
-    args match {
-      case Array(pid) => attach(pid)
-      case _ => listVMsAndPrintUsage()
+    try {
+      driveWith(args)
+    } catch {
+      case e => sys.error(e.getMessage); sys.exit(-1)
     }
   }
 
-  private[insider] def listVMsAndPrintUsage() {
-    val vmds = VirtualMachine.list
-    println("""Usage: CMD <pid>
-              |Please choose one JVM's pid detected below:""".stripMargin)
-    VirtualMachine.list.foreach { vmd => println(format(vmd.id, vmd.displayName)) }
+  private[insider] def driveWith(args: Array[String]) {
+    val commander = new JCommander()
+    val argsObject: Args = new Args
+
+    commander.setProgramName("house")
+    commander.addObject(argsObject)
+
+    try {
+      commander.parse(args.toArray: _*)
+      if (argsObject.params.size() < 2) throw new ParameterException("Missing parameter")
+
+      val pid :: methodRegexs = argsObject.params.toList
+      val validator = new RegexValidator
+      methodRegexs.foreach(validator.validate("", _))
+
+      attach(pid, argsObject.agentJarPath, args.foldLeft("")(_ + " " + _))
+    } catch {
+      case e =>
+        val sb = new java.lang.StringBuilder()
+        sb.append(e.getClass.getSimpleName).append(": ").append(e.getMessage).append('\n')
+        commander.usage(sb)
+        throw new RuntimeException(sb.toString)
+    }
+
   }
 
-  private[insider] def format(id: String, name: String) = "\t%1$s\t%2$s".format(id, name)
-
-  private[insider] def attach(pid: String) {
+  private[insider] def attach(pid: String, agentJarPath:String, agentOptions:String) {
     val vm = VirtualMachine.attach(pid)
     println("Attached pid: " + vm.id)
-    // vm.loadAgent()
+    vm.loadAgent(agentJarPath,agentOptions)
     vm.detach()
     println("Detached pid: " + vm.id)
-    // start up a socket server
   }
 }
 

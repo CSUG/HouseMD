@@ -18,7 +18,7 @@ object ProjectBuild extends Build {
         file("/usr/lib/jvm/java-6-sun/lib/tools.jar")
       ), 
       libraryDependencies := Seq(
-        "com.github.scopt" %% "scopt" % "2.0.0",
+        "com.beust" % "jcommander" % "1.20",
         "org.scala-lang" % "scala-library" % "2.9.2" % "runtime",
         "org.scalatest" %% "scalatest" % "1.7.2" % "test"
       )

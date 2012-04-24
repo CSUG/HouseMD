@@ -4,17 +4,17 @@ import com.sun.tools.attach._
 import collection.JavaConversions._
 import com.beust.jcommander.{ParameterException, JCommander}
 
-object Inside {
+object HouseMD {
 
   def main(args: Array[String]) {
     try {
-      driveWith(args)
+      insideWith(args)
     } catch {
       case e => sys.error(e.getMessage); sys.exit(-1)
     }
   }
 
-  private[insider] def driveWith(args: Array[String]) {
+  private[insider] def insideWith(args: Array[String]) {
     val commander = new JCommander()
     val argsObject: Args = new Args
 

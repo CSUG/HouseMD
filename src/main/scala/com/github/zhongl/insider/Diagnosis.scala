@@ -13,29 +13,10 @@ import management.ManagementFactory
  */
 object Diagnosis {
 
-  private[insider] def probeWith(args: Array[String], inst: Instrumentation) {
-    val commander = new JCommander()
-    val argsObject = new Args
+  private[insider] def probeWith(agentOptions: String, inst: Instrumentation) {
+    val args = parse(agentOptions.split(" "))
 
-    commander.addObject(argsObject)
-
-    try {
-      commander.parse(args.toArray: _*)
-      if (argsObject.params.size() < 2) throw new ParameterException("Missing parameter")
-
-      val _ :: methodRegexs = argsObject.params.toList
-      val validator = new RegexValidator
-      methodRegexs.foreach(validator.validate("", _))
-
-    } catch {
-      case e =>
-        val sb = new java.lang.StringBuilder()
-        sb.append(e.getClass.getSimpleName).append(": ").append(e.getMessage).append('\n')
-        commander.usage(sb)
-        throw new RuntimeException(sb.toString)
-    }
-
-    reportTo(argsObject.output) {
+    reportTo(args.output) {
       implicit stream: PrintStream =>
 
         stream.printf("#Diagnosis report\n> created at %tc\n\n", new Date)
@@ -49,34 +30,55 @@ object Diagnosis {
             ("upTime = %1$d hours %2$d minutes %3$d seconds" format (convert(runtime.getUptime): _*)) ::
             Nil
 
-        }.render
+        }
 
         Section("Enviroment") {
           list(sys.env)
-        }.render
+        }
 
         Section("Properties") {
           list(sys.props.toMap)
-        }.render
+        }
 
-        Section("Loaded classes") {
-          inst.getAllLoadedClasses.filter(_.getName.matches(argsObject.loaded)).map {
+        Section("Loaded classes: " + args.loaded) {
+          inst.getAllLoadedClasses.filter(_.getName.matches(args.loaded)).map {
             c: java.lang.Class[_] =>
 
               val name: String = c.getName
               val path: String = '/' + name.replace('.', '/') + ".class"
               name + " -> " + c.getResource(path).toString
           }
-        }.render
+        }
 
 
       // TODO         Section("Traces", ).render(stream)
 
     }
-
-
   }
 
+
+  def parse(args: Array[String]) = {
+    val argsObject = new Args
+    val commander = new JCommander()
+    commander.addObject(argsObject)
+
+    try {
+      commander.parse(args.toArray: _*)
+      if (argsObject.params.size() < 2) throw new ParameterException("Missing parameter")
+
+      val _ :: methodRegexs = argsObject.params.toList
+      val validator = new RegexValidator
+      methodRegexs.foreach(validator.validate("", _))
+
+      argsObject
+    } catch {
+      case e =>
+        val sb = new java.lang.StringBuilder()
+        sb.append(e.getClass.getSimpleName).append(": ").append(e.getMessage).append('\n')
+        commander.usage(sb)
+        throw new RuntimeException(sb.toString)
+    }
+  }
 
   private[this] def convert(l: Long) = {
     var r = l
@@ -105,16 +107,14 @@ object Diagnosis {
     }
   }
 
-  private[this] def mkdirsFor(path: String) {
-    new File(path).getParentFile.mkdirs()
+  private[this] def mkdirsFor(path: String) = new File(path).getParentFile.mkdirs()
+
+  def agentmain(agentOptions: String, inst: Instrumentation) {
+    probeWith(agentOptions, inst)
   }
 
-  def agentmain(agentArg: String, inst: Instrumentation) {
-    probeWith(agentArg.split(" "), inst)
-  }
-
-  def premain(agentArg: String, inst: Instrumentation) {
-    probeWith(agentArg.split(" "), inst)
+  def premain(agentOptions: String, inst: Instrumentation) {
+    probeWith(agentOptions, inst)
   }
 }
 

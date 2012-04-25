@@ -1,12 +1,13 @@
 package com.github.zhongl.insider
 
 import java.lang.instrument._
+import java.lang.System.{currentTimeMillis => now}
 import java.io._
 import java.util.Date
-import java.util.concurrent.TimeUnit
 import com.beust.jcommander.{ParameterException, JCommander}
 import scala.collection.JavaConversions._
 import management.ManagementFactory
+import java.util.concurrent.TimeUnit._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -24,20 +25,21 @@ object Diagnosis {
         Section("Summary") {
           val runtime = ManagementFactory.getRuntimeMXBean
 
-          ("name = " + runtime.getName) ::
+          val pairs = ("name = " + runtime.getName) ::
             ("arguments = " + runtime.getInputArguments) ::
             ("starTime = %tc" format new Date(runtime.getStartTime)) ::
             ("upTime = %1$d hours %2$d minutes %3$d seconds" format (convert(runtime.getUptime): _*)) ::
             Nil
 
+          pairs.toIterator
         }
 
         Section("Enviroment") {
-          list(sys.env)
+          list(sys.env).toIterator
         }
 
         Section("Properties") {
-          list(sys.props.toMap)
+          list(sys.props.toMap).toIterator
         }
 
         Section("Loaded classes: " + args.loaded) {
@@ -47,15 +49,16 @@ object Diagnosis {
               val name: String = c.getName
               val path: String = '/' + name.replace('.', '/') + ".class"
               name + " -> " + c.getResource(path).toString
-          }
+          }.toIterator
         }
 
-
-      // TODO         Section("Traces", ).render(stream)
-
+        val methodRegexs = args.params.tail
+        // TODO do probe
+        Section("Traces: " + methodRegexs) {
+          new Trace(inst, methodRegexs, args.timeout, args.maxProbeCount)
+        }
     }
   }
-
 
   def parse(args: Array[String]) = {
     val argsObject = new Args
@@ -67,8 +70,7 @@ object Diagnosis {
       if (argsObject.params.size() < 2) throw new ParameterException("Missing parameter")
 
       val _ :: methodRegexs = argsObject.params.toList
-      val validator = new RegexValidator
-      methodRegexs.foreach(validator.validate("", _))
+      methodRegexs.foreach((new RegexValidator).validate("", _))
 
       argsObject
     } catch {
@@ -82,13 +84,11 @@ object Diagnosis {
 
   private[this] def convert(l: Long) = {
     var r = l
-    val millis = TimeUnit.MILLISECONDS
-
-    val hours = millis.toHours(r)
-    r -= TimeUnit.HOURS.toMillis(hours)
-    val minutes = millis.toMinutes(r)
-    r -= TimeUnit.MINUTES.toMillis(minutes)
-    val seconds = millis.toMinutes(r)
+    val hours = MILLISECONDS.toHours(r)
+    r -= HOURS.toMillis(hours)
+    val minutes = MILLISECONDS.toMinutes(r)
+    r -= MINUTES.toMillis(minutes)
+    val seconds = MILLISECONDS.toMinutes(r)
 
     Array(hours, minutes, seconds)
   }
@@ -102,7 +102,10 @@ object Diagnosis {
     val stream = new PrintStream(new BufferedOutputStream(new FileOutputStream(path, true)))
     try {
       appending(stream)
+    } catch {
+      case e => e.printStackTrace(stream)
     } finally {
+      stream.flush()
       stream.close()
     }
   }

@@ -14,10 +14,13 @@ object ProjectBuild extends Build {
       unmanagedClasspath in Compile += Attributed.blank(
         file("/usr/lib/jvm/java-6-sun/lib/tools.jar")
       ), 
-      unmanagedClasspath in Test += Attributed.blank(
-        file("/usr/lib/jvm/java-6-sun/lib/tools.jar")
-      ), 
+      unmanagedClasspath in Test <<= unmanagedClasspath in Compile,
+//      unmanagedClasspath in Coverage += Attributed.blank(
+//        file("/usr/lib/jvm/java-6-sun/lib/tools.jar")
+//      ),
       libraryDependencies := Seq(
+        "asm" % "asm" % "3.3.1",
+        "asm" % "asm-commons" % "3.3.1",
         "com.beust" % "jcommander" % "1.20",
 //        "org.scala-lang" % "scala-library" % "2.9.2" % "runtime",
         "org.mockito" % "mockito-all" % "1.9.0" % "test",

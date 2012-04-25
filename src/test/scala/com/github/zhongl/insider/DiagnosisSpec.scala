@@ -3,8 +3,8 @@ package com.github.zhongl.insider
 import java.lang.instrument._
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.mock.MockitoSugar._
 import io.Source
+import org.mockito.Mockito._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -12,17 +12,24 @@ import io.Source
 class DiagnosisSpec extends FunSpec with ShouldMatchers {
   describe("Diagnosis") {
     it("output diagnosis report") {
-      val inst = mock[Instrumentation]
+      val inst = mock(classOf[Instrumentation])
       val path = "target/test-output/diagnosis.report"
 
-      Diagnosis.probeWith(Array("-o",path,"123","class"), inst)
+      doReturn(Array(classOf[Args], classOf[String])) when (inst) getAllLoadedClasses
+
+      val args = Array("-l", "com.github.*", "-o", path, "123", "class")
+      Diagnosis.probeWith(args, inst)
 
       val report = Source.fromFile(path).getLines().toTraversable
 
       report should (
-        contain ("#Enviroment") and
-        contain ("#Properties")
-      )
+          contain ("#Diagnosis report") and
+          contain ("##Summary") and
+          contain ("##Enviroment") and
+          contain ("##Properties") and
+          contain ("##Loaded classes") and
+          contain ("\tcom.github.zhongl.insider.Args -> file:/home/jushi/dev/workspaces/scala-new/insider-pack/insider/target/scala-2.9.2/classes/com/github/zhongl/insider/Args.class")
+        )
     }
   }
 

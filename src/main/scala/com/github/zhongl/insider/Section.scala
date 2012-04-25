@@ -8,7 +8,7 @@ object Section {
 
 class Section(head: String, body: => Iterable[String]) {
   def render(implicit stream: PrintStream) {
-    stream.println("#" + head)
+    stream.println("##" + head)
     stream.println
     body.foreach { s=>
       stream.println("\t" + s)

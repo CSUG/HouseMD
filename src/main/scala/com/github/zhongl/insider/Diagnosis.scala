@@ -2,8 +2,11 @@ package com.github.zhongl.insider
 
 import java.lang.instrument._
 import java.io._
+import java.util.Date
+import java.util.concurrent.TimeUnit
 import com.beust.jcommander.{ParameterException, JCommander}
 import scala.collection.JavaConversions._
+import management.ManagementFactory
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -24,28 +27,6 @@ object Diagnosis {
       val validator = new RegexValidator
       methodRegexs.foreach(validator.validate("", _))
 
-      reportTo(argsObject.output) {
-        implicit stream: PrintStream =>
-        // TODO         Section("Summary", ).render(stream)
-
-          Section("Enviroment") {
-            list(sys.env)
-          }.render
-
-          Section("Properties") {
-            list(sys.props.toMap)
-          }.render
-
-        //          Section("Loaded classes", inst.getAllLoadedClasses.map {
-        //            c: java.lang.Class[_] =>
-        //              val name: String = c.getName
-        //              val path: String = '/' + name.replace('.', '/') + ".class"
-        //              name + "->" + c.getResource(path).toString
-        //          }).render(stream)
-
-        // TODO         Section("Traces", ).render(stream)
-
-      }
     } catch {
       case e =>
         val sb = new java.lang.StringBuilder()
@@ -54,10 +35,64 @@ object Diagnosis {
         throw new RuntimeException(sb.toString)
     }
 
+    reportTo(argsObject.output) {
+      implicit stream: PrintStream =>
+
+        stream.printf("#Diagnosis report\n> created at %tc\n\n", new Date)
+
+        Section("Summary") {
+          val runtime = ManagementFactory.getRuntimeMXBean
+
+          ("name = " + runtime.getName) ::
+            ("arguments = " + runtime.getInputArguments) ::
+            ("starTime = %tc" format new Date(runtime.getStartTime)) ::
+            ("upTime = %1$d hours %2$d minutes %3$d seconds" format (convert(runtime.getUptime): _*)) ::
+            Nil
+
+        }.render
+
+        Section("Enviroment") {
+          list(sys.env)
+        }.render
+
+        Section("Properties") {
+          list(sys.props.toMap)
+        }.render
+
+        Section("Loaded classes") {
+          inst.getAllLoadedClasses.filter(_.getName.matches(argsObject.loaded)).map {
+            c: java.lang.Class[_] =>
+
+              val name: String = c.getName
+              val path: String = '/' + name.replace('.', '/') + ".class"
+              name + " -> " + c.getResource(path).toString
+          }
+        }.render
+
+
+      // TODO         Section("Traces", ).render(stream)
+
+    }
+
+
+  }
+
+
+  private[this] def convert(l: Long) = {
+    var r = l
+    val millis = TimeUnit.MILLISECONDS
+
+    val hours = millis.toHours(r)
+    r -= TimeUnit.HOURS.toMillis(hours)
+    val minutes = millis.toMinutes(r)
+    r -= TimeUnit.MINUTES.toMillis(minutes)
+    val seconds = millis.toMinutes(r)
+
+    Array(hours, minutes, seconds)
   }
 
   private[this] def list(kv: Map[String, String]) = kv map {
-    case (k, v) => k + "=" + v
+    case (k, v) => k + " = " + v
   }
 
   private[this] def reportTo(path: String)(appending: PrintStream => Unit) {

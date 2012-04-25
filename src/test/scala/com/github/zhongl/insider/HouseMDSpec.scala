@@ -10,7 +10,7 @@ import management.ManagementFactory
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 class HouseMDSpec extends FunSpec with ShouldMatchers {
-  describe("HouseMD$$") {
+  describe("HouseMD") {
     it("should attach VM") {
       val NameRE = """(\d+)@.+""".r
       val NameRE(pid) = ManagementFactory.getRuntimeMXBean().getName()

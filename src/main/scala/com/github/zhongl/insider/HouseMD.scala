@@ -21,7 +21,7 @@ object HouseMD {
     val commander = new JCommander()
     val argsObject: Args = new Args
 
-    commander.setProgramName("house")
+    commander.setProgramName(sys.props.getOrElse("program.name", "house"))
     commander.addObject(argsObject)
 
     try {

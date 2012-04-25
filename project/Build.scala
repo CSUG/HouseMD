@@ -19,7 +19,8 @@ object ProjectBuild extends Build {
       ), 
       libraryDependencies := Seq(
         "com.beust" % "jcommander" % "1.20",
-        "org.scala-lang" % "scala-library" % "2.9.2" % "runtime",
+//        "org.scala-lang" % "scala-library" % "2.9.2" % "runtime",
+        "org.mockito" % "mockito-all" % "1.9.0" % "test",
         "org.scalatest" %% "scalatest" % "1.7.2" % "test"
       )
 

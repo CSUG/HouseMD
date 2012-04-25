@@ -4,6 +4,9 @@ import com.sun.tools.attach._
 import collection.JavaConversions._
 import com.beust.jcommander.{ParameterException, JCommander}
 
+/**
+ * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
+ */
 object HouseMD {
 
   def main(args: Array[String]) {

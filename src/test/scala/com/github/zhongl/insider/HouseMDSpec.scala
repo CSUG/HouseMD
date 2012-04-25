@@ -6,6 +6,9 @@ import scala.Array
 import java.io.ByteArrayOutputStream
 import management.ManagementFactory
 
+/**
+ * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
+ */
 class HouseMDSpec extends FunSpec with ShouldMatchers {
   describe("HouseMD$$") {
     it("should attach VM") {

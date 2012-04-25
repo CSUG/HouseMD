@@ -7,7 +7,6 @@ import java.io.File
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-
 class Args {
   @Parameter(description = "<pid> <method regex> [more method regex...]")
   var params: java.util.List[String] = null

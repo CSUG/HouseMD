@@ -56,7 +56,6 @@ object Diagnosis {
 
   }
 
-
   private[this] def list(kv: Map[String, String]) = kv map {
     case (k, v) => k + "=" + v
   }

@@ -53,9 +53,16 @@ object Diagnosis {
         }
 
         val methodRegexs = args.params.tail
+        val transformer = new Transformer(inst, methodRegexs)
+        transformer.probe()
         // TODO do probe
         Section("Traces: " + methodRegexs) {
-          new Trace(new Transformer(inst, methodRegexs), args.timeout, args.maxProbeCount)
+          AdviceProxy.delegate = HaltAdviceProxy(Trace, args.timeout, args.maxProbeCount) {
+            cause: Cause =>
+              transformer.reset()
+              stream.printf("Diagnosing end by %s \n", cause)
+          }
+          Trace
         }
     }
   }

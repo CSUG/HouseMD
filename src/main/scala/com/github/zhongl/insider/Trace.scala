@@ -2,21 +2,37 @@ package com.github.zhongl.insider
 
 import java.util.concurrent.TimeUnit._
 import java.lang.System.{currentTimeMillis => now}
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.Date
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.LinkedBlockingQueue
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Trace[T](transformer: Transformer, timeout: Int, maxCount: Int) extends AbstractIterator[T] with Advice {
+object Trace extends AbstractIterator[String] with HaltAdvice {
 
-  // init code
-  AdviceProxy.delegate = this
-  transformer.probe()
+  def enterWith(context: Context) {
+    context.startAt = System.currentTimeMillis()
+  }
 
-  protected def computeNext(): Option[T] = {
-    if (isTimeout || isOverCount) {
-      transformer.reset()
+  def exitWith(context: Context) {
+    context.stopAt = System.currentTimeMillis()
+    val started = "%1$tF %1$tT" format (new Date(context.startAt))
+    val elapse = "%,dms" format (context.stopAt - context.startAt)
+    val thread = Thread.currentThread().getName
+    val method = context.className + "." + context.methodName
+    val arguments = context.arguments.mkString(" ")
+    val resultOrExcption = context.resultOrException match {
+      case null => "null"
+      case x => x.toString
+    }
+    queue.offer(Array(started, elapse, thread, method, arguments, resultOrExcption).mkString(" "))
+  }
+
+  def halt() {isHalt.set(true)}
+
+  protected def computeNext(): Option[String] = {
+    if (isHalt.get()) {
       None
     } else {
       val next = queue.poll(500L, MILLISECONDS)
@@ -24,17 +40,8 @@ class Trace[T](transformer: Transformer, timeout: Int, maxCount: Int) extends Ab
     }
   }
 
-  private[this] def isOverCount = count.incrementAndGet() > maxCount
+  private[this] lazy val queue = new LinkedBlockingQueue[String]
 
-  private[this] def isTimeout = now - started >= SECONDS.toMillis(timeout)
-
-  def enterWith(context: Context) {}
-
-  def exitWith(context: Context) {}
-
-  private[this] lazy val queue   = new LinkedBlockingQueue[T]
-  private[this] lazy val started = now
-  private[this] lazy val count   = new AtomicInteger()
-
+  private[this] lazy val isHalt = new AtomicBoolean(false)
 }
 

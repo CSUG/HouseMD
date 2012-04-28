@@ -1,7 +1,7 @@
 import sbt._
 import sbt.Keys._
 
-object ProjectBuild extends Build {
+object Build extends sbt.Build {
 
   lazy val root = Project(
     id = "root",
@@ -15,9 +15,6 @@ object ProjectBuild extends Build {
         file("/usr/lib/jvm/java-6-sun/lib/tools.jar")
       ), 
       unmanagedClasspath in Test <<= unmanagedClasspath in Compile,
-//      unmanagedClasspath in Coverage += Attributed.blank(
-//        file("/usr/lib/jvm/java-6-sun/lib/tools.jar")
-//      ),
       libraryDependencies := Seq(
         "asm" % "asm" % "3.3.1",
         "asm" % "asm-commons" % "3.3.1",
@@ -25,8 +22,14 @@ object ProjectBuild extends Build {
 //        "org.scala-lang" % "scala-library" % "2.9.2" % "runtime",
         "org.mockito" % "mockito-all" % "1.9.0" % "test",
         "org.scalatest" %% "scalatest" % "1.7.2" % "test"
+      ),
+      packageOptions += Package.ManifestAttributes(
+        ("Main-Class","com.github.zhongl.insider.HouseMD"),
+        ("Agent-Class","com.github.zhongl.insider.Diagnosis"),
+        ("Premain-Class","com.github.zhongl.insider.Diagnosis"),
+        ("Can-Retransform-Classes","true"),
+        ("Can-Redefine-Classes","true")
       )
-
       // add other settings here
     )
   )

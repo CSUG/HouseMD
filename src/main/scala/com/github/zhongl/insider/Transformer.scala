@@ -4,7 +4,7 @@ import java.lang.System.{currentTimeMillis => now}
 import java.lang.reflect.Method
 import instrument.{ClassFileTransformer, Instrumentation}
 import java.security.ProtectionDomain
-import java.io.{InputStream, ByteArrayOutputStream, FileNotFoundException}
+import java.io.FileNotFoundException
 import scala.Predef._
 import scala.Array
 
@@ -24,7 +24,9 @@ class Transformer(inst: Instrumentation, methodRegexs: Traversable[String]) {
   private[this] lazy val resetTransformer = classFileTransformer {
     (loader: ClassLoader, className: String, classfileBuffer: Array[Byte]) =>
     // TODO log "reset class {1} from {0}", loader, className
-      toBytes(loader.getResourceAsStream(className + ".class"))
+      val stream = loader.getResourceAsStream(className + ".class")
+      if (stream == null) throw new FileNotFoundException
+      Utils.toBytes(stream)
   }
 
   def probe() {transformBy(probeTransformer)}
@@ -40,9 +42,12 @@ class Transformer(inst: Instrumentation, methodRegexs: Traversable[String]) {
     }
   }
 
-  private[this] def toProbe(method: Method) = !methodRegexs.find(method.getName.matches).isEmpty
+  private[this] def toProbe(method: Method) = {
+    val fullName = method.getDeclaringClass.getName + "." + method.getName
+    !methodRegexs.find(fullName.matches).isEmpty
+  }
 
-  private[this] def toProbe(klass: Class[_]) = {
+  private[this] def toProbe(klass: Class[_]):Boolean = {
     val methods = (klass.getDeclaredMethods ++ klass.getMethods).toSet
     !methods.find(toProbe).isEmpty
   }
@@ -65,16 +70,5 @@ class Transformer(inst: Instrumentation, methodRegexs: Traversable[String]) {
         bytes
       }
     }
-
-  private[this] def toBytes(stream: InputStream): Array[Byte] = {
-    if (stream == null) throw new FileNotFoundException
-    val bytes = new ByteArrayOutputStream
-    var read = stream.read
-    while (read > -1) {
-      bytes.write(read)
-      read = stream.read
-    }
-    bytes.toByteArray
-  }
 }
 

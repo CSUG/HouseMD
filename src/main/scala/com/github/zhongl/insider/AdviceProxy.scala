@@ -4,8 +4,8 @@ import org.objectweb.asm._
 import collection.mutable.Stack
 import java.lang.System.{nanoTime => now}
 import commons.Method
-import java.util.concurrent.atomic.AtomicReference
 import java.lang.Object
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -43,42 +43,31 @@ object AdviceProxy {
     }
   }
 
-  def clearThreadBoundContext() {
-    threadBoundContexts.clear()
-  }
+  def clearThreadBoundContext() {threadBoundContexts.clear()}
 
-  def delegate_=(instance: Advice) {
-    _delegate.set(instance)
-  }
+  def delegate_=(instance: Advice) {_delegate.set(instance)}
 
-  def delegate = _delegate.get()
+  def delegate = _delegate.get
 
   private[this] def currentStrackTrace() = {
     val stackTrace = Thread.currentThread().getStackTrace
     java.util.Arrays.copyOfRange(stackTrace, 4, stackTrace.length) // trim useless stack trace elements.
   }
 
-  private[this] def method(name: String, argumentTypes: Class[_]*) = {
-    try {
-      new Method(name, Type.getMethodDescriptor(this.getClass.getMethod(name, argumentTypes: _*)));
-    } catch {
-      case e => throw new Error(e);
-    }
-  }
+  private[this] def method(name: String, argumentTypes: Class[_]*) =
+    new Method(name, Type.getMethodDescriptor(this.getClass.getMethod(name, argumentTypes: _*)))
 
-  private[this] def stackPush(c: Context) = threadBoundContexts.getOrElseUpdate(Thread.currentThread(), new
-      Stack[Context]).push(c)
+  private[this] def stackPush(c: Context) =
+    threadBoundContexts.getOrElseUpdate(Thread.currentThread(), new Stack[Context]).push(c)
 
   private[this] def stackPop() = threadBoundContexts(Thread.currentThread()).pop()
 
-  lazy val ENTRY = method("onMethodBegin", classOf[String], classOf[String], classOf[String], classOf[Object], classOf[Object]);
-  lazy val EXIT  = method("onMethodEnd", classOf[Object]);
-  lazy val TYPE  = Type.getType(this.getClass);
+  lazy val ENTRY = method("onMethodBegin", classOf[String], classOf[String], classOf[String], classOf[Object], classOf[Object])
+  lazy val EXIT  = method("onMethodEnd", classOf[Object])
+  lazy val TYPE  = Type.getType(this.getClass)
 
   private[this] val threadBoundContexts = collection.mutable.Map.empty[Thread, Stack[Context]]
-
-  private[this] val _delegate: AtomicReference[Advice] = new AtomicReference[Advice](NullAdvice);
-
+  private[this] val _delegate           = new AtomicReference[Advice](NullAdvice)
 }
 
 case class Context(
@@ -93,14 +82,14 @@ case class Context(
   var resultOrException: Object = _
 }
 
-trait Advice {
-  def enterWith(context: Context)
-
-  def exitWith(context: Context)
-}
-
 object NullAdvice extends Advice {
   def enterWith(context: Context) {}
 
   def exitWith(context: Context) {}
+}
+
+trait Advice {
+  def enterWith(context: Context)
+
+  def exitWith(context: Context)
 }

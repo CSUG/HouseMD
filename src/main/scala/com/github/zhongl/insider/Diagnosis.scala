@@ -55,7 +55,7 @@ object Diagnosis {
         val methodRegexs = args.params.tail
         // TODO do probe
         Section("Traces: " + methodRegexs) {
-          new Trace(inst, methodRegexs, args.timeout, args.maxProbeCount)
+          new Trace(new Transformer(inst, methodRegexs), args.timeout, args.maxProbeCount)
         }
     }
   }

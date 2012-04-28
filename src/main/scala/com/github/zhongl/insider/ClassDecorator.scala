@@ -14,7 +14,7 @@ object ClassDecorator {
     cw.toByteArray
   }
 
-  def classAdapter(cw: ClassWriter, methodRegexs:Traversable[String]) =
+  def classAdapter(cw: ClassWriter, methodRegexs: Traversable[String]) =
     new ClassAdapter(cw) {
 
       override def visit(
@@ -28,7 +28,12 @@ object ClassDecorator {
         super.visit(version, access, name, signature, superName, interfaces)
       }
 
-      override def visitMethod(access: Int, name: String, desc: String, signature: String, exceptions: Array[String]) = {
+      override def visitMethod(
+                                access: Int,
+                                name: String,
+                                desc: String,
+                                signature: String,
+                                exceptions: Array[String]) = {
         val mv = super.visitMethod(access, name, desc, signature, exceptions)
         if ((mv != null && containsMethod(name))) methodAdapter(mv, access, name, desc) else mv
       }
@@ -65,9 +70,7 @@ object ClassDecorator {
 
           private[this] def isStaticMethod = (methodAccess & ACC_STATIC) != 0
 
-          private[this] def loadThisOrPushNullIfIsStatic() {
-            if (isStaticMethod) pushNull() else loadThis()
-          }
+          private[this] def loadThisOrPushNullIfIsStatic() {if (isStaticMethod) pushNull() else loadThis()}
 
           private[this] def prepareResultBy(opcode: Int) {
             opcode match {
@@ -78,9 +81,7 @@ object ClassDecorator {
             }
           }
 
-          private[this] def pushNull() {
-            push(null.asInstanceOf[Type])
-          }
+          private[this] def pushNull() {push(null.asInstanceOf[Type])}
 
           private[this] val start = new Label
           private[this] val end   = new Label

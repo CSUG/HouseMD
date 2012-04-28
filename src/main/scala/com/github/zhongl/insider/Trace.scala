@@ -8,11 +8,7 @@ import java.util.concurrent.LinkedBlockingQueue
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Trace[+T]( transformer: Transformer, timeout: Int, maxCount: Int) extends AbstractIterator[T] with Advice {
-
-  private[this] lazy val started = now
-  private[this] lazy val queue   = new LinkedBlockingQueue[T]
-  private[this] lazy val count   = new AtomicInteger()
+class Trace[T](transformer: Transformer, timeout: Int, maxCount: Int) extends AbstractIterator[T] with Advice {
 
   // init code
   AdviceProxy.delegate = this
@@ -35,5 +31,10 @@ class Trace[+T]( transformer: Transformer, timeout: Int, maxCount: Int) extends 
   def enterWith(context: Context) {}
 
   def exitWith(context: Context) {}
+
+  private[this] lazy val queue   = new LinkedBlockingQueue[T]
+  private[this] lazy val started = now
+  private[this] lazy val count   = new AtomicInteger()
+
 }
 

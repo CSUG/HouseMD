@@ -15,7 +15,7 @@ class DiagnosisSpec extends FunSpec with ShouldMatchers {
       val inst = mock(classOf[Instrumentation])
       val path = "target/test-output/diagnosis.report"
 
-      doReturn(Array(classOf[Args], classOf[String])) when (inst) getAllLoadedClasses
+      doReturn(Array(classOf[Args], classOf[String])).when(inst).getAllLoadedClasses
 
       val args = "-l com.github.* -o " + path + " 123 class"
       Diagnosis.probeWith(args, inst)

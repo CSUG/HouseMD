@@ -13,7 +13,7 @@ object HouseMD {
     try {
       insideWith(args)
     } catch {
-      case e => sys.error(e.getMessage); sys.exit(-1)
+      case e => Console.err.print(e.getMessage); sys.exit(-1)
     }
   }
 
@@ -32,7 +32,7 @@ object HouseMD {
       val validator = new RegexValidator
       methodRegexs.foreach(validator.validate("", _))
 
-      attach(pid, argsObject.agentJarPath, args.foldLeft("")(_ + " " + _))
+      attach(pid, argsObject.agentJarPath, args.mkString(" "))
     } catch {
       case e =>
         val sb = new java.lang.StringBuilder()

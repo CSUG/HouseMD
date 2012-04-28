@@ -15,7 +15,7 @@ class TraceSpec extends FunSpec with ShouldMatchers{
       Thread.sleep(10L)
       context.resultOrException = "result"
       Trace.exitWith(context)
-      Trace.next() should include ("main java.lang.String.split , result")
+      Trace.next() should include ("java.lang.String.split , result")
 
       Trace.halt()
       Trace.hasNext should be (false)

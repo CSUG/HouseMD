@@ -8,6 +8,7 @@ import com.beust.jcommander.{ParameterException, JCommander}
 import scala.collection.JavaConversions._
 import management.ManagementFactory
 import java.util.concurrent.TimeUnit._
+import collection.mutable.ListBuffer
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -25,11 +26,12 @@ object Diagnosis {
         Section("Summary") {
           val runtime = ManagementFactory.getRuntimeMXBean
 
-          val pairs = ("name = " + runtime.getName) ::
-            ("arguments = " + runtime.getInputArguments) ::
-            ("starTime = %tc" format new Date(runtime.getStartTime)) ::
-            ("upTime = %1$d hours %2$d minutes %3$d seconds" format (convert(runtime.getUptime): _*)) ::
-            Nil
+          val pairs = new ListBuffer[String]
+
+          pairs += ("name = " + runtime.getName)
+          pairs += ("arguments = " + runtime.getInputArguments)
+          pairs += ("starTime = %tc" format new Date(runtime.getStartTime))
+          pairs += ("upTime = %1$d hours %2$d minutes %3$d seconds" format (convert(runtime.getUptime): _*))
 
           pairs.toIterator
         }
@@ -73,11 +75,12 @@ object Diagnosis {
     commander.addObject(argsObject)
 
     try {
-      commander.parse(args.toArray: _*)
+      commander.parse(args: _*)
       if (argsObject.params.size() < 2) throw new ParameterException("Missing parameter")
 
-      val _ :: methodRegexs = argsObject.params.toList
-      methodRegexs.foreach((new RegexValidator).validate("", _))
+      // FIXME
+      //      val _ :: methodRegexs = argsObject.params.toList
+      //      methodRegexs.foreach((new RegexValidator).validate("", _))
 
       argsObject
     } catch {
@@ -85,7 +88,7 @@ object Diagnosis {
         val sb = new java.lang.StringBuilder()
         sb.append(e.getClass.getSimpleName).append(": ").append(e.getMessage).append('\n')
         commander.usage(sb)
-        throw new RuntimeException(sb.toString)
+        throw new RuntimeException(sb.toString, e)
     }
   }
 

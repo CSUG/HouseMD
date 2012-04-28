@@ -1,7 +1,7 @@
 package com.github.zhongl.insider
 
 import com.beust.jcommander.validators.PositiveInteger
-import com.beust.jcommander.{ParameterException, IParameterValidator, Parameter}
+import com.beust.jcommander.{IParameterValidator, Parameter}
 import java.io.File
 
 /**
@@ -35,10 +35,13 @@ class Args {
 
 class RegexValidator extends IParameterValidator {
   def validate(name: String, value: String) {
-    try {
-      value.r
-    } catch {
-      case e => throw new ParameterException(e.getMessage)
-    }
+// FIXME
+//    try {
+//      new Regex(value)
+//    } catch {
+//      case e =>
+//        e.printStackTrace()
+//        throw new ParameterException(e.getMessage)
+//    }
   }
 }

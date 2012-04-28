@@ -19,7 +19,7 @@ object AdviceProxy {
                      thisObject: Object,
                      arguments: Array[Object]) {
     val voidReturn = Type.getReturnType(descriptor).equals(Type.VOID_TYPE);
-    val context = new Context(className, methodName, voidReturn, thisObject, arguments);
+    val context = new Context(className, methodName, voidReturn, thisObject, arguments, currentStrackTrace());
     try {
       delegate.enterWith(context);
     } catch {
@@ -30,11 +30,10 @@ object AdviceProxy {
     stackPush(context);
   }
 
-  def onMethodEnd(result: Object) {
+  def onMethodEnd(resultOrException: Object) {
     val context = stackPop()
     context.stopAt = now
-    context.result = result;
-    context.stackTrace = currentStrackTrace()
+    context.resultOrException = resultOrException;
 
     try {
       delegate.exitWith(context);
@@ -67,7 +66,8 @@ object AdviceProxy {
     }
   }
 
-  private[this] def stackPush(c:Context) = threadBoundContexts.getOrElseUpdate(Thread.currentThread(), new Stack[Context]).push(c)
+  private[this] def stackPush(c: Context) = threadBoundContexts.getOrElseUpdate(Thread.currentThread(), new
+      Stack[Context]).push(c)
 
   private[this] def stackPop() = threadBoundContexts(Thread.currentThread()).pop()
 
@@ -77,11 +77,7 @@ object AdviceProxy {
 
   private[this] val threadBoundContexts = collection.mutable.Map.empty[Thread, Stack[Context]]
 
-  private[this] val _delegate: AtomicReference[Advice] = new AtomicReference[Advice](new Advice {
-    def enterWith(context: Context) {}
-
-    def exitWith(context: Context) {}
-  });
+  private[this] val _delegate: AtomicReference[Advice] = new AtomicReference[Advice](NullAdvice);
 
 }
 
@@ -91,10 +87,11 @@ case class Context(
                     voidReturn: Boolean,
                     thisObject: Object,
                     arguments: Array[Object],
-                    var stackTrace: Array[StackTraceElement] = _,
-                    var result:Object = _,
-                    var startAt:Long = 0L,
-                    var stopAt:Long = 0L)
+                    stackTrace: Array[StackTraceElement]) {
+  var startAt          : Long   = 0L
+  var stopAt           : Long   = 0L
+  var resultOrException: Object = _
+}
 
 trait Advice {
   def enterWith(context: Context)
@@ -102,3 +99,8 @@ trait Advice {
   def exitWith(context: Context)
 }
 
+object NullAdvice extends Advice {
+  def enterWith(context: Context) {}
+
+  def exitWith(context: Context) {}
+}

@@ -11,12 +11,9 @@ import java.util.concurrent.LinkedBlockingQueue
  */
 object Trace extends AbstractIterator[String] with HaltAdvice {
 
-  def enterWith(context: Context) {
-    context.startAt = System.currentTimeMillis()
-  }
+  def enterWith(context: Context) {}
 
   def exitWith(context: Context) {
-    context.stopAt = System.currentTimeMillis()
     val started = "%1$tF %1$tT" format (new Date(context.startAt))
     val elapse = "%,dms" format (context.stopAt - context.startAt)
     val thread = Thread.currentThread().getName

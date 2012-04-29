@@ -1,0 +1,90 @@
+#!/bin/bash
+exec java -Dsbt.main.class=sbt.ScriptMain -Dsbt.boot.directory=/tmp/.sbt/boot -jar ../sbt-launch.jar "$0" "$@"
+!#
+
+
+/***
+scalaVersion := "2.9.2"
+
+*/
+
+import io.Source
+import java.io.File
+import scala.Predef._
+import sys.process._
+
+println("Test started")
+
+"rm -f TraceTarget.class" !
+
+"rm -f diagnosis.report" !
+
+"javac TraceTarget.java" !
+
+val target = "java TraceTarget" run
+
+println("TraceTarget ran")
+
+val timeout = 3
+val jarPath = sys.props("user.dir") + "/../target/insider-assembly-0.1-SNAPSHOT.jar"
+val LineRE = """(\d+).+\n""".r
+
+try {
+  val LineRE(pid) = "jps" #| "grep TraceTarget" !!
+
+  println("Diagnosing")
+
+  val output = "java  -jar " + jarPath + " -a " + jarPath + " -t " + timeout + " -l .*TraceTarget.* " + pid + " .*TraceTarget.*" !!
+
+
+  assert(output contains ("Attached"))
+  assert(output contains ("Detached"))
+
+  println("Diagnosed")
+} finally {
+  target.destroy()
+  target.exitValue()
+}
+
+
+val lines = Source.fromFile(new File("diagnosis.report")).getLines()
+
+var hasHead = false
+var hasSummary = false
+var hasEnviroment = false
+var hasProperites = false
+var hasLoaded = false
+var hasTraces = false
+var hasEnd = false
+val EndRE = """(Diagnosing ended by Timeout.+)""".r
+val LoadedRE = """(\s*TraceTarget -> file:.+)""".r
+val TraceRE = """(\s*\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \d+ms \w+ TraceTarget\.addOne 0 1.*)""".r
+
+lines.foreach {
+  _ match {
+    case "#Diagnosis report" => hasHead = true
+    case "##Summary" => hasSummary = true
+    case "##Enviroment" => hasEnviroment = true
+    case "##Properties" => hasProperites = true
+    case LoadedRE(_) => hasLoaded = true
+    case TraceRE(_) => hasTraces = true
+    case EndRE(_) => hasEnd = true
+    case _ =>
+  }
+}
+
+try {
+  assert(hasHead, "head missing")
+  assert(hasSummary, "summary missing")
+  assert(hasEnviroment, "env missing")
+  assert(hasProperites, "props missing")
+  assert(hasLoaded, "loaded missing")
+  assert(hasTraces, "traces missing")
+  assert(hasEnd, "end missing")
+
+  println("Test passed!")
+} catch {
+  case e: Exception => println("Test failed: " + e.getMessage)
+}
+
+

@@ -1,7 +1,9 @@
 package com.github.zhongl.insider
 
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit._
+import actors._
+import actors.Actor._
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -11,8 +13,14 @@ object HaltAdviceProxy {
     new HaltAdviceProxy(delegate, timeout, maxCount, haltCallback)
 }
 
-class HaltAdviceProxy(delegate: HaltAdvice, timeout: Int, maxCount: Int, haltCallback: Cause => Unit)
+class HaltAdviceProxy(delegate: HaltAdvice, timeoutSeconds: Int, maxCount: Int, haltCallback: Cause => Unit)
   extends Advice {
+
+  actor{
+    receiveWithin(SECONDS.toMillis(timeoutSeconds)){
+      case TIMEOUT => _timeout.set(true); haltAndCallback(Timeout(timeoutSeconds))
+    }
+  }
 
   def haltAndCallback(cause: Cause) {
     delegate.halt()
@@ -20,23 +28,23 @@ class HaltAdviceProxy(delegate: HaltAdvice, timeout: Int, maxCount: Int, haltCal
   }
 
   def enterWith(context: Context) {
-    if (isTimeout) haltAndCallback(Timeout(timeout))
+    if (isTimeout) Unit
     else if (overMaxCount) haltAndCallback(Over(maxCount))
     else `catch` {delegate.enterWith(context)}
   }
 
-  def exitWith(context: Context) { `catch` {delegate.exitWith(context)}}
+  def exitWith(context: Context) {`catch` {delegate.exitWith(context)}}
 
-  private[this] def isTimeout: Boolean = (System.nanoTime() - started) >= TimeUnit.SECONDS.toNanos(timeout)
+  private[this] def isTimeout: Boolean = _timeout.get()
 
   private[this] def overMaxCount: Boolean = count.incrementAndGet() > maxCount
 
   private[this] def `catch`(snippet: => Unit) {
-    try { snippet} catch { case t => haltAndCallback(Thrown(t)) }
+    try {snippet} catch {case t => haltAndCallback(Thrown(t))}
   }
 
-  private[this] lazy val count = new AtomicInteger()
-  private[this] lazy val started = System.nanoTime()
+  private[this] lazy val count   = new AtomicInteger()
+  private[this] lazy val _timeout = new AtomicBoolean(false)
 }
 
 trait HaltAdvice extends Advice {

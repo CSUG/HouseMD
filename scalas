@@ -1,1 +1,0 @@
-java -Dsbt.main.class=sbt.ScriptMain -Dsbt.boot.directory=/tmp/.sbt/boot -jar sbt-launch.jar "$@"

@@ -1,8 +1,9 @@
 package com.github.zhongl.insider
 
 import com.beust.jcommander.validators.PositiveInteger
-import com.beust.jcommander.{IParameterValidator, Parameter}
 import java.io.File
+import com.beust.jcommander.{ParameterException, IParameterValidator, Parameter}
+import java.util.regex.PatternSyntaxException
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -35,13 +36,10 @@ class Args {
 
 class RegexValidator extends IParameterValidator {
   def validate(name: String, value: String) {
-// FIXME
-//    try {
-//      new Regex(value)
-//    } catch {
-//      case e =>
-//        e.printStackTrace()
-//        throw new ParameterException(e.getMessage)
-//    }
+    try {
+      value.r
+    } catch {
+      case e: PatternSyntaxException=> throw new ParameterException(e.getMessage)
+    }
   }
 }

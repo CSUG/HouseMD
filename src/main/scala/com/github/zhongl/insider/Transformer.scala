@@ -2,18 +2,18 @@ package com.github.zhongl.insider
 
 import java.lang.System.{currentTimeMillis => now}
 import java.lang.reflect.Method
-import instrument.{ClassFileTransformer, Instrumentation}
-import java.security.ProtectionDomain
 import java.io.FileNotFoundException
 import scala.Predef._
 import scala.Array
+import instrument.{ClassDefinition, ClassFileTransformer, Instrumentation}
+import java.security.ProtectionDomain
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Transformer(inst: Instrumentation, methodRegexs: Traversable[String]) {
+class Transformer(inst: Instrumentation, methodRegexs: Traversable[String], agentJarPath:String) {
 
-  private[this] lazy val toProbeClasses = inst.getAllLoadedClasses.filter(toProbe)
+  private[this] lazy val toProbeClasses = inst.getAllLoadedClasses.filter(toProbe).toSet
 
   private[this] lazy val probeTransformer = classFileTransformer {
     (loader: ClassLoader, className: String, classfileBuffer: Array[Byte]) =>
@@ -24,19 +24,59 @@ class Transformer(inst: Instrumentation, methodRegexs: Traversable[String]) {
   private[this] lazy val resetTransformer = classFileTransformer {
     (loader: ClassLoader, className: String, classfileBuffer: Array[Byte]) =>
     // TODO log "reset class {1} from {0}", loader, className
-      val stream = loader.getResourceAsStream(className + ".class")
-      if (stream == null) throw new FileNotFoundException
-      Utils.toBytes(stream)
+      getOriginClassFileBytes(loader, className)
   }
 
-  def probe() {transformBy(probeTransformer)}
+  private[this] lazy val log = classFileTransformer {
+    (loader: ClassLoader, className: String, classfileBuffer: Array[Byte]) =>
+      classfileBuffer
+  }
 
-  def reset() {transformBy(resetTransformer)}
+  def probe() {
+    inst.addTransformer(log)
+    redefine {
+      c: Class[_] =>
+        val loader: ClassLoader = c.getClassLoader
+//        if (loader.isInstanceOf[URLClassLoader]) {
+//          import java.net.URL
+//          import java.io.File
+//
+//          AccessController.doPrivileged(new PrivilegedAction[Unit] {
+//            def run() {
+//              val method = loader.getClass.getDeclaredMethod("addURL", classOf[URL])
+//              method.invoke(loader, new File(agentJarPath).toURI.toURL)
+//            }
+//          })
+//        }
+        val origin = getOriginClassFileBytes(loader, c.getName.replace('.', '/'))
+        val decorated = ClassDecorator.decorate(origin, methodRegexs)
+        new ClassDefinition(c, decorated)
+    }
+  }
+
+  def reset() {
+    redefine {
+      c: Class[_] =>
+        val origin = getOriginClassFileBytes(c.getClassLoader, c.getName.replace('.', '/'))
+        new ClassDefinition(c, origin)
+    }
+    inst.removeTransformer(log)
+  }
+
+  private[this] def redefine(fun: Class[_] => ClassDefinition) {
+    inst.redefineClasses(toProbeClasses.toArray.map {fun}: _*)
+  }
+
+  private[this] def getOriginClassFileBytes(loader: ClassLoader, className: String): Array[Byte] = {
+    val stream = loader.getResourceAsStream(className + ".class")
+    if (stream == null) throw new FileNotFoundException
+    Utils.toBytes(stream)
+  }
 
   private[this] def transformBy(t: ClassFileTransformer) {
     inst.addTransformer(t)
     try {
-      inst.retransformClasses(toProbeClasses: _*)
+      inst.retransformClasses(toProbeClasses.toArray: _*)
     } finally {
       inst.removeTransformer(t)
     }
@@ -47,7 +87,7 @@ class Transformer(inst: Instrumentation, methodRegexs: Traversable[String]) {
     !methodRegexs.find(fullName.matches).isEmpty
   }
 
-  private[this] def toProbe(klass: Class[_]):Boolean = {
+  private[this] def toProbe(klass: Class[_]): Boolean = {
     val methods = (klass.getDeclaredMethods ++ klass.getMethods).toSet
     !methods.find(toProbe).isEmpty
   }
@@ -62,7 +102,10 @@ class Transformer(inst: Instrumentation, methodRegexs: Traversable[String]) {
                      classfileBuffer: Array[Byte]) = {
         var bytes = classfileBuffer
         try {
-          bytes = fun(loader, className, classfileBuffer)
+          if (toProbeClasses.contains(classBeingRedefined)) {
+            // TODO clean this
+            bytes = fun(loader, className, classfileBuffer)
+          }
         } catch {
           case e =>
           // TODO log "transfor but not reset class {1} from {0}", loader, className

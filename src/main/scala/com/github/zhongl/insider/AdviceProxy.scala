@@ -2,7 +2,7 @@ package com.github.zhongl.insider
 
 import org.objectweb.asm._
 import collection.mutable.Stack
-import java.lang.System.{nanoTime => now}
+import java.lang.System.{currentTimeMillis => now}
 import commons.Method
 import java.lang.Object
 import java.util.concurrent.atomic.AtomicReference
@@ -20,12 +20,7 @@ object AdviceProxy {
                      arguments: Array[Object]) {
     val voidReturn = Type.getReturnType(descriptor).equals(Type.VOID_TYPE);
     val context = new Context(className, methodName, voidReturn, thisObject, arguments, currentStrackTrace());
-    try {
-      delegate.enterWith(context);
-    } catch {
-      case _ =>
-      // TODO notify to stop probing and reset
-    }
+    delegate.enterWith(context);
     context.startAt = now;
     stackPush(context);
   }
@@ -34,13 +29,7 @@ object AdviceProxy {
     val context = stackPop()
     context.stopAt = now
     context.resultOrException = resultOrException;
-
-    try {
-      delegate.exitWith(context);
-    } catch {
-      case _ =>
-      // TODO notify to stop probing and reset
-    }
+    delegate.exitWith(context);
   }
 
   def clearThreadBoundContext() {threadBoundContexts.clear()}
@@ -62,9 +51,9 @@ object AdviceProxy {
 
   private[this] def stackPop() = threadBoundContexts(Thread.currentThread()).pop()
 
-  lazy val ENTRY = method("onMethodBegin", classOf[String], classOf[String], classOf[String], classOf[Object], classOf[Object])
+  lazy val ENTRY = method("onMethodBegin", classOf[String], classOf[String], classOf[String], classOf[Object], classOf[Array[Object]])
   lazy val EXIT  = method("onMethodEnd", classOf[Object])
-  lazy val TYPE  = Type.getType(this.getClass)
+  lazy val TYPE  = Type.getType("L" + getClass.getName.replace('.','/').replace("$","") +";")
 
   private[this] val threadBoundContexts = collection.mutable.Map.empty[Thread, Stack[Context]]
   private[this] val _delegate           = new AtomicReference[Advice](NullAdvice)
@@ -82,14 +71,14 @@ case class Context(
   var resultOrException: Object = _
 }
 
-object NullAdvice extends Advice {
-  def enterWith(context: Context) {}
-
-  def exitWith(context: Context) {}
-}
-
 trait Advice {
   def enterWith(context: Context)
 
   def exitWith(context: Context)
+}
+
+object NullAdvice extends Advice {
+  def enterWith(context: Context) {}
+
+  def exitWith(context: Context) {}
 }

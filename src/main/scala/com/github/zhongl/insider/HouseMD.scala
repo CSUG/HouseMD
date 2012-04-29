@@ -43,12 +43,17 @@ object HouseMD {
 
   }
 
-  private[insider] def attach(pid: String, agentJarPath:String, agentOptions:String) {
+  private[insider] def attach(pid: String, agentJarPath: String, agentOptions: String) {
     val vm = VirtualMachine.attach(pid)
+
+    sys.addShutdownHook {
+      vm.detach()
+      println("Detached pid: " + vm.id)
+    }
+
     println("Attached pid: " + vm.id)
-    vm.loadAgent(agentJarPath,agentOptions)
-    vm.detach()
-    println("Detached pid: " + vm.id)
+    vm.loadAgent(agentJarPath, agentOptions)
   }
+
 }
 

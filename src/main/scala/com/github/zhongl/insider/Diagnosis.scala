@@ -9,6 +9,7 @@ import scala.collection.JavaConversions._
 import management.ManagementFactory
 import java.util.concurrent.TimeUnit._
 import collection.mutable.ListBuffer
+import java.net.URL
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -26,7 +27,7 @@ object Diagnosis {
         Section("Summary") {
           val runtime = ManagementFactory.getRuntimeMXBean
 
-          val pairs = new ListBuffer[String]
+          val pairs = ListBuffer.empty[String]
 
           pairs += ("name = " + runtime.getName)
           pairs += ("arguments = " + runtime.getInputArguments)
@@ -45,24 +46,26 @@ object Diagnosis {
         }
 
         Section("Loaded classes: " + args.loaded) {
-          inst.getAllLoadedClasses.filter(_.getName.matches(args.loaded)).map {
-            c: java.lang.Class[_] =>
+          inst.getAllLoadedClasses.map {
+            c: Class[_] =>
 
               val name: String = c.getName
               val path: String = '/' + name.replace('.', '/') + ".class"
-              name + " -> " + c.getResource(path).toString
-          }.toIterator
+              val resource: URL = c.getResource(path)
+
+              if (!name.matches(args.loaded) || resource == null) null
+              else name + " -> " + resource
+          }.filter(_ != null).toIterator
         }
 
         val methodRegexs = args.params.tail
-        val transformer = new Transformer(inst, methodRegexs)
+        val transformer = new Transformer(inst, methodRegexs, args.agentJarPath)
         transformer.probe()
-        // TODO do probe
-        Section("Traces: " + methodRegexs) {
+        Section("Traces: " + methodRegexs.mkString(" ")) {
           AdviceProxy.delegate = HaltAdviceProxy(Trace, args.timeout, args.maxProbeCount) {
             cause: Cause =>
               transformer.reset()
-              stream.printf("Diagnosing end by %s \n", cause)
+              stream.printf("\nDiagnosing ended by %s \n", cause)
           }
           Trace
         }
@@ -78,9 +81,8 @@ object Diagnosis {
       commander.parse(args: _*)
       if (argsObject.params.size() < 2) throw new ParameterException("Missing parameter")
 
-      // FIXME
-      //      val _ :: methodRegexs = argsObject.params.toList
-      //      methodRegexs.foreach((new RegexValidator).validate("", _))
+      val _ :: methodRegexs = argsObject.params.toList
+      methodRegexs.foreach((new RegexValidator).validate("", _))
 
       argsObject
     } catch {

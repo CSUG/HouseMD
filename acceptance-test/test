@@ -34,8 +34,8 @@ try {
 
   println("Diagnosing")
 
+  // TODO support package filter and inspect instance.
   val output = "java  -jar " + jarPath + " -t " + timeout + " -l .*TraceTarget.* " + pid + " .*TraceTarget.*" !!
-
 
   assert(output contains ("Attached"))
   assert(output contains ("Detached"))

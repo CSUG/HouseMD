@@ -28,7 +28,7 @@ class Args {
   @Parameter(description = "<pid> <method regex> [more method regex...]")
   var params: java.util.List[String] = null
 
-  @Parameter(names = Array("-p", "--package"), description = "regex pattern for package filter", validateWith = classOf[RegexValidator])
+  @Parameter(hidden = true,names = Array("-p", "--package"), description = "regex pattern for package filter", validateWith = classOf[RegexValidator])
   var packageFilter = ".+"
 
   @Parameter(names = Array("-l", "--loaded"), description = "regex pattern for loaded class filter", validateWith = classOf[RegexValidator])

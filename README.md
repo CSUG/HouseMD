@@ -1,5 +1,5 @@
 HouseMD is a command-line tool for dianosing Java process in runtime.
-It's inspirattion came from [BTrace](http://rdc.taobao.com/team/jm/archives/509), but more easier to use.
+It's inspiration came from [BTrace](http://rdc.taobao.com/team/jm/archives/509), but more easier to use.
 
 # Features
 
@@ -37,7 +37,7 @@ It's inspirattion came from [BTrace](http://rdc.taobao.com/team/jm/archives/509)
 
     ##Loaded classes: .*TraceTarget.*
 
-            TraceTarget -> file:/home/jushi/dev/workspaces/scala-new/insider-pack/insider/acceptance-test/TraceTarget.class
+            TraceTarget -> file:/path/to/TraceTarget.class
 
     ##Traces: .*TraceTarget.*
 

@@ -62,14 +62,32 @@ object HouseMD {
   private[house] def attach(pid: String, agentJarPath: String, agentOptions: String) {
     val vm = VirtualMachine.attach(pid)
 
+    import actors.Actor._
+
+    val progressor = actor {
+      loop {
+        react {
+          case "." =>
+            print(".")
+            Thread.sleep(1000L)
+            self ! "."
+          case _ => exit()
+        }
+      }
+    }
+
     sys.addShutdownHook {
       vm.detach()
       println("Detached pid: " + vm.id)
     }
 
     println("Attached pid: " + vm.id)
+
+    progressor ! "."
     vm.loadAgent(agentJarPath, agentOptions)
+    progressor ! "exit"
   }
+
 
 }
 

@@ -38,6 +38,7 @@ try {
   val output = "java  -jar " + jarPath + " -t " + timeout + " -l .*TraceTarget.* " + pid + " .*TraceTarget.*" !!
 
   assert(output contains ("Attached"))
+  assert(output contains ("..."))
   assert(output contains ("Detached"))
 
   println("Diagnosed")

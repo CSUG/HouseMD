@@ -36,6 +36,8 @@ class TraceSpec extends FunSpec with ShouldMatchers{
       Trace.halt()
       Trace.hasNext should be (false)
     }
+
+    it("should inspect instance of specical class") (pending)
   }
 
 }

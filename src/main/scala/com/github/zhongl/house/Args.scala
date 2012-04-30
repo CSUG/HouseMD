@@ -43,7 +43,7 @@ class Args {
   @Parameter(names = Array("-c", "--max-probe-count"), description = "max probe count for diagnosing last", validateWith = classOf[PositiveInteger])
   var maxProbeCount = 1000
 
-  @Parameter(names = Array("-i", "--inspect"), description = "class names seperated by comma for inspecting at invocation")
+  @Parameter(hidden = true, names = Array("-i", "--inspect"), description = "class names seperated by comma for inspecting at invocation")
   var inspects: java.util.List[String] = null
 
   @Parameter(hidden = true, names = Array("-a", "--agent"), description = "file path agent jar ")

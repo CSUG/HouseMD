@@ -49,8 +49,6 @@ class HaltAdviceProxySpec extends FunSpec {
       def halt() {}
     }
 
-
-
     it("should halt by over max count") {
       expect(Over(1)) {
         testHaltAdviceProxy(new NullHaltAdvice, timeout = Int.MaxValue, maxCount = 1)
@@ -63,7 +61,7 @@ class HaltAdviceProxySpec extends FunSpec {
       }
     }
 
-    it("shout halt by thrown when call entry") {
+    it("should halt by thrown when call entry") {
       val e = new Exception
       val advice = new NullHaltAdvice {
         override def enterWith(context: Context) {throw e}
@@ -73,7 +71,7 @@ class HaltAdviceProxySpec extends FunSpec {
       }
     }
 
-    it("shout halt by thrown when call exit") {
+    it("should halt by thrown when call exit") {
       val e = new Exception
       val advice = new NullHaltAdvice {
         override def enterWith(context: Context) {throw e}

@@ -1,4 +1,4 @@
-package com.github.zhongl.insider
+package com.github.zhongl.house
 
 import com.beust.jcommander.validators.PositiveInteger
 import java.io.File
@@ -30,8 +30,8 @@ class Args {
   @Parameter(names = Array("-i", "--inspect"), description = "class names seperated by comma for inspecting at invocation")
   var inspects: java.util.List[String] = null
 
-  @Parameter(hidden = true,names = Array("-a", "--agent"), description = "file path agent jar ")
-  var agentJarPath: String = new File("agent.jar").getAbsolutePath
+  @Parameter(hidden = true, names = Array("-a", "--agent"), description = "file path agent jar ")
+  var agentJarPath: String = Utils.sourceOf(getClass)
 }
 
 class RegexValidator extends IParameterValidator {
@@ -39,7 +39,7 @@ class RegexValidator extends IParameterValidator {
     try {
       value.r
     } catch {
-      case e: PatternSyntaxException=> throw new ParameterException(e.getMessage)
+      case e: PatternSyntaxException => throw new ParameterException(e.getMessage)
     }
   }
 }

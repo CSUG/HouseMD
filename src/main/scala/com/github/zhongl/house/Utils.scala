@@ -1,4 +1,4 @@
-package com.github.zhongl.insider
+package com.github.zhongl.house
 
 import java.io.{ByteArrayOutputStream, InputStream}
 
@@ -17,4 +17,16 @@ object Utils {
     }
     bytes.toByteArray
   }
+
+  def sourceOf(klass: Class[_]): String = {
+    val file = klass.getResource("/" + klass.getName.replace('.', '/') + ".class").getFile
+    extractSource(file)
+  }
+
+  def extractSource(file:String) = {
+    val FileRE = """(file:)?([^!]+)!?.*""".r
+    val FileRE(_, source) = file
+    source
+  }
+
 }

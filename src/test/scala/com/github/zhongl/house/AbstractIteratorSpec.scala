@@ -1,10 +1,7 @@
-package com.github.zhongl.insider
+package com.github.zhongl.house
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSpec
-import java.util.concurrent.LinkedBlockingQueue
-import sun.net.dns.ResolverConfiguration.Options
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>

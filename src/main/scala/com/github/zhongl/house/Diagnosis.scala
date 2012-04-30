@@ -1,4 +1,4 @@
-package com.github.zhongl.insider
+package com.github.zhongl.house
 
 import java.lang.instrument._
 import java.lang.System.{currentTimeMillis => now}
@@ -16,7 +16,7 @@ import java.net.URL
  */
 object Diagnosis {
 
-  private[insider] def probeWith(agentOptions: String, inst: Instrumentation) {
+  private[house] def probeWith(agentOptions: String, inst: Instrumentation) {
     val args = parse(agentOptions.split(" "))
 
     reportTo(args.output) {

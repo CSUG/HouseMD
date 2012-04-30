@@ -1,4 +1,4 @@
-package com.github.zhongl.insider
+package com.github.zhongl.house
 
 import com.sun.tools.attach._
 import collection.JavaConversions._
@@ -17,7 +17,7 @@ object HouseMD {
     }
   }
 
-  private[insider] def insideWith(args: Array[String]) {
+  private[house] def insideWith(args: Array[String]) {
     val commander = new JCommander()
     val argsObject: Args = new Args
 
@@ -43,7 +43,7 @@ object HouseMD {
 
   }
 
-  private[insider] def attach(pid: String, agentJarPath: String, agentOptions: String) {
+  private[house] def attach(pid: String, agentJarPath: String, agentOptions: String) {
     val vm = VirtualMachine.attach(pid)
 
     sys.addShutdownHook {

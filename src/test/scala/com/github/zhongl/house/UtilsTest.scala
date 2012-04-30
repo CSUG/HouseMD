@@ -1,4 +1,4 @@
-package com.github.zhongl.insider
+package com.github.zhongl.house
 
 import java.io.ByteArrayInputStream
 import org.scalatest.FunSuite
@@ -15,4 +15,8 @@ class UtilsTest extends FunSuite {
     assert(Utils.toBytes(stream) === array)
   }
 
+  test("extractSource") {
+    assert(Utils.extractSource("file:path!xxx") === "path")
+    assert(Utils.extractSource("path") === "path")
+  }
 }

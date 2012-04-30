@@ -1,4 +1,4 @@
-package com.github.zhongl.insider
+package com.github.zhongl.house
 
 import java.util.concurrent.TimeUnit._
 import actors._

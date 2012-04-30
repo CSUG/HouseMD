@@ -1,0 +1,3 @@
+#! /bin/bash
+home = basename $0
+java -jar house-assembly-0.1.0.jar "$@"

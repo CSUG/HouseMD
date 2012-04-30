@@ -26,7 +26,7 @@ val target = "java TraceTarget" run
 println("TraceTarget ran")
 
 val timeout = 3
-val jarPath = sys.props("user.dir") + "/../target/insider-assembly-0.1-SNAPSHOT.jar"
+val jarPath = sys.props("user.dir") + "/../target/house-assembly-0.1.0.jar"
 val LineRE = """(\d+).+\n""".r
 
 try {
@@ -34,7 +34,7 @@ try {
 
   println("Diagnosing")
 
-  val output = "java  -jar " + jarPath + " -a " + jarPath + " -t " + timeout + " -l .*TraceTarget.* " + pid + " .*TraceTarget.*" !!
+  val output = "java  -jar " + jarPath + " -t " + timeout + " -l .*TraceTarget.* " + pid + " .*TraceTarget.*" !!
 
 
   assert(output contains ("Attached"))

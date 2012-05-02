@@ -107,7 +107,7 @@ Execute command without any argument, you will see:
 
 # Trace line schema
 
-    | data     | time   | elapse | thread name | method full name  | arguemnt(s) |result or exception
+    | date     | time   | elapse | thread name | method full name  | arguemnt(s) |result or exception
     2012-04-30 16:37:28 0ms      main          TraceTarget.addOne  0             1
 
 - The delimiter is one `white space`,

@@ -23,7 +23,6 @@ import java.util.Date
 import com.beust.jcommander.{ParameterException, JCommander}
 import scala.collection.JavaConversions._
 import management.ManagementFactory
-import java.util.concurrent.TimeUnit._
 import collection.mutable.ListBuffer
 import java.net.URL
 
@@ -48,7 +47,7 @@ object Diagnosis {
           pairs += ("name = " + runtime.getName)
           pairs += ("arguments = " + runtime.getInputArguments)
           pairs += ("starTime = %tc" format new Date(runtime.getStartTime))
-          pairs += ("upTime = %1$d hours %2$d minutes %3$d seconds" format (convert(runtime.getUptime): _*))
+          pairs += ("upTime = %1$d hours %2$d minutes %3$d seconds" format (Utils.convertToTimestamp(runtime.getUptime): _*))
 
           pairs.toIterator
         }
@@ -108,17 +107,6 @@ object Diagnosis {
         commander.usage(sb)
         throw new RuntimeException(sb.toString, e)
     }
-  }
-
-  private[this] def convert(l: Long) = {
-    var r = l
-    val hours = MILLISECONDS.toHours(r)
-    r -= HOURS.toMillis(hours)
-    val minutes = MILLISECONDS.toMinutes(r)
-    r -= MINUTES.toMillis(minutes)
-    val seconds = MILLISECONDS.toMinutes(r)
-
-    Array(hours, minutes, seconds)
   }
 
   private[this] def list(kv: Map[String, String]) = kv map {

@@ -18,6 +18,7 @@ package com.github.zhongl.house
 
 import java.io.ByteArrayInputStream
 import org.scalatest.FunSuite
+import java.util.concurrent.TimeUnit._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -35,4 +36,24 @@ class UtilsTest extends FunSuite {
     assert(Utils.extractSource("file:path!xxx") === "path")
     assert(Utils.extractSource("path") === "path")
   }
+
+  test("convertToTimestamp") {
+    def assertTimestamp(hour: Long, minute: Long, second: Long) {
+      val millis = HOURS.toMillis(hour) + MINUTES.toMillis(minute) + SECONDS.toMillis(second)
+      val Array(h, m, s) = Utils.convertToTimestamp(millis)
+      assert(h === hour)
+      assert(m === minute)
+      assert(s === second)
+    }
+    assertTimestamp(0, 0, 0)
+    assertTimestamp(0, 0, 1)
+    assertTimestamp(0, 1, 1)
+
+    assertTimestamp(1, 0, 1)
+
+    assertTimestamp(1, 0, 0)
+    assertTimestamp(1, 1, 0)
+    assertTimestamp(1, 1, 1)
+  }
+
 }

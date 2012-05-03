@@ -17,6 +17,8 @@
 package com.github.zhongl.house
 
 import java.io.{ByteArrayOutputStream, InputStream}
+import java.util.concurrent.TimeUnit._
+import scala.Array
 
 
 /**
@@ -44,5 +46,17 @@ object Utils {
     val FileRE(_, source) = file
     source
   }
+
+  def convertToTimestamp(millis: Long) = {
+    var r = millis
+    val hours = MILLISECONDS.toHours(r)
+    r -= HOURS.toMillis(hours)
+    val minutes = MILLISECONDS.toMinutes(r)
+    r -= MINUTES.toMillis(minutes)
+    val seconds = MILLISECONDS.toSeconds(r)
+
+    Array(hours, minutes, seconds)
+  }
+
 
 }

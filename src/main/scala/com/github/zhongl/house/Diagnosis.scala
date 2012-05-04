@@ -64,12 +64,25 @@ object Diagnosis {
           inst.getAllLoadedClasses.map {
             c: Class[_] =>
 
+              object &{
+                def unapply(list: List[ClassLoader]):Option[(List[ClassLoader], ClassLoader)] =
+                  if (list.isEmpty) None else Some(list.take(list.size - 1), list(list.size - 1))
+              }
+
+              def classLoaderHierarchiesOf(a:Any):String = a match {
+                case c:Class[_] => classLoaderHierarchiesOf(c.getClassLoader)
+                case cl:ClassLoader => classLoaderHierarchiesOf(cl :: cl.getParent :: Nil)
+                case before & null  => before.mkString("[",",","]")
+                case before & last  => classLoaderHierarchiesOf(before ::: last :: last.getParent :: Nil)
+                case _ => "[]"
+              }
+
               val name: String = c.getName
               val path: String = '/' + name.replace('.', '/') + ".class"
               val resource: URL = c.getResource(path)
 
               if (!name.matches(args.loaded) || resource == null) null
-              else name + " -> " + resource
+              else name + " -> " + resource + " @ " +classLoaderHierarchiesOf(c)
           }.filter(_ != null).toIterator
         }
 

@@ -6,7 +6,11 @@ import java.io.File
 
 class OptionsSpec extends FunSpec with ShouldMatchers {
 
-  val options = Options.parse("class.loader.urls=a.jar:b.jar closure.executor.name=com.github.zhongl.house.Executor console.address=localhost:54321")
+  val options = Options.parse(
+    """class.loader.urls=a.jar:b.jar
+       closure.executor.name=com.github.zhongl.house.Executor
+       console.address=localhost:54321"""
+  )
 
   def url(s: String) = new File(s).toURI.toURL
 
@@ -18,11 +22,11 @@ class OptionsSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should get closure executor name") {
-      options.closureExecutorName() should be ("com.github.zhongl.house.Executor")
+      options.closureExecutorName() should be("com.github.zhongl.house.Executor")
     }
 
     it("should get console address") {
-      options.consoleAddress() should be ("localhost:54321")
+      options.consoleAddress() should be("localhost:54321")
     }
   }
 }

@@ -44,8 +44,10 @@ object Build extends sbt.Build {
     id = "Agent",
     base = file("agent"),
     settings = baseSettings ++ Seq(
-      libraryDependencies := test,
-      packageOptions      += Package.ManifestAttributes(
+      libraryDependencies :=  test,
+      artifactName        :=  { (scalaVersion, moduleID, artifact) => moduleID.name + "-" + moduleID.revision + ".jar" },
+      javacOptions        ++= Seq("-source", "1.6", "-target", "1.6"),
+      packageOptions      +=  Package.ManifestAttributes(
         ("Agent-Class","com.github.zhongl.house.Agent"),
         ("Can-Retransform-Classes","true"),
         ("Can-Redefine-Classes","true")
@@ -63,7 +65,6 @@ object Build extends sbt.Build {
 
   object Dependencies {
     val test = Seq(
-      "org.scala-lang"  % "scala-library"   % "2.9.2" % "test",
       "org.mockito"     %   "mockito-all"   % "1.9.0" % "test",
       "org.scalatest"   %%  "scalatest"     % "1.7.2" % "test"
     )

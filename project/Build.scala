@@ -46,7 +46,7 @@ object Build extends sbt.Build {
     settings = baseSettings ++ Seq(
       libraryDependencies := test,
       packageOptions      += Package.ManifestAttributes(
-        ("Agent-Class","com.github.zhongl.house.Diagnosis"),
+        ("Agent-Class","com.github.zhongl.house.Agent"),
         ("Can-Retransform-Classes","true"),
         ("Can-Redefine-Classes","true")
       )

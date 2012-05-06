@@ -43,6 +43,10 @@ class Options {
         return new Options(map);
     }
 
+    /**
+     * @return urls for URLClassLoader to find classes.
+     * @see java.net.URLClassLoader
+     */
     public URL[] classLoaderUrls() {
         String value = map.get("class.loader.urls");
         String[] split = value.split(":");
@@ -57,11 +61,31 @@ class Options {
         }
     }
 
+    /**
+     * @return closure executor class full name.
+     * @see Class#getName()
+     */
     public String closureExecutorName() {
         return map.get("closure.executor.name");
     }
 
+    /**
+     * @return address string, eg: "localhost:54321"
+     */
     public String consoleAddress() {
         return map.get("console.address");
+    }
+
+    /**
+     * @return true if you want gc all useless classes loaded by last.
+     * @see System#gc()
+     */
+    public boolean gcAtBeginning() {
+        // having value means turn on this option
+        return map.containsKey("gc.at.beginning");
+    }
+
+    public boolean debug() {
+        return map.containsKey("debug");
     }
 }

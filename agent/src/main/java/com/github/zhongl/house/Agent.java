@@ -25,6 +25,10 @@ import java.net.URLClassLoader;
 public class Agent {
     public static void agentmain(String arguments, Instrumentation instrumentation) throws Exception {
         Options options = Options.parse(arguments);
+
+        if (options.debug()) System.out.println("agent arguments: " + arguments);
+        if (options.gcAtBeginning()) System.gc();
+
         ClassLoader parentClassLoader = Agent.class.getClassLoader();
         URLClassLoader classLoader = URLClassLoader.newInstance(options.classLoaderUrls(), parentClassLoader);
 

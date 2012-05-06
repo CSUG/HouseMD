@@ -73,7 +73,7 @@ object Build extends sbt.Build {
       "asm"             % "asm"             % "3.3.1",
       "asm"             % "asm-commons"     % "3.3.1",
       "com.beust"       % "jcommander"      % "1.20",
-      "org.scala-lang"  % "scala-library"   % "2.9.2" % "runtime"
+      "org.scala-lang"  % "scala-library"   % "2.9.2"
     )
   }
 

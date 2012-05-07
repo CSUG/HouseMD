@@ -21,6 +21,7 @@ import sbtassembly.Plugin._
 object Build extends sbt.Build {
   import BaseSettings._
   import Dependencies._
+  import Unmanaged._
 
   lazy val root = Project(id = "HouseMD", base = file("."), settings = baseSettings) aggregate(console, agent)
 
@@ -28,16 +29,16 @@ object Build extends sbt.Build {
     id = "Console",
     base = file("console"),
     settings = baseSettings ++ assemblySettings ++ Seq(
-      unmanagedClasspath in Compile +=  Attributed.blank(
-        file("/usr/lib/jvm/java-6-sun/lib/tools.jar")
-      ),
-      unmanagedClasspath in Test    <<= unmanagedClasspath in Compile,
-      unmanagedClasspath in Runtime <<= unmanagedClasspath in Compile,
+//      unmanagedClasspath in Compile +=  Attributed.blank(
+//        file("/usr/lib/jvm/java-6-sun/lib/tools.jar")
+//      ),
+//      unmanagedClasspath in Test    <<= unmanagedClasspath in Compile,
+//      unmanagedClasspath in Runtime <<= unmanagedClasspath in Compile,
       libraryDependencies           :=  consoleDependencies ++ test,
       packageOptions                +=  Package.ManifestAttributes(
         ("Main-Class","com.github.zhongl.house.HouseMD")
       )
-    )
+    ) ++ classpathSettings
   )
 
   lazy val agent = Project(
@@ -56,7 +57,7 @@ object Build extends sbt.Build {
   )
 
   object BaseSettings {
-    val baseSettings = Defaults.defaultSettings ++ Seq(
+    lazy val baseSettings = Defaults.defaultSettings ++ Seq(
       organization  := "com.github.zhongl",
       version       := "0.2.0",
       scalaVersion  := "2.9.2"
@@ -64,17 +65,31 @@ object Build extends sbt.Build {
   }
 
   object Dependencies {
-    val test = Seq(
+    lazy val test = Seq(
       "org.mockito"     %   "mockito-all"   % "1.9.0" % "test",
       "org.scalatest"   %%  "scalatest"     % "1.7.2" % "test"
     )
 
-    val consoleDependencies =  Seq(
+    lazy val consoleDependencies =  Seq(
       "asm"             % "asm"             % "3.3.1",
       "asm"             % "asm-commons"     % "3.3.1",
       "com.beust"       % "jcommander"      % "1.20",
       "org.scala-lang"  % "scala-library"   % "2.9.2"
     )
   }
+
+  object Unmanaged {
+    lazy val javaHome = sys.props("java.home").replace("/jre","")
+    lazy val toolsFile = file(javaHome + "/lib/tools.jar")
+    lazy val classpathSettings =
+      if (sys.props("os.name").contains("Linux")) Seq(
+        unmanagedClasspath in Compile +=  Attributed.blank(toolsFile),
+        unmanagedClasspath in Test    <<= unmanagedClasspath in Compile,
+        unmanagedClasspath in Runtime <<= unmanagedClasspath in Compile
+      )
+      else Seq()
+  }
+
+
 
 }

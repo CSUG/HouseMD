@@ -29,11 +29,7 @@ object Build extends sbt.Build {
     id = "Console",
     base = file("console"),
     settings = baseSettings ++ assemblySettings ++ Seq(
-//      unmanagedClasspath in Compile +=  Attributed.blank(
-//        file("/usr/lib/jvm/java-6-sun/lib/tools.jar")
-//      ),
-//      unmanagedClasspath in Test    <<= unmanagedClasspath in Compile,
-//      unmanagedClasspath in Runtime <<= unmanagedClasspath in Compile,
+      scalacOptions                 ++= Seq("-unchecked", "-deprecation"),
       libraryDependencies           :=  consoleDependencies ++ test,
       packageOptions                +=  Package.ManifestAttributes(
         ("Main-Class","com.github.zhongl.house.HouseMD")
@@ -89,7 +85,5 @@ object Build extends sbt.Build {
       )
       else Seq()
   }
-
-
 
 }

@@ -19,20 +19,19 @@ package com.github.zhongl.house
 import management.ManagementFactory
 import instrument.Instrumentation
 import Reflections._
+import scala.Predef._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-trait Closure extends (() => Unit) {
-  override def toString() = "Closure: " + nativeToStringOf(this)
+trait Closure {
+  override def toString = "Closure: " + nativeToStringOf(this)
 
-  protected def output(line: String)
-
-  protected def instrumentation: Instrumentation
+  def apply(instrumentation: Instrumentation)(output: String => Unit)
 }
 
-abstract class Summary extends Closure {
-  def apply() {
+class Summary extends Closure {
+  def apply(instrumentation: Instrumentation)(output: String => Unit) {
     val runtime = ManagementFactory.getRuntimeMXBean
     output("name : " + runtime.getName)
   }
@@ -40,7 +39,7 @@ abstract class Summary extends Closure {
 
 trait ListMapByPattern extends Closure {
 
-  def apply() {
+  def apply(instrumentation: Instrumentation)(output: String => Unit) {
     for ((k, v) <- map) {
       if (pattern == null ||
         k.toLowerCase.contains(pattern.toLowerCase)) output(k + " = " + v)
@@ -52,19 +51,21 @@ trait ListMapByPattern extends Closure {
   protected def map: Map[String, String]
 }
 
-abstract class Enviroment(protected val pattern: String = null) extends ListMapByPattern {
+class Enviroment(protected val pattern: String = null) extends ListMapByPattern {
   protected def map = sys.env
 }
 
-abstract class Properites(protected val pattern: String = null) extends ListMapByPattern {
+class Properites(protected val pattern: String = null) extends ListMapByPattern {
   protected def map = sys.props.toMap
 }
 
-abstract class LoadedClasses(regex: String = ".+", loaderHierarchies: Boolean = false)
+class LoadedClasses(regex: String = ".+", loaderHierarchies: Boolean = false)
   extends Closure {
+
   private[this] val tab = "\t"
 
-  def apply() {
+  def apply(instrumentation: Instrumentation)(output: String => Unit) {
+    implicit val o = output
     instrumentation.getAllLoadedClasses filter {_.getName.matches(regex)} foreach {
       c =>
         output(c.getName + originOf(c))
@@ -72,10 +73,10 @@ abstract class LoadedClasses(regex: String = ".+", loaderHierarchies: Boolean = 
     }
   }
 
-  private[this] def layout(cl: ClassLoader, lastIndents: String = "- ") {
+  private[this] def layout(cl: ClassLoader, lastIndents: String = "- ")(implicit output: String => Unit) {
     cl match {
       case null => Unit
-      case _    =>
+      case _ =>
         val indents = tab + lastIndents
         output(indents + nativeToStringOf(cl))
         layout(cl.getParent, indents)

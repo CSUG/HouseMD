@@ -23,5 +23,5 @@ import System.identityHashCode
  */
 
 object Reflections {
-  def nativeToStringOf(instance: AnyRef) = instance.getClass.getName + "@" + identityHashCode(instance)
+  def nativeToStringOf(instance: AnyRef) = instance.getClass.getName + "@" + Integer.toHexString(identityHashCode(instance))
 }

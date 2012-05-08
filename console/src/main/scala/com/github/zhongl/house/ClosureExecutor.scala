@@ -17,60 +17,15 @@
 package com.github.zhongl.house
 
 import instrument.Instrumentation
-import java.nio.channels.SocketChannel
-import java.net.InetSocketAddress
-import java.nio.ByteBuffer
-import actors.Actor
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-abstract class ClosureExecutor(consoleAddress: String, inst: Instrumentation) extends Runnable {
+object ClosureExecutor extends App {
+  val klass = Class.forName("com.github.zhongl.house.Summary").asInstanceOf[Class[Closure]]
+  val method = klass.getMethod("apply", classOf[Instrumentation], classOf[String => Unit])
+  val instance = klass.newInstance()
+  val arguments = Seq(null, {x:String => println(x)}).asInstanceOf[Seq[AnyRef]]
+  method invoke(instance, arguments:_*)
 
-  private lazy val in = ByteBuffer.allocate(1024)
-
-  protected def parse(consoleAddress: String): (String, Int)
-
-  protected def readClosureNameFrom(channel: SocketChannel): String
-
-  def run() {
-    val (host, port) = parse(consoleAddress)
-    val channel = SocketChannel.open(new InetSocketAddress(host, port))
-    val engine = new Engine(channel)
-    try {
-      val name = readClosureNameFrom(channel)
-//      closure(name).executeWith(inst, engine)
-    } catch {
-      case e: Throwable => // notify console
-    } finally {
-      engine ! Exit
-    }
-  }
-
-  class Engine(channel: SocketChannel) extends Actor {
-    def act() {
-      loop {
-        react {
-          case Exit => exit()
-          case unknown => exit(unknown.toString)
-        }
-
-      }
-    }
-
-//    override protected[actors] def exit() = {
-//      silentClose(channel)
-//      super.exit()
-//    }
-  }
-
-  case class Exit()
-
-  def silentClose(closable: {def close(): Unit}) {
-    try {
-      closable.close()
-    } catch {
-      case _ => Unit
-    }
-  }
 }

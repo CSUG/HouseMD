@@ -18,25 +18,24 @@ package com.github.zhongl.house
 
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.FunSuite
+import collection.mutable.ListBuffer
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 class ListMapByPatternTest extends FunSuite with ShouldMatchers {
   test("Enviroment") {
-    val enviroment = new Enviroment("PATH") with OutputCollector {
-      protected def instrumentation = null
-    }
-    enviroment()
-    enviroment.lines.toList should contain("PATH = " + sys.env("PATH"))
+    val lines = ListBuffer.empty[String]
+    val enviroment = new Enviroment("PATH")
+    enviroment(null) { lines += _ }
+    lines.toList should contain("PATH = " + sys.env("PATH"))
   }
 
   test("Properties") {
-    val properties = new Properites("os") with OutputCollector {
-      protected def instrumentation = null
-    }
-    properties()
-    properties.lines.toList should contain("os.name = " + sys.props("os.name"))
+    val lines = ListBuffer.empty[String]
+    val properties = new Properites("os")
+    properties(null) { lines += _ }
+    lines.toList should contain("os.name = " + sys.props("os.name"))
   }
 
 }

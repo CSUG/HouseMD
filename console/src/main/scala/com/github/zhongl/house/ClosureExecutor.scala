@@ -39,7 +39,7 @@ abstract class ClosureExecutor(consoleAddress: String, inst: Instrumentation) ex
     val engine = new Engine(channel)
     try {
       val name = readClosureNameFrom(channel)
-      closure(name).executeWith(inst, engine)
+//      closure(name).executeWith(inst, engine)
     } catch {
       case e: Throwable => // notify console
     } finally {
@@ -58,10 +58,10 @@ abstract class ClosureExecutor(consoleAddress: String, inst: Instrumentation) ex
       }
     }
 
-    override protected[actors] def exit() = {
-      silentClose(channel)
-      super.exit()
-    }
+//    override protected[actors] def exit() = {
+//      silentClose(channel)
+//      super.exit()
+//    }
   }
 
   case class Exit()

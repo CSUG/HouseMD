@@ -16,36 +16,14 @@
 
 package com.github.zhongl.house
 
-import org.scalatest.FunSpec
-import actors.Actor
 import collection.mutable.ListBuffer
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class EnviromentSpec extends FunSpec {
-  case class List()
 
-  class Collector extends Actor {
-    val lines = ListBuffer.empty[String]
+trait OutputCollector extends Closure {
+  val lines = ListBuffer.empty[String]
 
-    def act() {
-      loop {
-        react {
-          case line:String => lines += line
-          case List => reply(lines.toList); exit()
-        }
-      }
-    }
-  }
-
-  describe("Enviroment") {
-    it("should list matched pair") {
-      val collector = new Collector
-      collector.start()
-      new Enviroment(collector, ".*os.*").execute()
-
-
-    }
-  }
+  def output(line: String) { lines += line }
 }

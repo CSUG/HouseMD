@@ -16,60 +16,79 @@
 
 package com.github.zhongl.house
 
-import actors.Actor
 import management.ManagementFactory
 import instrument.Instrumentation
+import Reflections._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-trait Closure {
-  def execute(): Unit
+trait Closure extends (() => Unit) {
+  override def toString() = "Closure: " + nativeToStringOf(this)
+
+  protected def output(line: String)
+
+  protected def instrumentation: Instrumentation
 }
 
-class Summary(console: Actor) extends Closure {
-  def execute() {
+abstract class Summary extends Closure {
+  def apply() {
     val runtime = ManagementFactory.getRuntimeMXBean
-    console ! "name : " + runtime.getName
+    output("name : " + runtime.getName)
   }
 }
 
-class Enviroment(console: Actor, pattern: String = ".+") extends Closure {
-  def execute() {
-      for ((k, v) <- sys.env) {
-        val line = k + " = " + v
-        if (line.matches(pattern)) console ! line
-      }
+trait ListMapByPattern extends Closure {
+
+  def apply() {
+    for ((k, v) <- map) {
+      if (pattern == null ||
+        k.toLowerCase.contains(pattern.toLowerCase)) output(k + " = " + v)
+    }
   }
+
+  protected def pattern: String
+
+  protected def map: Map[String, String]
 }
 
-class LoadedClasses(console: Actor,
-                    inst: Instrumentation,
-                    regex: String = ".+",
-                    origin: Boolean = true,
-                    loaderHierarchies: Boolean = false) extends Closure {
-  def execute() {
-    inst.getAllLoadedClasses.filter(_.getName.matches(regex)).foreach {
+abstract class Enviroment(protected val pattern: String = null) extends ListMapByPattern {
+  protected def map = sys.env
+}
+
+abstract class Properites(protected val pattern: String = null) extends ListMapByPattern {
+  protected def map = sys.props.toMap
+}
+
+abstract class LoadedClasses(regex: String = ".+", loaderHierarchies: Boolean = false)
+  extends Closure {
+  private[this] val tab = "\t"
+
+  def apply() {
+    instrumentation.getAllLoadedClasses filter {_.getName.matches(regex)} foreach {
       c =>
-        val from = if (origin) originOf(c) else ""
-        console ! c.getName + from
+        output(c.getName + originOf(c))
         if (loaderHierarchies) layout(c.getClassLoader)
     }
   }
 
-  private[this] def layout(cl: ClassLoader, t: String = "- ") {
-    if (cl != null) {
-      console ! '\t' + t + cl.getClass.getName + '@' + System.identityHashCode(cl)
-      layout(cl.getParent, '\t' + t)
+  private[this] def layout(cl: ClassLoader, lastIndents: String = "- ") {
+    cl match {
+      case null => Unit
+      case _    =>
+        val indents = tab + lastIndents
+        output(indents + nativeToStringOf(cl))
+        layout(cl.getParent, indents)
     }
   }
 
-  private[this] def originOf(c: Class[_]): String = " -> " + c.getResource("/" + c.getName.replace('.', '/') + ".class").toString
+  private[this] def originOf(c: Class[_]): String = " -> " + Utils.sourceOf(c)
 }
 
-class Trace(console: Actor, inst: Instrumentation, regex: String) extends Closure {
-  def execute() {
+//abstract class Trace(regex: String) extends Closure {
+//  def apply() {
+//
+//
+//  }
+//}
 
-
-  }
-}

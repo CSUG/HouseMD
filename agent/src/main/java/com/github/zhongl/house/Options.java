@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * @author: <a href = "mailto:zhong.lunfu@gmail.com">zhongl</a>
+ * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl</a>
  */
 class Options {
     private final Map<String, String> map;
@@ -55,7 +55,7 @@ class Options {
             for (String path : split) {
                 urls.add(new File(path).toURI().toURL());
             }
-            return urls.toArray(new URL[0]);
+            return urls.toArray(new URL[urls.size()]);
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

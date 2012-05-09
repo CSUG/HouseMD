@@ -26,6 +26,8 @@ import scala.Array
  */
 
 object Utils {
+  lazy val FileRE = """(file:)?([^!]+)!?.*""".r
+
   def toBytes(stream: InputStream): Array[Byte] = {
     val bytes = new ByteArrayOutputStream
     var read = stream.read
@@ -41,8 +43,7 @@ object Utils {
     extractSource(file)
   }
 
-  def extractSource(file:String) = {
-    val FileRE = """(file:)?([^!]+)!?.*""".r
+  def extractSource(file: String) = {
     val FileRE(_, source) = file
     source
   }

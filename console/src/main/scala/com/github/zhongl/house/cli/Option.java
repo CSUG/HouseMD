@@ -14,30 +14,16 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.house
+package com.github.zhongl.house.cli;
 
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.FunSuite
-import collection.mutable.ListBuffer
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class ListMapByPatternTest extends FunSuite with ShouldMatchers {
-  test("Enviroment") {
-    val lines = ListBuffer.empty[String]
-    val enviroment = new Enviroment("PATH")
-    enviroment(null) { lines += _ }
-    lines.toList should contain("PATH = " + sys.env("PATH"))
-  }
-
-  test("Properties") {
-    val lines = ListBuffer.empty[String]
-    val properties = new Properites("os")
-    properties(null) { lines += _ }
-    lines.toList should contain("os.name = " + sys.props("os.name"))
-  }
-
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Option {
+    String[] name();
+    String description();
 }
-
-

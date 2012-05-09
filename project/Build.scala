@@ -69,6 +69,7 @@ object Build extends sbt.Build {
     lazy val consoleDependencies =  Seq(
       "asm"             % "asm"             % "3.3.1",
       "asm"             % "asm-commons"     % "3.3.1",
+      "jline"           % "jline"           % "2.6",
       "com.beust"       % "jcommander"      % "1.20",
       "org.scala-lang"  % "scala-library"   % "2.9.2"
     )

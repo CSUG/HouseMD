@@ -14,16 +14,16 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.house
+package com.github.zhongl.house.cli;
 
-import collection.mutable.ListBuffer
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-
-trait OutputCollector extends Closure {
-  val lines = ListBuffer.empty[String]
-
-  def output(line: String) { lines += line }
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Argument {
+    String name();
+    String description();
 }

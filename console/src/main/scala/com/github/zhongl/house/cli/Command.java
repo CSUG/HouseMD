@@ -14,18 +14,17 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.house
+package com.github.zhongl.house.cli;
 
-import instrument.Instrumentation
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-object ClosureExecutor extends App {
-  val klass = Class.forName("com.github.zhongl.house.Summary").asInstanceOf[Class[Closure]]
-  val method = klass.getMethod("apply", classOf[Instrumentation], classOf[String => Unit])
-  val instance = klass.newInstance()
-  val arguments = Seq(null, {x:String => println(x)}).asInstanceOf[Seq[AnyRef]]
-  method invoke(instance, arguments:_*)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Command {
+    String name();
 
+    String description();
 }

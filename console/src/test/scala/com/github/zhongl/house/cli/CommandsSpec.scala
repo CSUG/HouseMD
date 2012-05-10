@@ -16,28 +16,32 @@
 
 package com.github.zhongl.house.cli
 
-import java.io.InputStream
-import java.io.OutputStream
-import jline.console.ConsoleReader
-import instrument.Instrumentation
+import org.scalatest.FunSpec
+import org.scalatest.matchers.ShouldMatchers
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Console(in: InputStream, out: OutputStream, instrumentation: Instrumentation) {
 
-   def parse(line: String) {
+class CommandsSpec extends FunSpec with ShouldMatchers {
+
+  @command(name = "mock", description = "mock a command")
+  class Mock {
+    def apply() {
+      throw new Exception("invoked")
+    }
   }
 
+  describe("Commands") {
+    it("should get command by name") {
+      val command = new Commands(new Mock).command("mock")
+      evaluating { command(Array()) } should produce [Exception]
+    }
 
-  def run() {
-    val reader = new ConsoleReader(in, out)
-
-
+    it("should complain by unknown command name") {
+      val exception = evaluating(new Commands().command("unknown")) should produce[IllegalArgumentException]
+      exception getMessage() should be ("Unknown command: unknown")
+    }
   }
-
 
 }
-
-
-

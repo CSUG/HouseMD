@@ -14,17 +14,14 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.house
-
-import annotation.target.field
-import cli.annotation.{Option, Command, Argument}
+package com.github.zhongl.house.cli
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-package object cli {
-  type command = Command
-  type option = Option@field
-  type argument = Argument@field
+@command(name = "quit", description = "quit the console")
+class Quit {
+
+  def apply() {}
 }

@@ -14,17 +14,16 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.house
+package com.github.zhongl.house.cli.annotation;
 
-import annotation.target.field
-import cli.annotation.{Option, Command, Argument}
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-
-package object cli {
-  type command = Command
-  type option = Option@field
-  type argument = Argument@field
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Option {
+    String[] name();
+    String description();
 }

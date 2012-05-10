@@ -14,16 +14,30 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.house.cli;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+package com.github.zhongl.house.cli
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Argument {
-    String name();
-    String description();
+
+@command(name = "help", description = "show help infomation of the command or all commands")
+class Help(val output: String => Unit, commands: Commands) {
+
+  def apply(@argument(name = "command", description = "command name to show information") command: String = "*") {
+    command match {
+      case "*" => list()
+      case _   => usage(command)
+    }
+  }
+
+  private[this] def list() {
+    // TODO
+  }
+
+  private[this] def usage(command: String) {
+    // TODO
+  }
+
+  case class Arguments(@argument(name = "command", description = "command name to show information") command: String = "*")
+
 }

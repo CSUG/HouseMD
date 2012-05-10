@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.house.cli;
+package com.github.zhongl.house.cli.annotation;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -23,7 +23,8 @@ import java.lang.annotation.RetentionPolicy;
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Option {
-    String[] name();
+public @interface Command {
+    String name();
+
     String description();
 }

@@ -42,21 +42,57 @@ import com.github.zhongl.house.logging.{AssertLog, Level}
 
 class CommandsSpec extends FunSpec with ShouldMatchers {
 
-  @command(name = "mock", description = "mock a command")
-  class Mock {
+  abstract class Mock {
+    var called = false
+
+    def shouldCalled = assert(called)
+  }
+
+  @command(name = "mock0", description = "mock a command")
+  class Mock0 extends Mock {
+
+    def apply() {
+      called = true
+    }
+
+  }
+
+  @command(name = "mock1", description = "mock a command")
+  class Mock1 extends Mock {
     def apply(@argument(name = "arg", description = "desc") arg: String) {
-      throw new Exception()
+      called = true
+      assert(arg === "arg")
+    }
+  }
+
+  @command(name = "mock1", description = "mock a command")
+  class Mock2 extends Mock {
+    def apply(
+      @option(name = Array("-b", "--boolean"), description = "flag") flag: Boolean = false,
+      @argument(name = "arg", description = "desc") arg: String) {
+      called = true
+      assert(arg === "arg")
     }
   }
 
   describe("Commands") {
-    it("should execute command and get exception") {
-      val commands = new Commands(new Mock) with AssertLog
-      evaluating {commands.execute("mock", "arg")} should produce[Exception]
+    it("should execute command without argument and get exception") {
+      val mock = new Mock0
+      val commands = new Commands(mock) with AssertLog
+      commands.execute("mock0")
+      mock.shouldCalled
+    }
+
+    it("should execute command with argument and get exception") {
+      val mock = new Mock1
+      val commands = new Commands(mock) with AssertLog
+      commands.execute("mock1", "arg")
+      mock.shouldCalled
+      commands.shouldNotLogged
     }
 
     it("should complain by unknown command name") {
-      val commands = new Commands(new Mock) with AssertLog
+      val commands = new Commands() with AssertLog
       commands.execute("unknown")
       commands.shouldLogged(Level.Warn, "Unknown command {}", "unknown")
     }

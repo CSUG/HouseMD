@@ -51,8 +51,8 @@ abstract class Commands(commands: AnyRef*) extends Loggable {
 
     def apply(argStrings: Seq[String]) {
       try invoke(parse(argStrings)) catch {
-        case e: IllegalArgumentException => warn(e.getMessage); Help.apply(name)
-        case e: Throwable                => error(e.getMessage); throw e
+        case e: IllegalArgumentException => warn(e.getMessage); Help.apply(name) //; throw e
+        case e: Throwable                => warn(e.getMessage) //; throw e
       }
     }
 

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.house.cli
+package com.github.zhongl.house.logging
 
 /*
  * Copyright 2012 zhongl
@@ -32,44 +32,19 @@ package com.github.zhongl.house.cli
  *  limitations under the License.
  */
 
-import org.scalatest.FunSpec
-import org.scalatest.matchers.ShouldMatchers
-import com.github.zhongl.house.logging.{AssertLog, Level}
-
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class CommandsSpec extends FunSpec with ShouldMatchers {
+trait Loggable {
 
-  @command(name = "mock", description = "mock a command")
-  class Mock {
-    def apply(@argument(name = "arg", description = "desc") arg: String) {
-      throw new Exception()
-    }
-  }
+  protected def debug(pattern: String, anyRefs: AnyRef*)
 
-  describe("Commands") {
-    it("should execute command and get exception") {
-      val commands = new Commands(new Mock) with AssertLog
-      evaluating {commands.execute("mock", "arg")} should produce[Exception]
-    }
+  protected def info(pattern: String, anyRefs: AnyRef*)
 
-    it("should complain by unknown command name") {
-      val commands = new Commands(new Mock) with AssertLog
-      commands.execute("unknown")
-      commands.shouldLogged(Level.Warn, "Unknown command {}", "unknown")
-    }
+  protected def warn(pattern: String, anyRefs: AnyRef*)
 
-    it("should complain by illegal argument") {
-      pending
-    }
-
-    it("should complain by runtime exception of command") {
-      pending
-    }
-  }
+  protected def error(pattern: String, anyRefs: AnyRef*)
 
 }
-
 

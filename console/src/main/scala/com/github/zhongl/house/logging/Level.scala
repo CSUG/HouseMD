@@ -14,30 +14,13 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.house.cli
+package com.github.zhongl.house.logging
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-@command(name = "help", description = "show help infomation of the command or all commands")
-class Help(val output: String => Unit, commands: Commands) {
-
-  def apply(@argument(name = "command", description = "command name to show information") command: String = "*") {
-    command match {
-      case "*" => list()
-      case _   => usage(command)
-    }
-  }
-
-  private[this] def list() {
-    // TODO
-  }
-
-  private[this] def usage(command: String) {
-    // TODO
-  }
-
-  case class Arguments(@argument(name = "command", description = "command name to show information") command: String = "*")
-
+object Level extends Enumeration {
+  type Level = Value
+  val Debug, Info, Warn, Error = Value
 }

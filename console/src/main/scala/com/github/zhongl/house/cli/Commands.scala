@@ -16,41 +16,64 @@
 
 package com.github.zhongl.house.cli
 
+import com.github.zhongl.house.logging.Loggable
+
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class Commands(commands: AnyRef*) {
+abstract class Commands(commands: AnyRef*) extends Loggable {
   private[this] val list = commands.toList ::: Quit :: Help :: Nil
 
-  private[this] lazy val name2Command = {
-    val map = scala.collection.mutable.Map.empty[String, Array[AnyRef] => Unit]
+  private[this] val name2Command = {
+    val map = scala.collection.mutable.Map.empty[String, Command]
     list foreach {instance =>
       commandMethodOf(instance) match {
-        case None         => Unit
+        case None         => warn("Skip invalid command {}", instance)
         case Some(method) =>
           val name = instance.getClass.getAnnotation(classOf[annotation.Command]).name()
-          map += (name -> {args: Array[AnyRef] => method.invoke(instance, args: _*) })
+          map += (name -> new Command(name, instance))
       }
     }
     map.toMap
   }
 
-  private[this] def commandMethodOf(instance: AnyRef) = instance.getClass.getMethods find {_.getName == "apply"}
-
-  @throws(classOf[IllegalArgumentException])
-  def command(name: String): (Array[AnyRef]) => Unit = name2Command get name match {
-    case None => throw new IllegalArgumentException("Unknown command: " + name)
-    case Some(command) => command
+  def execute(name: String, arguments: String*) {
+    name2Command get name match {
+      case None          => warn("Unknown command {}", name)
+      case Some(command) => command.apply(arguments)
+    }
   }
 
-  @command(name = "help", description = "show help infomation of the command or all commands")
+  private[this] def commandMethodOf(instance: AnyRef) = instance.getClass.getMethods find {_.getName == "apply"}
+
+  class Command(name: String, instance: AnyRef) extends (Seq[String] => Unit) {
+
+    def apply(argStrings: Seq[String]) {
+      try invoke(parse(argStrings)) catch {
+        case e: IllegalArgumentException => warn(e.getMessage); Help.apply(name)
+        case e: Throwable                => error(e.getMessage); throw e
+      }
+    }
+
+    private[this] def invoke(arguments: Seq[AnyRef]) {
+      commandMethodOf(instance).get.invoke(instance, arguments: _*)
+    }
+
+    private[this] def parse(argStrings: Seq[String]): Seq[AnyRef] = {
+      // TODO
+      argStrings
+    }
+
+  }
+
+  @command(name = "help", description = "show help infomation of one command or all commands")
   object Help {
 
-    def apply(@argument(name = "command", description = "command name to show information") command: String = "*") {
+    def apply(@argument(name = "command", description = "command name") command: String = "") {
       command match {
-        case "*" => list()
-        case _   => usage(command)
+        case "" => list()
+        case _  => usage(command)
       }
     }
 
@@ -70,7 +93,3 @@ class Commands(commands: AnyRef*) {
   }
 
 }
-
-
-
-

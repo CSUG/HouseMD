@@ -20,20 +20,35 @@ import java.io.InputStream
 import java.io.OutputStream
 import jline.console.ConsoleReader
 import instrument.Instrumentation
+import scala.annotation.tailrec
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 class Console(in: InputStream, out: OutputStream, instrumentation: Instrumentation) {
 
-   def parse(line: String) {
-  }
-
+  var commands: Commands = _
 
   def run() {
     val reader = new ConsoleReader(in, out)
 
+    @tailrec
+    def parse(line: String) {
+      line match {
+        case null =>
+        case _    => execute(line); parse(reader.readLine())
+      }
+    }
 
+    parse(reader.readLine())
+  }
+
+  private[this] def execute(line: String) {
+    line split ("\\s+") match {
+      case Array()                      =>
+      case Array(command)               => commands.execute(command)
+      case Array(command, arguments@_*) => commands.execute(command, arguments: _*)
+    }
   }
 
 

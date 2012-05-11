@@ -60,7 +60,7 @@ trait AssertLog extends Loggable with Assertions{
     assert(this.anyRefs === anyRefs)
   }
 
-  def shouldNotLogged {
+  def shouldNotLogged() {
     assert(this.level === null)
     assert(this.pattern === null)
     assert(this.anyRefs === null)

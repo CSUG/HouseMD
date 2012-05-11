@@ -17,11 +17,40 @@
 package com.github.zhongl.house
 
 import System.identityHashCode
+import java.lang._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
 object Reflections {
-  def nativeToStringOf(instance: AnyRef) = instance.getClass.getName + "@" + Integer.toHexString(identityHashCode(instance))
+
+  private val S = classOf[String]
+
+  private val I = classOf[Integer]
+  private val i = Integer.TYPE
+
+  private val L = classOf[Long]
+  private val l = Long.TYPE
+
+  private val B = classOf[Boolean]
+  private val b = Boolean.TYPE
+
+  private val D = classOf[Double]
+  private val d = Double.TYPE
+
+  def convert(c: Class[_], s: String): AnyRef = {
+    c match {
+      case B | `b` => Boolean.valueOf(s)
+      case I | `i` => Integer.valueOf(s)
+      case L | `l` => Long.valueOf(s)
+      case D | `d` => Double.valueOf(s)
+      case S       => s
+      case _       => throw new IllegalArgumentException("Unsupported converting type: " + c)
+    }
+  }
+
+  def nativeToStringOf(instance: AnyRef) = instance.getClass.getName + "@" + Integer
+    .toHexString(identityHashCode(instance))
+
 }

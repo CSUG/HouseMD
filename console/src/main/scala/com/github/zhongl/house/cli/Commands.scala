@@ -16,7 +16,9 @@
 
 package com.github.zhongl.house.cli
 
+import java.lang.reflect.Method
 import com.github.zhongl.house.logging.Loggable
+import com.github.zhongl.house.Reflections._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -27,12 +29,12 @@ abstract class Commands(commands: AnyRef*) extends Loggable {
 
   private[this] val name2Command = {
     val map = scala.collection.mutable.Map.empty[String, Command]
-    list foreach {instance =>
+    list foreach { instance =>
       commandMethodOf(instance) match {
         case None         => warn("Skip invalid command {}", instance)
         case Some(method) =>
           val name = instance.getClass.getAnnotation(classOf[annotation.Command]).name()
-          map += (name -> new Command(name, instance))
+          map += (name -> new Command(name, method, instance))
       }
     }
     map.toMap
@@ -47,7 +49,7 @@ abstract class Commands(commands: AnyRef*) extends Loggable {
 
   private[this] def commandMethodOf(instance: AnyRef) = instance.getClass.getMethods find {_.getName == "apply"}
 
-  class Command(name: String, instance: AnyRef) extends (Seq[String] => Unit) {
+  class Command(name: String, method: Method, instance: AnyRef) extends (Seq[String] => Unit) {
 
     def apply(argStrings: Seq[String]) {
       try invoke(parse(argStrings)) catch {
@@ -57,12 +59,13 @@ abstract class Commands(commands: AnyRef*) extends Loggable {
     }
 
     private[this] def invoke(arguments: Seq[AnyRef]) {
-      commandMethodOf(instance).get.invoke(instance, arguments: _*)
+      method.invoke(instance, arguments: _*)
     }
 
     private[this] def parse(argStrings: Seq[String]): Seq[AnyRef] = {
-      // TODO
-      argStrings
+      val classes = method.getParameterTypes
+      if (argStrings.size != classes.size) throw new IllegalArgumentException("Miss match argument")
+      classes zip argStrings map { t => convert(t._1, t._2) }
     }
 
   }
@@ -93,3 +96,5 @@ abstract class Commands(commands: AnyRef*) extends Loggable {
   }
 
 }
+
+

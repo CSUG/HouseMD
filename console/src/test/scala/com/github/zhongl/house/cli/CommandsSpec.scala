@@ -45,7 +45,9 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
   abstract class Mock {
     var called = false
 
-    def shouldCalled = assert(called)
+    def shouldCalled() {
+      assert(called === true)
+    }
   }
 
   @command(name = "mock0", description = "mock a command")
@@ -59,9 +61,18 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
 
   @command(name = "mock1", description = "mock a command")
   class Mock1 extends Mock {
-    def apply(@argument(name = "arg", description = "desc") arg: String) {
+    def apply(
+      @argument(name = "boolean", description = "desc") b: Boolean,
+      @argument(name = "int", description = "desc") i: Int,
+      @argument(name = "long", description = "desc") l: Long,
+      @argument(name = "double", description = "desc") d: Double,
+      @argument(name = "string", description = "desc") s: String) {
       called = true
-      assert(arg === "arg")
+      assert(b === true)
+      assert(i === 1)
+      assert(l === 1000L)
+      assert(d === 0.5D)
+      assert(s === "s")
     }
   }
 
@@ -80,15 +91,15 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
       val mock = new Mock0
       val commands = new Commands(mock) with AssertLog
       commands.execute("mock0")
-      mock.shouldCalled
+      mock.shouldCalled()
     }
 
     it("should execute command with argument and get exception") {
       val mock = new Mock1
       val commands = new Commands(mock) with AssertLog
-      commands.execute("mock1", "arg")
-      mock.shouldCalled
-      commands.shouldNotLogged
+      commands.execute("mock1", "true", "1", "1000", "0.5", "s")
+      mock.shouldCalled()
+      commands.shouldNotLogged()
     }
 
     it("should complain by unknown command name") {

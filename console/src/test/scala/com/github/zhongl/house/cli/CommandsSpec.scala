@@ -124,7 +124,6 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
       candidates.get(0) should be("help")
       candidates.get(1) should be("quit")
       candidates.size() should be(2)
-
       cursor should be(0)
     }
 
@@ -134,9 +133,7 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
       val cursor = commands.complete("he", 2, candidates)
       candidates.get(0) should be("help")
       candidates.size() should be(1)
-
       cursor should be(0)
-
     }
 
     it("should complete help all arguments") {
@@ -148,7 +145,6 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
       candidates.size() should be(2)
 
       cursor should be(5)
-
     }
 
     it("should complete help argument quit") {
@@ -157,9 +153,15 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
       val cursor = commands.complete("help qu", 7, candidates)
       candidates.get(0) should be("quit")
       candidates.size() should be(1)
-
       cursor should be(5)
+    }
 
+    it("should complete nothing for quit") {
+      val commands = new Commands() with AssertLog with DefaultCompleter
+      val candidates = new ArrayList[CharSequence]()
+      val cursor = commands.complete("quit ", 5, candidates)
+      candidates.size() should be(0)
+      cursor should be(-1)
     }
   }
 

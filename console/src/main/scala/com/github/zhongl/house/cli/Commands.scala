@@ -17,17 +17,20 @@
 package com.github.zhongl.house.cli
 
 import java.lang.reflect.Method
+import java.util.List
+import collection.JavaConversions._
 import com.github.zhongl.house.logging.Loggable
 import com.github.zhongl.house.Reflections._
+import jline.console.completer.Completer
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-abstract class Commands(commands: AnyRef*) extends Loggable {
-  private[this] val list = commands.toList ::: Quit :: Help :: Nil
+abstract class Commands(commands: AnyRef*) extends Loggable with Completer {
+  protected val list = commands.toList ::: Quit :: Help :: Nil
 
-  private[this] val name2Command = {
+  protected val name2Command = {
     val map = scala.collection.mutable.Map.empty[String, Command]
     list foreach { instance =>
       commandMethodOf(instance) match {
@@ -40,6 +43,8 @@ abstract class Commands(commands: AnyRef*) extends Loggable {
     map.toMap
   }
 
+  protected val commandNames = new java.util.TreeSet[String](name2Command.keySet)
+
   def execute(name: String, arguments: String*) {
     name2Command get name match {
       case None          => warn("Unknown command {}", name)
@@ -49,7 +54,13 @@ abstract class Commands(commands: AnyRef*) extends Loggable {
 
   private[this] def commandMethodOf(instance: AnyRef) = instance.getClass.getMethods find {_.getName == "apply"}
 
-  class Command(name: String, method: Method, instance: AnyRef) extends (Seq[String] => Unit) {
+  class Command(name: String, method: Method, instance: AnyRef) extends (Seq[String] => Unit) with Completer {
+    private lazy val completer = {
+      if (instance.isInstanceOf[Completer]) instance.asInstanceOf[Completer]
+      else new Completer {
+        def complete(buffer: String, cursor: Int, candidates: List[CharSequence]) = -1
+      }
+    }
 
     def apply(argStrings: Seq[String]) {
       try invoke(parse(argStrings)) catch {
@@ -68,10 +79,13 @@ abstract class Commands(commands: AnyRef*) extends Loggable {
       classes zip argStrings map { t => convert(t._1, t._2) }
     }
 
+    def complete(buffer: String, cursor: Int, candidates: List[CharSequence]) =
+      completer.complete(buffer, cursor, candidates)
+
   }
 
   @command(name = "help", description = "show help infomation of one command or all commands")
-  object Help {
+  object Help extends Completer {
 
     def apply(@argument(name = "command", description = "command name") command: String = "") {
       command match {
@@ -88,6 +102,15 @@ abstract class Commands(commands: AnyRef*) extends Loggable {
       // TODO
     }
 
+    def complete(buffer: String, cursor: Int, candidates: List[CharSequence]) = {
+      val trimmed = buffer.trim
+      trimmed match {
+        case "" => candidates.addAll(commandNames); cursor
+        case _  =>
+          commandNames.tailSet(trimmed) filter {_.startsWith(trimmed)} foreach {candidates.add}
+          if (candidates.isEmpty) -1 else cursor - trimmed.size
+      }
+    }
   }
 
   @command(name = "quit", description = "quit the console")

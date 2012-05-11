@@ -35,6 +35,7 @@ package com.github.zhongl.house.cli
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 import com.github.zhongl.house.logging.{AssertLog, Level}
+import java.util.ArrayList
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -89,21 +90,21 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
   describe("Commands") {
     it("should execute command without argument and get exception") {
       val mock = new Mock0
-      val commands = new Commands(mock) with AssertLog
+      val commands = new Commands(mock) with AssertLog with NoneCompleter
       commands.execute("mock0")
       mock.shouldCalled()
     }
 
     it("should execute command with argument and get exception") {
       val mock = new Mock1
-      val commands = new Commands(mock) with AssertLog
+      val commands = new Commands(mock) with AssertLog with NoneCompleter
       commands.execute("mock1", "true", "1", "1000", "0.5", "s")
       mock.shouldCalled()
       commands.shouldNotLogged()
     }
 
     it("should complain by unknown command name") {
-      val commands = new Commands() with AssertLog
+      val commands = new Commands() with AssertLog with NoneCompleter
       commands.execute("unknown")
       commands.shouldLogged(Level.Warn, "Unknown command {}", "unknown")
     }
@@ -114,6 +115,51 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
 
     it("should complain by runtime exception of command") {
       pending
+    }
+
+    it("should complete all command names") {
+      val commands = new Commands() with AssertLog with DefaultCompleter
+      val candidates = new ArrayList[CharSequence]()
+      val cursor = commands.complete("  ", 2, candidates)
+      candidates.get(0) should be("help")
+      candidates.get(1) should be("quit")
+      candidates.size() should be(2)
+
+      cursor should be(0)
+    }
+
+    it("should complete help") {
+      val commands = new Commands() with AssertLog with DefaultCompleter
+      val candidates = new ArrayList[CharSequence]()
+      val cursor = commands.complete("he", 2, candidates)
+      candidates.get(0) should be("help")
+      candidates.size() should be(1)
+
+      cursor should be(0)
+
+    }
+
+    it("should complete help all arguments") {
+      val commands = new Commands() with AssertLog with DefaultCompleter
+      val candidates = new ArrayList[CharSequence]()
+      val cursor = commands.complete("help ", 5, candidates)
+      candidates.get(0) should be("help")
+      candidates.get(1) should be("quit")
+      candidates.size() should be(2)
+
+      cursor should be(5)
+
+    }
+
+    it("should complete help argument quit") {
+      val commands = new Commands() with AssertLog with DefaultCompleter
+      val candidates = new ArrayList[CharSequence]()
+      val cursor = commands.complete("help qu", 7, candidates)
+      candidates.get(0) should be("quit")
+      candidates.size() should be(1)
+
+      cursor should be(5)
+
     }
   }
 

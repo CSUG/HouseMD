@@ -21,6 +21,7 @@ import java.io.OutputStream
 import jline.console.ConsoleReader
 import instrument.Instrumentation
 import scala.annotation.tailrec
+import management.ManagementFactory
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -29,8 +30,14 @@ class Console(in: InputStream, out: OutputStream, instrumentation: Instrumentati
 
   var commands: Commands = _
 
+  private[this] lazy val prompt = ManagementFactory.getRuntimeMXBean.getName + ">"
+
   def run() {
     val reader = new ConsoleReader(in, out)
+
+    reader.setPrompt(prompt)
+
+    reader.addCompleter(commands)
 
     @tailrec
     def parse(line: String) {

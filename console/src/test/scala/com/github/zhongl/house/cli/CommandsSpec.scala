@@ -118,7 +118,7 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should complete all command names") {
-      val commands = new Commands() with AssertLog with DefaultCompleter
+      val commands = new Commands() with AssertLog with CommandCompleter
       val candidates = new ArrayList[CharSequence]()
       val cursor = commands.complete("  ", 2, candidates)
       candidates.get(0) should be("help")
@@ -128,7 +128,7 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should complete help") {
-      val commands = new Commands() with AssertLog with DefaultCompleter
+      val commands = new Commands() with AssertLog with CommandCompleter
       val candidates = new ArrayList[CharSequence]()
       val cursor = commands.complete("he", 2, candidates)
       candidates.get(0) should be("help")
@@ -137,7 +137,7 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should complete help all arguments") {
-      val commands = new Commands() with AssertLog with DefaultCompleter
+      val commands = new Commands() with AssertLog with CommandCompleter
       val candidates = new ArrayList[CharSequence]()
       val cursor = commands.complete("help ", 5, candidates)
       candidates.get(0) should be("help")
@@ -148,7 +148,7 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should complete help argument quit") {
-      val commands = new Commands() with AssertLog with DefaultCompleter
+      val commands = new Commands() with AssertLog with CommandCompleter
       val candidates = new ArrayList[CharSequence]()
       val cursor = commands.complete("help qu", 7, candidates)
       candidates.get(0) should be("quit")
@@ -157,7 +157,7 @@ class CommandsSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should complete nothing for quit") {
-      val commands = new Commands() with AssertLog with DefaultCompleter
+      val commands = new Commands() with AssertLog with CommandCompleter
       val candidates = new ArrayList[CharSequence]()
       val cursor = commands.complete("quit ", 5, candidates)
       candidates.size() should be(0)

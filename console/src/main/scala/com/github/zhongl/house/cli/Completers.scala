@@ -18,22 +18,37 @@ package com.github.zhongl.house.cli
 
 import collection.JavaConversions._
 import jline.console.completer.Completer
+import java.util.SortedSet
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-trait DefaultCompleter extends Completer {self: Commands =>
-  private      val RE0          = """\s+""".r
-  private      val RE1          = """\s*(\w+)""".r
-  private      val RE2          = """\s*(\w+)(.+)""".r
+trait CommandCompleter extends Completer {self: Commands =>
+  private val RE0 = """\s+""".r
+  private val RE1 = """\s*(\w+)""".r
+  private val RE2 = """\s*(\w+)(.+)""".r
 
   override def complete(buffer: String, cursor: Int, candidates: java.util.List[CharSequence]): Int = buffer match {
-    case null | RE0()    => candidates.addAll(commandNames); 0
-    case RE1(part)       => commandNames.tailSet(part) filter {_.startsWith(part)} foreach {candidates.add}; 0
-    case RE2(name, part) => name2Command get name match {
+    case null | RE0()    => candidates.addAll(commands); 0
+    case RE1(part)       => commands.tailSet(part) filter {_.startsWith(part)} foreach {candidates.add}; 0
+    case RE2(name, part) => command(name) match {
       case None          => warn("Invalid command {}", name); -1
       case Some(command) => command.complete(part, cursor, candidates)
+    }
+  }
+}
+
+trait FirstArgumentCompleter extends Completer {
+  protected def allCandidates:SortedSet[String]
+
+  override def complete(buffer: String, cursor: Int, candidates: java.util.List[CharSequence]) = {
+    val trimmed = buffer.trim
+    trimmed match {
+      case "" => candidates.addAll(allCandidates); cursor
+      case _  =>
+        allCandidates.tailSet(trimmed) filter {_.startsWith(trimmed)} foreach {candidates.add}
+        if (candidates.isEmpty) -1 else cursor - trimmed.size
     }
   }
 

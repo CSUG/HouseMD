@@ -30,12 +30,10 @@ class Console(in: InputStream, out: OutputStream, instrumentation: Instrumentati
 
   var commands: Commands = _
 
-  private[this] lazy val prompt = ManagementFactory.getRuntimeMXBean.getName + ">"
-
   def run() {
     val reader = new ConsoleReader(in, out)
 
-    reader.setPrompt(prompt)
+    reader.setPrompt(ManagementFactory.getRuntimeMXBean.getName + ">")
 
     reader.addCompleter(commands)
 

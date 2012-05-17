@@ -26,13 +26,11 @@ import java.util.{SortedSet, List}
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-
 abstract class Commands(commandObjects: AnyRef*) extends Loggable with Completer {
 
   protected val name2Command = {
     val map = scala.collection.mutable.Map.empty[String, Command]
-    val list = commandObjects.toList ::: Quit :: Help :: Nil
-    list foreach { instance =>
+    commandObjects.toList ::: Quit :: Help :: Nil foreach { instance =>
       commandMethodOf(instance) match {
         case None         => warn("Skip invalid command {}", instance)
         case Some(method) =>
@@ -55,7 +53,6 @@ abstract class Commands(commandObjects: AnyRef*) extends Loggable with Completer
   def commands: SortedSet[String] = commandNames
 
   def command(name: String): Option[Command] = name2Command get name
-
 
   private[this] def commandMethodOf(instance: AnyRef) = instance.getClass.getMethods find {_.getName == "apply"}
 
@@ -100,6 +97,8 @@ abstract class Commands(commandObjects: AnyRef*) extends Loggable with Completer
       }
     }
 
+    protected def allCandidates = commands
+
     private[this] def list() {
       // TODO
     }
@@ -108,7 +107,6 @@ abstract class Commands(commandObjects: AnyRef*) extends Loggable with Completer
       // TODO
     }
 
-    def allCandidates = commands
   }
 
   @command(name = "quit", description = "quit the console")

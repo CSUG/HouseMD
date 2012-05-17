@@ -22,22 +22,32 @@ import org.mockito.Mockito._
 import instrument.Instrumentation
 import collection.mutable.ListBuffer
 import com.github.zhongl.house.Utils
+import com.github.zhongl.house.cli.{VirtualMachine, Output}
+import java.util.ArrayList
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 class LoadedSpec extends FunSpec with ShouldMatchers {
+  val stringClass = classOf[String]
+
+  val fixture = new {
+    val output = mock(classOf[Output])
+    val vm     = mock(classOf[VirtualMachine])
+    doReturn(Array(stringClass)).when(vm).allLoadedClasses
+  }
+
   describe("LoadedClasses") {
     it("should output loaded classes info") {
-      val lines = ListBuffer.empty[String]
-      val inst = mock(classOf[Instrumentation])
-      val stringClass = classOf[String]
+      new Loaded(fixture.output, fixture.vm).apply("String@java.lang")
+      verify(fixture.output).println(stringClass.getName + " -> " + Utils.sourceOf(stringClass))
+    }
 
-      doReturn(Array(stringClass)).when(inst).getAllLoadedClasses
-
-      new Loaded({lines += _}, inst).apply("java.lang.String")
-
-      lines should contain(stringClass.getName + " -> " + Utils.sourceOf(stringClass))
+    it("should complete class name") {
+      val candidates = new ArrayList[CharSequence]()
+      new Loaded(fixture.output, fixture.vm).complete("Stri", 11, candidates)
+      candidates.size should be (1)
+      candidates.get(0) should be ("String@java.lang")
     }
 
     it("should output loaded classes info and it's class loader hierarchies") {

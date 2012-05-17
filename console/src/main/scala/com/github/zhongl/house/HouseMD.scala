@@ -26,11 +26,6 @@ import com.beust.jcommander.{ParameterException, JCommander}
 object HouseMD {
 
   def main(args: Array[String]) {
-    try {
-      insideWith(args)
-    } catch {
-      case e => Console.err.print(e.getMessage); sys.exit(-1)
-    }
   }
 
   private[house] def insideWith(args: Array[String]) {
@@ -71,7 +66,7 @@ object HouseMD {
             print(".")
             Thread.sleep(1000L)
             self ! "."
-          case _ => exit()
+          case _   => exit()
         }
       }
     }

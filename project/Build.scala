@@ -26,7 +26,7 @@ object Build extends sbt.Build {
   lazy val root = Project(id = "HouseMD", base = file("."), settings = baseSettings) aggregate(console, agent)
 
   lazy val console = Project(
-    id = "Console",
+    id = "console",
     base = file("console"),
     settings = baseSettings ++ assemblySettings ++ Seq(
       scalacOptions                 ++= Seq("-unchecked", "-deprecation"),
@@ -37,8 +37,16 @@ object Build extends sbt.Build {
     ) ++ classpathSettings
   )
 
+  lazy val cmdl = Project(
+    id = "cmdl",
+    base = file("cmdl"),
+    settings = baseSettings ++ Seq(
+      libraryDependencies :=  test
+    )
+  )
+
   lazy val agent = Project(
-    id = "Agent",
+    id = "agent",
     base = file("agent"),
     settings = baseSettings ++ Seq(
       libraryDependencies :=  test,

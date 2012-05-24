@@ -13,9 +13,9 @@ trait CommandLineApplication extends CommandLine {
       parse(arguments)
       if (printHelp()) print(help) else run()
     } catch {
-      case UnknownOptionException(name)     => println("Unknown option: " + name)
-      case MissingParameterException(name)  => println("Missing parameter: " + name)
-      case ConvertingException(name, value) => println("Invalid " + name + " value: " + value)
+      case UnknownOptionException(name)              => println("Unknown option: " + name)
+      case MissingParameterException(name)           => println("Missing parameter: " + name)
+      case ConvertingException(name, value, explain) => println("Invalid " + name + " value: " + value + explain)
     }
   }
 }

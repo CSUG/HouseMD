@@ -2,6 +2,7 @@ package com.github.zhongl
 
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
+import java.io.File
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -89,9 +90,38 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
           |                set param1
           |        param2
           |                set param2
-          |""".stripMargin.replaceAll("        ","\t"))
+          |""".stripMargin.replaceAll("        ", "\t"))
     }
 
+    it("should complain unknown option") {
+      val cmdl = new Base {}
+
+      val exception = evaluating {cmdl main ("-u".split("\\s+"))} should produce[UnknownOptionException]
+      exception.name should be("-u")
+    }
+
+    it("should complain missing parameter") {
+      val cmdl = new Base {
+        val param = parameter[String]("param", "set param")
+      }
+      cmdl main (Array())
+      val exception = evaluating {cmdl param() } should produce[MissingParameterException]
+      exception.name should be("param")
+    }
+
+    it("should complain converting error") {
+      val cmdl = new Base {
+        val file = option[File]("--file" :: Nil, "set a file", new File("default")) { value: String =>
+          val file = new File(value)
+          if (file.exists()) file else throw new IllegalArgumentException(", it should be an existed file")
+        }
+      }
+      cmdl main ("--file nonexist".split("\\s+"))
+      val exception = evaluating {cmdl file()} should produce[ConvertingException]
+      exception.name  should be ("--file")
+      exception.value should be ("nonexist")
+      exception.explain should be (", it should be an existed file")
+    }
   }
 
 }

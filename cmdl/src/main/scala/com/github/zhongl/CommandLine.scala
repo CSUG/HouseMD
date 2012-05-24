@@ -35,6 +35,20 @@ trait CommandLine {
       parameters.mkString("\n"))
   }
 
+  protected final def parse(arguments: Array[String]) {
+
+    @tailrec
+    def read(list: List[String])(implicit index: Int = 0) {
+      list match {
+        case head :: tail if (head.matches("-[a-zA-Z-]+")) => read(addOption(head, tail))
+        case Nil                                           => // end recusive
+        case _                                             => read(addParameter(index, list))(index + 1)
+      }
+    }
+
+    read(arguments.toList)
+  }
+
   protected def run()
 
   protected final def flag(names: List[String], description: String) = {
@@ -79,20 +93,6 @@ trait CommandLine {
     }
   }
 
-  protected def parse(arguments: Array[String]) {
-
-    @tailrec
-    def read(list: List[String])(implicit index: Int = 0) {
-      list match {
-        case head :: tail if (head.matches("-[a-zA-Z-]+")) => read(addOption(head, tail))
-        case Nil                                           => // end recusive
-        case _                                             => read(addParameter(index, list))(index + 1)
-      }
-    }
-
-    read(arguments.toList)
-  }
-
   private def addOption(name: String, rest: List[String]) = options find (_.names.contains(name)) match {
     case None         => throw new UnknownOptionException(name)
     case Some(option) =>
@@ -117,7 +117,7 @@ trait CommandLine {
       throw MissingParameterException(name)
     }
     case Some(value) => try convert(value) catch {
-      case _ => throw ConvertingException(name, value)
+      case t: Throwable => throw ConvertingException(name, value, t.getMessage)
     }
   }
 
@@ -142,4 +142,4 @@ case class UnknownOptionException(name: String) extends Exception
 
 case class MissingParameterException(name: String) extends Exception
 
-case class ConvertingException(name: String, value: String) extends Exception
+case class ConvertingException(name: String, value: String, explain: String) extends Exception

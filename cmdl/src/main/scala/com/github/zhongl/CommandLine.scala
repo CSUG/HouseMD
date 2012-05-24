@@ -2,6 +2,7 @@ package com.github.zhongl
 
 import collection.mutable.{ListBuffer, Map}
 import annotation.tailrec
+import java.text.MessageFormat
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -16,19 +17,22 @@ trait CommandLine {
   private val parameters = ListBuffer.empty[Parameter]
   private val values     = Map.empty[String, String]
 
-  final def main(arguments: Array[String])(implicit output: String => Unit) {
-    try {
-      parse(arguments)
-      run
-    } catch {
-      case UnknownOptionException(name)     => output("Unknown option: " + name)
-      case MissingParameterException(name)  => output("Missing parameter: " + name)
-      case ConvertingException(name, value) => output("Invalid " + name + " value: " + value)
-    }
-  }
-
-  final def help() {
-    // TODO
+  final def help = {
+    MessageFormat.format(
+      """Version: {0}
+        |Usage  : {1} [OPTIONS] {2}
+        |{3}
+        |Options:
+        |{4}
+        |Parameters:
+        |{5}
+        |""".stripMargin,
+      version,
+      name,
+      parameters.map(_.name).mkString(" "),
+      "\t" + description,
+      options.mkString("\n"),
+      parameters.mkString("\n"))
   }
 
   protected def run()
@@ -36,21 +40,19 @@ trait CommandLine {
   protected final def flag(names: List[String], description: String) = {
     import Convertors.string2Boolean
 
-    option[Boolean](names, description, Some(false))
+    option[Boolean](names, description, false)
   }
 
-  protected final def option[T](names: List[String], description: String, defaultValue: scala.Option[T] = None)
+  protected final def option[T](names: List[String], description: String, defaultValue: T)
     (implicit convert: String => T) = {
 
     checkIllegalOption(names)
     checkDuplicatedOption(names)
-    options += Option(names, description, defaultValue)
-    () => eval(names(0), defaultValue)
+    options += Option(names, description, defaultValue.asInstanceOf[AnyRef])
+    () => eval(names(0), Some(defaultValue))
   }
 
-  protected final def parameter[T](name: String, description: String, defaultValue: scala.Option[T] = None)
-    (implicit convert: String => T) = {
-
+  protected final def parameter[T](name: String, description: String)(implicit convert: String => T) = {
     checkDuplicatedParameter(name)
     parameters += Parameter(name, description)
     () => eval(name)
@@ -77,7 +79,7 @@ trait CommandLine {
     }
   }
 
-  private def parse(arguments: Array[String]) {
+  protected def parse(arguments: Array[String]) {
 
     @tailrec
     def read(list: List[String])(implicit index: Int = 0) {
@@ -91,17 +93,19 @@ trait CommandLine {
     read(arguments.toList)
   }
 
-  def addOption(name: String, rest: List[String]) = {
-    options find (_.names.contains(name)) match {
-      case None         => throw new UnknownOptionException(name)
-      case Some(option) => option.defaultValue match {
-        case Some(false) => values(option.names(0)) = "true"; rest // flag option
-        case _           => values(option.names(0)) = rest.head; rest.tail
+  private def addOption(name: String, rest: List[String]) = options find (_.names.contains(name)) match {
+    case None         => throw new UnknownOptionException(name)
+    case Some(option) =>
+      if (option.defaultValue.isInstanceOf[Boolean]) {
+        values(option.names(0)) = "true"
+        rest
+      } else {
+        values(option.names(0)) = rest.head
+        rest.tail
       }
-    }
   }
 
-  def addParameter(index: Int, arguments: List[String]) = {
+  private def addParameter(index: Int, arguments: List[String]) = {
     val parameter = parameters(index)
     values(parameter.name) = arguments.head
     arguments.tail
@@ -109,13 +113,28 @@ trait CommandLine {
 
   private def eval[T](name: String, defaultValue: scala.Option[T] = None)
     (implicit convert: String => T) = values get name match {
-    case None        => defaultValue.getOrElse {throw MissingParameterException(name)}
-    case Some(value) => try convert(value) catch {case _ => throw ConvertingException(name, value) }
+    case None        => defaultValue.getOrElse {
+      throw MissingParameterException(name)
+    }
+    case Some(value) => try convert(value) catch {
+      case _ => throw ConvertingException(name, value)
+    }
   }
 
-  case class Option(names: List[String], description: String, defaultValue: scala.Option[_])
+  case class Option(names: List[String], description: String, defaultValue: AnyRef) {
+    override def toString = {
+      lazy val valueName = defaultValue.getClass.getSimpleName.toUpperCase
+      lazy val desc =
+        if (defaultValue.isInstanceOf[Boolean]) "\n\t\t" + description
+        else "=[" + valueName + "]\n\t\t" + description + "\n\t\tdefault: " + defaultValue
 
-  case class Parameter(name: String, description: String)
+      "\t" + names.mkString(", ") + desc
+    }
+  }
+
+  case class Parameter(name: String, description: String) {
+    override def toString = "\t" + name + "\n\t\t" + description
+  }
 
 }
 

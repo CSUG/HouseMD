@@ -5,7 +5,6 @@ package com.github.zhongl
  */
 
 object Convertors {
-//  implicit val string2String  = (s: String) => s
   implicit val string2Int     = (s: String) => s.toInt
   implicit val string2Boolean = (s: String) => s.toBoolean
 }

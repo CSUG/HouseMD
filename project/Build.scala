@@ -35,7 +35,7 @@ object Build extends sbt.Build {
         ("Main-Class","com.github.zhongl.house.HouseMD")
       )
     ) ++ classpathSettings
-  )
+  ).dependsOn(cmdl)
 
   lazy val cmdl = Project(
     id = "cmdl",

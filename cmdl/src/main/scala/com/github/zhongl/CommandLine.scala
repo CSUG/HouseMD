@@ -35,7 +35,7 @@ trait CommandLine {
       parameters.mkString("\n"))
   }
 
-  protected final def parse(arguments: Array[String]) {
+  final def parse(arguments: Array[String]) {
 
     @tailrec
     def read(list: List[String])(implicit index: Int = 0) {
@@ -49,7 +49,7 @@ trait CommandLine {
     read(arguments.toList)
   }
 
-  protected def run()
+  def run()
 
   protected final def flag(names: List[String], description: String) = {
     import Convertors.string2Boolean

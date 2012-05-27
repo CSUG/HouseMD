@@ -41,7 +41,7 @@ object Build extends sbt.Build {
     id = "cmdl",
     base = file("cmdl"),
     settings = baseSettings ++ Seq(
-      libraryDependencies :=  test
+      libraryDependencies :=  cmdlDependencies ++ test
     )
   )
 
@@ -81,6 +81,12 @@ object Build extends sbt.Build {
       "com.beust"       % "jcommander"      % "1.20",
       "org.scala-lang"  % "scala-library"   % "2.9.2"
     )
+
+    lazy val cmdlDependencies =  Seq(
+      "jline"           % "jline"           % "2.6",
+      "org.scala-lang"  % "scala-library"   % "2.9.2"
+    )
+
   }
 
   object Unmanaged {

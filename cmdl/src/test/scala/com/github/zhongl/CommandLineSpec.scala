@@ -18,7 +18,7 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
     val version     = "0.1.0"
     val description = "some description"
 
-    protected def run() {}
+    def run() {}
 
     def main(arguments: Array[String]) {
       parse(arguments)
@@ -105,7 +105,7 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
         val param = parameter[String]("param", "set param")
       }
       cmdl main (Array())
-      val exception = evaluating {cmdl param() } should produce[MissingParameterException]
+      val exception = evaluating {cmdl param()} should produce[MissingParameterException]
       exception.name should be("param")
     }
 
@@ -118,9 +118,9 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
       }
       cmdl main ("--file nonexist".split("\\s+"))
       val exception = evaluating {cmdl file()} should produce[ConvertingException]
-      exception.name  should be ("--file")
-      exception.value should be ("nonexist")
-      exception.explain should be (", it should be an existed file")
+      exception.name should be("--file")
+      exception.value should be("nonexist")
+      exception.explain should be(", it should be an existed file")
     }
   }
 

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012 zhongl
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package com.github.zhongl
 
 import org.scalatest.FunSpec
@@ -12,11 +28,7 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
 
   import Convertors._
 
-  trait Base extends CommandLine {
-
-    val name        = "app name"
-    val version     = "0.1.0"
-    val description = "some description"
+  abstract class Base extends CommandLine("app name", "some description") {
 
     def run() {}
 
@@ -36,6 +48,17 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
       cmdl main ("123 allen".split("\\s+"))
       cmdl param1() should be(123)
       cmdl param2() should be("allen")
+    }
+
+    it("should support var length paramters") {
+      val cmdl = new Base {
+        val param1 = parameter[Int]("param1", "param1 description")
+        val param2 = parameter[Array[String]]("param2", "param2 description")
+      }
+
+      cmdl main ("123 allen john".split("\\s+"))
+      cmdl param1() should be(123)
+      cmdl param2() should be(Array("allen", "john"))
     }
 
     ignore("should support POSIX-style short options") {
@@ -76,8 +99,7 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
       }
 
       cmdl.help should be(
-        """Version: 0.1.0
-          |Usage  : app name [OPTIONS] param1 param2
+        """Usage  : app name [OPTIONS] param1 param2
           |        some description
           |Options:
           |        -f, --flag
@@ -90,7 +112,7 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
           |                set param1
           |        param2
           |                set param2
-          |""".stripMargin.replaceAll("        ", "\t"))
+          | """.stripMargin.replaceAll("        ", "\t"))
     }
 
     it("should complain unknown option") {
@@ -111,10 +133,12 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
 
     it("should complain converting error") {
       val cmdl = new Base {
-        val file = option[File]("--file" :: Nil, "set a file", new File("default")) { value: String =>
-          val file = new File(value)
-          if (file.exists()) file else throw new IllegalArgumentException(", it should be an existed file")
+        implicit val toFile = {
+          value: String =>
+            val file = new File(value)
+            if (file.exists()) file else throw new IllegalArgumentException(", it should be an existed file")
         }
+        val file = option[File]("--file" :: Nil, "set a file", new File("default"))
       }
       cmdl main ("--file nonexist".split("\\s+"))
       val exception = evaluating {cmdl file()} should produce[ConvertingException]

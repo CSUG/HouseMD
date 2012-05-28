@@ -16,12 +16,15 @@
 
 package com.github.zhongl
 
+import org.scalatest.FunSpec
+import org.scalatest.matchers.ShouldMatchers
+
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
+class CommandSuiteApplicationSpec extends FunSpec with ShouldMatchers{
+  describe("Command suite application") {
+//    it("should ")
+  }
 
-object Convertors {
-  implicit val string2Int     = (s: String) => s.toInt
-  implicit val string2Boolean = (s: String) => s.toBoolean
-  implicit val string2Array   = (s: String) => s.split("\\s+")
 }

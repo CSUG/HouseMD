@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012 zhongl
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package com.github.zhongl
 
 import org.scalatest.FunSpec
@@ -8,16 +24,13 @@ import org.scalatest.matchers.ShouldMatchers
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class CommandLineApplicationSpec extends FunSpec with ShouldMatchers{
+class CommandLineApplicationSpec extends FunSpec with ShouldMatchers {
 
-  object App extends CommandLineApplication {
-    val name        = "App"
-    val version     = "0.1.0"
-    val description = "desc"
+  object App extends CommandLineApplication("App", "0.1.0", "desc") {
 
-    val param = parameter[String]("param", "parameter") { value =>
+    val param = parameter[String]("param", "parameter")(manifest[String], { value: String =>
       if (value.contains("@")) value else throw new IllegalArgumentException(", it should contains @")
-    }
+    })
 
     def run() {}
   }
@@ -31,7 +44,7 @@ class CommandLineApplicationSpec extends FunSpec with ShouldMatchers{
                |Parameters:
                |        param
                |                parameter
-               |""".stripMargin.replaceAll("        ", "\t")
+               | """.stripMargin.replaceAll("        ", "\t")
 
   describe("Command line application") {
     it("should print help by short option") {
@@ -39,7 +52,7 @@ class CommandLineApplicationSpec extends FunSpec with ShouldMatchers{
       Console.withOut(bout) {
         App.main(Array("-h"))
       }
-      bout.toString() should be (help)
+      bout.toString() should be(help)
     }
 
     it("should print help by long option") {
@@ -47,7 +60,7 @@ class CommandLineApplicationSpec extends FunSpec with ShouldMatchers{
       Console.withOut(bout) {
         App.main(Array("--help"))
       }
-      bout.toString() should be (help)
+      bout.toString() should be(help)
     }
   }
 }

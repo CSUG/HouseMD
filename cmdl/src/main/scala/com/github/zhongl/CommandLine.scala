@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012 zhongl
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package com.github.zhongl
 
 import collection.mutable.{ListBuffer, Map}
@@ -7,27 +23,21 @@ import java.text.MessageFormat
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-trait CommandLine {
-
-  val name       : String
-  val version    : String
-  val description: String
+abstract class CommandLine(val name: String, description: String) {
 
   private val options    = ListBuffer.empty[Option]
-  private val parameters = ListBuffer.empty[Parameter]
+  private val parameters = ListBuffer.empty[Parameter[_]]
   private val values     = Map.empty[String, String]
 
-  final def help = {
+  def help = {
     MessageFormat.format(
-      """Version: {0}
-        |Usage  : {1} [OPTIONS] {2}
-        |{3}
+      """Usage  : {0} [OPTIONS] {1}
+        |{2}
         |Options:
-        |{4}
+        |{3}
         |Parameters:
-        |{5}
-        |""".stripMargin,
-      version,
+        |{4}
+        | """.stripMargin,
       name,
       parameters.map(_.name).mkString(" "),
       "\t" + description,
@@ -35,14 +45,14 @@ trait CommandLine {
       parameters.mkString("\n"))
   }
 
-  final def parse(arguments: Array[String]) {
+  def parse(arguments: Array[String]) {
 
     @tailrec
     def read(list: List[String])(implicit index: Int = 0) {
       list match {
         case head :: tail if (head.matches("-[a-zA-Z-]+")) => read(addOption(head, tail))
+        case head :: tail                                  => read(addParameter(index, list))(index + 1)
         case Nil                                           => // end recusive
-        case _                                             => read(addParameter(index, list))(index + 1)
       }
     }
 
@@ -58,7 +68,7 @@ trait CommandLine {
   }
 
   protected final def option[T](names: List[String], description: String, defaultValue: T)
-    (implicit convert: String => T) = {
+    (implicit m: Manifest[T], convert: String => T) = {
 
     checkIllegalOption(names)
     checkDuplicatedOption(names)
@@ -66,9 +76,9 @@ trait CommandLine {
     () => eval(names(0), Some(defaultValue))
   }
 
-  protected final def parameter[T](name: String, description: String)(implicit convert: String => T) = {
+  protected final def parameter[T](name: String, description: String)(implicit m: Manifest[T], convert: String => T) = {
     checkDuplicatedParameter(name)
-    parameters += Parameter(name, description)
+    parameters += Parameter[T](name, description)
     () => eval(name)
   }
 
@@ -81,14 +91,14 @@ trait CommandLine {
 
   private def checkDuplicatedParameter(s: String) {
     parameters.find(_.name == name) match {
-      case None    =>
+      case None    => // ignore
       case Some(_) => throw new IllegalStateException(s + " have already been used")
     }
   }
 
   private def checkDuplicatedOption[T](names: scala.List[String]) {
     options.find(_.names.intersect(names).size > 0) match {
-      case None         =>
+      case None         => // ignore
       case Some(option) => throw new IllegalStateException(names + " have already been used in " + option.names)
     }
   }
@@ -107,16 +117,19 @@ trait CommandLine {
 
   private def addParameter(index: Int, arguments: List[String]) = {
     val parameter = parameters(index)
-    values(parameter.name) = arguments.head
-    arguments.tail
+    if (parameter.isVarLength) {
+      values(parameter.name) = arguments.mkString(" ")
+      Nil
+    } else {
+      values(parameter.name) = arguments.head
+      arguments.tail
+    }
   }
 
   private def eval[T](name: String, defaultValue: scala.Option[T] = None)
-    (implicit convert: String => T) = values get name match {
-    case None        => defaultValue.getOrElse {
-      throw MissingParameterException(name)
-    }
-    case Some(value) => try convert(value) catch {
+    (implicit m: Manifest[T], convert: String => T) = values get name match {
+    case None        => defaultValue.getOrElse {throw MissingParameterException(name)}
+    case Some(value) => try {convert(value)} catch {
       case t: Throwable => throw ConvertingException(name, value, t.getMessage)
     }
   }
@@ -132,8 +145,10 @@ trait CommandLine {
     }
   }
 
-  case class Parameter(name: String, description: String) {
+  case class Parameter[T: Manifest](name: String, description: String) {
     override def toString = "\t" + name + "\n\t\t" + description
+
+    def isVarLength = manifest[T].erasure.isArray
   }
 
 }

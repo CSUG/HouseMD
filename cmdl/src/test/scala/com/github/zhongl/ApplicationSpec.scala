@@ -24,9 +24,9 @@ import org.scalatest.matchers.ShouldMatchers
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class CommandLineApplicationSpec extends FunSpec with ShouldMatchers {
+class ApplicationSpec extends FunSpec with ShouldMatchers {
 
-  object App extends CommandLineApplication("App", "0.1.0", "desc") {
+  object App extends Application("App", "0.1.0", "desc") {
 
     val param = parameter[String]("param", "parameter")(manifest[String], { value: String =>
       if (value.contains("@")) value else throw new IllegalArgumentException(", it should contains @")
@@ -35,24 +35,24 @@ class CommandLineApplicationSpec extends FunSpec with ShouldMatchers {
     def run() {}
   }
 
-  val help = """Version: 0.1.0
-               |Usage  : App [OPTIONS] param
+  val help = """0.1.0
+               |Usage: App [OPTIONS] param
                |        desc
                |Options:
                |        -h, --help
                |                show help infomation of this command.
                |Parameters:
                |        param
-               |                parameter
-               | """.stripMargin.replaceAll("        ", "\t")
+               |                parameter""".stripMargin.replaceAll("        ", "\t")
 
-  describe("Command line application") {
+  describe("Application") {
+
     it("should print help by short option") {
       val bout = new ByteArrayOutputStream()
       Console.withOut(bout) {
         App.main(Array("-h"))
       }
-      bout.toString() should be(help)
+      bout.toString should be(help)
     }
 
     it("should print help by long option") {
@@ -60,7 +60,7 @@ class CommandLineApplicationSpec extends FunSpec with ShouldMatchers {
       Console.withOut(bout) {
         App.main(Array("--help"))
       }
-      bout.toString() should be(help)
+      bout.toString should be(help)
     }
   }
 }

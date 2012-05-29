@@ -16,14 +16,14 @@
 
 package com.github.zhongl.house
 
-import com.github.zhongl.CommandLineApplication
+import com.github.zhongl.Application
 import java.io.File
 
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-object House extends CommandLineApplication("house", "0.2.0", "a runtime diagnosis tool of JVM.") {
+object House extends Application("house", "0.2.0", "a runtime diagnosis tool of JVM.") {
 
   implicit private val string2Port = { value: String =>
       val p = value.toInt

@@ -18,30 +18,23 @@ package com.github.zhongl
 
 import collection.mutable.{ListBuffer, Map}
 import annotation.tailrec
-import java.text.MessageFormat
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 abstract class Command(val name: String, val description: String) {
+  implicit val enhanceBoolean = (b: Boolean) => new {def ?(t: => String, f: => String = "") = if (b) t else f}
 
   private val options    = ListBuffer.empty[Option[_]]
   private val parameters = ListBuffer.empty[Parameter[_]]
   private val values     = Map.empty[String, String]
 
-  def help = MessageFormat.format(
-    """Usage  : {0} [OPTIONS] {1}
-      |{2}
-      |Options:
-      |{3}
-      |Parameters:
-      |{4}
-      | """.stripMargin,
-    name,
-    parameters.map(_.name).mkString(" "),
-    "\t" + description,
-    options.mkString("\n"),
-    parameters.mkString("\n"))
+  def help = "Usage: " + name +
+    !options.isEmpty ? (" [OPTIONS]") +
+    !parameters.isEmpty ? parameters.map(_.repr).mkString(" ", " ", "") +
+    "\n\t" + description +
+    !options.isEmpty ? ("\nOptions:\n" + options.mkString("\n")) +
+    !parameters.isEmpty ? ("\nParameters:\n" + parameters.mkString("\n"))
 
   def parse(arguments: Array[String]) {
 
@@ -59,11 +52,8 @@ abstract class Command(val name: String, val description: String) {
 
   def run()
 
-  protected final def flag(names: List[String], description: String) = {
-    import Convertors.string2Boolean
-
-    option[Boolean](names, description, false)
-  }
+  protected final def flag(names: List[String], description: String) =
+    option[Boolean](names, description, false)(manifest[Boolean], Convertors.string2Boolean)
 
   protected final def option[T](names: List[String], description: String, defaultValue: T)
     (implicit m: Manifest[T], convert: String => T) = {
@@ -74,10 +64,11 @@ abstract class Command(val name: String, val description: String) {
     () => eval(names(0), Some(defaultValue))
   }
 
-  protected final def parameter[T](name: String, description: String)(implicit m: Manifest[T], convert: String => T) = {
+  protected final def parameter[T](name: String, description: String, defaultValue: scala.Option[T] = None)
+    (implicit m: Manifest[T], convert: String => T) = {
     checkDuplicatedParameter(name)
-    parameters += Parameter[T](name, description)
-    () => eval(name)
+    parameters += Parameter[T](name, description, defaultValue.isDefined)
+    () => eval(name, defaultValue)
   }
 
   private def checkIllegalOption(names: List[String]) {
@@ -110,7 +101,7 @@ abstract class Command(val name: String, val description: String) {
     case p                  => values(p.name) = arguments.head; arguments.tail
   }
 
-  private def eval[T](name: String, defaultValue: scala.Option[T] = None)
+  private def eval[T](name: String, defaultValue: scala.Option[T])
     (implicit convert: String => T) = values get name match {
     case None        => defaultValue.getOrElse {throw MissingParameterException(name)}
     case Some(value) => try {convert(value)} catch {
@@ -120,18 +111,20 @@ abstract class Command(val name: String, val description: String) {
 
   case class Option[T: Manifest](names: List[String], description: String, defaultValue: T) {
     override def toString = {
-      def ?(s: => String) = if (isFlag) "" else s
+      val isNotFlag = !isFlag
 
-      "\t" + names.mkString(", ") + ?("=[" + manifest[T].erasure.getSimpleName.toUpperCase + "]") +
+      "\t" + names.mkString(", ") + isNotFlag ? ("=[" + manifest[T].erasure.getSimpleName.toUpperCase + "]") +
         "\n\t\t" + description +
-        ?("\n\t\tdefault: " + defaultValue)
+        isNotFlag ? ("\n\t\tdefault: " + defaultValue)
     }
 
     def isFlag = manifest[T].erasure == classOf[Boolean]
   }
 
-  case class Parameter[T: Manifest](name: String, description: String) {
+  case class Parameter[T: Manifest](name: String, description: String, optional: Boolean) {
     override def toString = "\t" + name + "\n\t\t" + description
+
+    def repr = { val s = isVarLength ?(name + "...", name); optional ?("[" + s + "]", s) }
 
     def isVarLength = manifest[T].erasure.isArray
   }

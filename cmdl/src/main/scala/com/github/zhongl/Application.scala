@@ -20,7 +20,7 @@ package com.github.zhongl
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-abstract class CommandLineApplication(name: String,val version: String, description: String)
+abstract class Application(name: String, val version: String, description: String)
   extends Command(name, description) {
 
   private val printHelp = flag("-h" :: "--help" :: Nil, "show help infomation of this command.")
@@ -36,5 +36,5 @@ abstract class CommandLineApplication(name: String,val version: String, descript
     }
   }
 
-  override def help = "Version: " + version + "\n" + super.help
+  override def help = version + "\n" + super.help
 }

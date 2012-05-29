@@ -27,18 +27,18 @@ import jline.console.completer.{NullCompleter, Completer}
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-abstract class CommandSuiteApplication(name: String, version: String, description: String, commands: Command*)
-  extends CommandLineApplication(name, version, description) {
+abstract class CommandSuite(name: String, version: String, description: String, commands: Command*)
+  extends Application(name, version, description) {
 
-  protected val prompt   : String      = name + ">"
+  protected val prompt   : String      = name + "> "
   protected val out      : PrintStream = System.out
   protected val in       : InputStream = System.in
-  protected val completer: Completer   = new DefaultCompleter
+  protected val completer: Completer   = new DefaultCompleter {}
 
   private val command   = parameter[String]("command", "sub command name.")
-  private val arguments = parameter[Array[String]]("arguments", "sub command arguments.")
+  private val arguments = parameter[Array[String]]("arguments", "sub command arguments.", Some(Array()))
 
-  private val _commands = commands :+ Help
+  private val _commands = commands :+ Help :+ Quit
 
   override def main(arguments: Array[String]) { if (arguments.isEmpty) interact() else super.main(arguments) }
 
@@ -67,19 +67,29 @@ abstract class CommandSuiteApplication(name: String, version: String, descriptio
     }
   }
 
-  object Help extends Command("help", "display this infomation.") {
-    private val command = parameter[String]("command", "sub command name.")
+  object Help extends Command("help", "display this infomation.") with DefaultCompleter {
+    private val command = parameter[String]("command", "sub command name.", Some("*"))
 
-    def run() {}
+    private lazy val format = "%1$-" + _commands.map(_.name.length).max + "s\t%2$s\n"
+
+    def run() {
+      out.println()
+      command() match {
+        case "*"       => _commands foreach { c => out.printf(format, c.name, c.description) }
+        case n: String => _commands find (_.name == n) match {
+          case Some(c) => out.println(c.help)
+          case None    => out.println("Unknown command: " + n)
+        }
+      }
+      out.println()
+    }
   }
 
   object Quit extends Command("quit", "terminate the process.") {
-    private val command = parameter[String]("command", "sub command name.")
-
-    def run() {}
+    def run() { sys.exit() }
   }
 
-  protected class DefaultCompleter extends Completer {
+  trait DefaultCompleter extends Completer {
 
     import collection.JavaConversions._
 
@@ -88,20 +98,20 @@ abstract class CommandSuiteApplication(name: String, version: String, descriptio
     private val RE2 = """\s*(\w+)(.+)""".r
 
     def complete(buffer: String, cursor: Int, candidates: List[CharSequence]) = buffer match {
-      case null | RE0() => candidates.addAll(commandNames); 0
-      case RE1(p)       => candidates.addAll(commandNamesStartsWith(p)); 0
+      case null | RE0() => candidates.addAll(commandNames); cursor
+      case RE1(p)       => candidates.addAll(commandNamesStartsWith(p)); cursor - p.length
       case RE2(n, p)    => completerOfCommand(n).complete(p, cursor, candidates)
     }
 
-    def completerOfCommand(name: String): Completer = _commands find {_.name == name} match {
+    private def completerOfCommand(name: String): Completer = _commands find {_.name == name} match {
       case Some(cl) if cl.isInstanceOf[Completer] => cl.asInstanceOf[Completer]
       case _                                      => NullCompleter.INSTANCE
     }
 
-    def commandNamesStartsWith(prefix: String): List[_ <: CharSequence] =
+    private def commandNamesStartsWith(prefix: String): List[_ <: CharSequence] =
       _commands.collect { case cl if cl.name.startsWith(prefix) => cl.name }.sorted
 
-    def commandNames: List[_ <: CharSequence] = _commands.map(_.name).sorted
+    private def commandNames: List[_ <: CharSequence] = _commands.map(_.name).sorted
   }
 
 }

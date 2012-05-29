@@ -24,7 +24,7 @@ import java.io.File
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class CommandLineSpec extends FunSpec with ShouldMatchers {
+class CommandSpec extends FunSpec with ShouldMatchers {
 
   import Convertors._
 
@@ -37,69 +37,78 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
     }
   }
 
-  describe("Command Line") {
+  describe("Command") {
 
     it("should parse parameters") {
-      val cmdl = new Base {
+      val command = new Base {
         val param1 = parameter[Int]("param1", "param1 description")
         val param2 = parameter[String]("param2", "param2 description")
       }
 
-      cmdl main ("123 allen".split("\\s+"))
-      cmdl param1() should be(123)
-      cmdl param2() should be("allen")
+      command main ("123 allen".split("\\s+"))
+      command param1() should be(123)
+      command param2() should be("allen")
     }
 
     it("should support var length paramters") {
-      val cmdl = new Base {
+      val command = new Base {
         val param1 = parameter[Int]("param1", "param1 description")
         val param2 = parameter[Array[String]]("param2", "param2 description")
       }
 
-      cmdl main ("123 allen john".split("\\s+"))
-      cmdl param1() should be(123)
-      cmdl param2() should be(Array("allen", "john"))
+      command main ("123 allen john".split("\\s+"))
+      command param1() should be(123)
+      command param2() should be(Array("allen", "john"))
+    }
+
+    it("should support optional parameter") {
+      val command = new Base {
+        val param = parameter[String]("param", "desc", Some(""))
+      }
+
+      command main (Array())
+      command param() should be("")
     }
 
     ignore("should support POSIX-style short options") {
-      val cmdl = new Base {
+      val command = new Base {
         val flag1 = flag("-f" :: Nil, "enable flag1")
         val flag2 = flag("-F" :: Nil, "enable flag2")
       }
 
-      cmdl main ("-fF".split("\\s+"))
-      cmdl flag1() should be(true)
-      cmdl flag2() should be(true)
+      command main ("-fF".split("\\s+"))
+      command flag1() should be(true)
+      command flag2() should be(true)
     }
 
     it("should support GNU-style long option") {
-      val cmdl = new Base {
+      val command = new Base {
         val flag0 = flag("--flag" :: Nil, "enable flag")
       }
 
-      cmdl main ("--flag".split("\\s+"))
-      cmdl flag0() should be(true)
+      command main ("--flag".split("\\s+"))
+      command flag0() should be(true)
     }
 
     it("should support single-value option") {
-      val cmdl = new Base {
+      val command = new Base {
         val singleValue = option[String]("--single-value" :: Nil, "set single value", "default")
       }
 
-      cmdl main ("--single-value v".split("\\s+"))
-      cmdl singleValue() should be("v")
+      command main ("--single-value v".split("\\s+"))
+      command singleValue() should be("v")
     }
 
     it("should get help info") {
-      val cmdl = new Base {
+      val command = new Base {
         val flag0       = flag("-f" :: "--flag" :: Nil, "enable flag")
         val singleValue = option[String]("--single-value" :: Nil, "set single value", "v")
         val param1      = parameter[String]("param1", "set param1")
         val param2      = parameter[String]("param2", "set param2")
       }
 
-      cmdl.help should be(
-        """Usage  : app name [OPTIONS] param1 param2
+      command.help should be(
+        """Usage: app name [OPTIONS] param1 param2
           |        some description
           |Options:
           |        -f, --flag
@@ -111,28 +120,48 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
           |        param1
           |                set param1
           |        param2
-          |                set param2
-          | """.stripMargin.replaceAll("        ", "\t"))
+          |                set param2""".stripMargin.replaceAll("        ", "\t"))
+    }
+
+    it("should get help without options and parameters") {
+      val command = new Base {}
+
+      command.help should be(
+        """Usage: app name
+          |        some description""".stripMargin.replaceAll("        ", "\t"))
+    }
+
+    it("should get help indicate var-length optional parameter") {
+      val command = new Base {
+        val param = parameter[Array[String]]("param", "var-length optional param", Some(Array()))
+      }
+      command.help should be(
+        """Usage: app name [param...]
+          |        some description
+          |Parameters:
+          |        param
+          |                var-length optional param""".stripMargin.replaceAll("        ", "\t"))
+
     }
 
     it("should complain unknown option") {
-      val cmdl = new Base {}
+      val command = new Base {}
 
-      val exception = evaluating {cmdl main ("-u".split("\\s+"))} should produce[UnknownOptionException]
+      val exception = evaluating {command main ("-u".split("\\s+"))} should produce[UnknownOptionException]
       exception.name should be("-u")
     }
 
     it("should complain missing parameter") {
-      val cmdl = new Base {
+      val command = new Base {
         val param = parameter[String]("param", "set param")
       }
-      cmdl main (Array())
-      val exception = evaluating {cmdl param()} should produce[MissingParameterException]
+      command main (Array())
+      val exception = evaluating {command param()} should produce[MissingParameterException]
       exception.name should be("param")
     }
 
     it("should complain converting error") {
-      val cmdl = new Base {
+      val command = new Base {
         implicit val toFile = {
           value: String =>
             val file = new File(value)
@@ -140,8 +169,8 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
         }
         val file = option[File]("--file" :: Nil, "set a file", new File("default"))
       }
-      cmdl main ("--file nonexist".split("\\s+"))
-      val exception = evaluating {cmdl file()} should produce[ConvertingException]
+      command main ("--file nonexist".split("\\s+"))
+      val exception = evaluating {command file()} should produce[ConvertingException]
       exception.name should be("--file")
       exception.value should be("nonexist")
       exception.explain should be(", it should be an existed file")

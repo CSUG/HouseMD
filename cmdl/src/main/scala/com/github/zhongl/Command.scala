@@ -82,8 +82,9 @@ abstract class Command(val name: String, val description: String) {
 
   private def checkIllegalOption(names: List[String]) {
     if (names.isEmpty) throw new IllegalArgumentException("At least one name should be given to option.")
-    names.foreach { name =>
-      if (!name.startsWith("-")) throw new IllegalArgumentException(name + " should starts with '-'.")
+    names find (!_.startsWith("-")) match {
+      case Some(n) => throw new IllegalArgumentException(n + " should starts with '-'.")
+      case None    => // ignore
     }
   }
 

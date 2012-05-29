@@ -28,7 +28,7 @@ class CommandLineSpec extends FunSpec with ShouldMatchers {
 
   import Convertors._
 
-  abstract class Base extends CommandLine("app name", "some description") {
+  abstract class Base extends Command("app name", "some description") {
 
     def run() {}
 

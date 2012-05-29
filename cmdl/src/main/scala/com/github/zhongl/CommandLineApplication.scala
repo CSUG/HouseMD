@@ -20,8 +20,8 @@ package com.github.zhongl
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-abstract class CommandLineApplication(name: String, version: String, description: String)
-  extends CommandLine(name, description) {
+abstract class CommandLineApplication(name: String,val version: String, description: String)
+  extends Command(name, description) {
 
   private val printHelp = flag("-h" :: "--help" :: Nil, "show help infomation of this command.")
 

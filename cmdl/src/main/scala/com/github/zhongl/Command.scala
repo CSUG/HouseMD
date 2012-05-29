@@ -23,27 +23,25 @@ import java.text.MessageFormat
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-abstract class CommandLine(val name: String, description: String) {
+abstract class Command(val name: String, val description: String) {
 
-  private val options    = ListBuffer.empty[Option]
+  private val options    = ListBuffer.empty[Option[_]]
   private val parameters = ListBuffer.empty[Parameter[_]]
   private val values     = Map.empty[String, String]
 
-  def help = {
-    MessageFormat.format(
-      """Usage  : {0} [OPTIONS] {1}
-        |{2}
-        |Options:
-        |{3}
-        |Parameters:
-        |{4}
-        | """.stripMargin,
-      name,
-      parameters.map(_.name).mkString(" "),
-      "\t" + description,
-      options.mkString("\n"),
-      parameters.mkString("\n"))
-  }
+  def help = MessageFormat.format(
+    """Usage  : {0} [OPTIONS] {1}
+      |{2}
+      |Options:
+      |{3}
+      |Parameters:
+      |{4}
+      | """.stripMargin,
+    name,
+    parameters.map(_.name).mkString(" "),
+    "\t" + description,
+    options.mkString("\n"),
+    parameters.mkString("\n"))
 
   def parse(arguments: Array[String]) {
 
@@ -72,7 +70,7 @@ abstract class CommandLine(val name: String, description: String) {
 
     checkIllegalOption(names)
     checkDuplicatedOption(names)
-    options += Option(names, description, defaultValue.asInstanceOf[AnyRef])
+    options += Option[T](names, description, defaultValue)
     () => eval(names(0), Some(defaultValue))
   }
 
@@ -90,59 +88,45 @@ abstract class CommandLine(val name: String, description: String) {
   }
 
   private def checkDuplicatedParameter(s: String) {
-    parameters.find(_.name == name) match {
-      case None    => // ignore
-      case Some(_) => throw new IllegalStateException(s + " have already been used")
-    }
+    if (parameters.find(_.name == name).isDefined) throw new IllegalStateException(s + " have already been used")
   }
 
   private def checkDuplicatedOption[T](names: scala.List[String]) {
     options.find(_.names.intersect(names).size > 0) match {
-      case None         => // ignore
       case Some(option) => throw new IllegalStateException(names + " have already been used in " + option.names)
+      case None         => // ignore
     }
   }
 
   private def addOption(name: String, rest: List[String]) = options find (_.names.contains(name)) match {
-    case None         => throw new UnknownOptionException(name)
-    case Some(option) =>
-      if (option.defaultValue.isInstanceOf[Boolean]) {
-        values(option.names(0)) = "true"
-        rest
-      } else {
-        values(option.names(0)) = rest.head
-        rest.tail
-      }
+    case Some(option) if option.isFlag => values(option.names(0)) = "true"; rest
+    case Some(option)                  => values(option.names(0)) = rest.head; rest.tail
+    case None                          => throw new UnknownOptionException(name)
   }
 
-  private def addParameter(index: Int, arguments: List[String]) = {
-    val parameter = parameters(index)
-    if (parameter.isVarLength) {
-      values(parameter.name) = arguments.mkString(" ")
-      Nil
-    } else {
-      values(parameter.name) = arguments.head
-      arguments.tail
-    }
+  private def addParameter(index: Int, arguments: List[String]) = parameters(index) match {
+    case p if p.isVarLength => values(p.name) = arguments.mkString(" "); Nil
+    case p                  => values(p.name) = arguments.head; arguments.tail
   }
 
   private def eval[T](name: String, defaultValue: scala.Option[T] = None)
-    (implicit m: Manifest[T], convert: String => T) = values get name match {
+    (implicit convert: String => T) = values get name match {
     case None        => defaultValue.getOrElse {throw MissingParameterException(name)}
     case Some(value) => try {convert(value)} catch {
       case t: Throwable => throw ConvertingException(name, value, t.getMessage)
     }
   }
 
-  case class Option(names: List[String], description: String, defaultValue: AnyRef) {
+  case class Option[T: Manifest](names: List[String], description: String, defaultValue: T) {
     override def toString = {
-      lazy val valueName = defaultValue.getClass.getSimpleName.toUpperCase
-      lazy val desc =
-        if (defaultValue.isInstanceOf[Boolean]) "\n\t\t" + description
-        else "=[" + valueName + "]\n\t\t" + description + "\n\t\tdefault: " + defaultValue
+      def ?(s: => String) = if (isFlag) "" else s
 
-      "\t" + names.mkString(", ") + desc
+      "\t" + names.mkString(", ") + ?("=[" + manifest[T].erasure.getSimpleName.toUpperCase + "]") +
+        "\n\t\t" + description +
+        ?("\n\t\tdefault: " + defaultValue)
     }
+
+    def isFlag = manifest[T].erasure == classOf[Boolean]
   }
 
   case class Parameter[T: Manifest](name: String, description: String) {

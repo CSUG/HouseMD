@@ -17,55 +17,32 @@
 package com.github.zhongl
 
 import jline.console.ConsoleReader
-import management.ManagementFactory
 import java.io.PrintStream
 import java.io.InputStream
-import jline.console.completer.Completer
 import annotation.tailrec
 import java.util.List
 import Convertors._
+import jline.console.completer.{NullCompleter, Completer}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-abstract class CommandSuiteApplication(name: String, version: String, description: String, commandLines: CommandLine*)
+abstract class CommandSuiteApplication(name: String, version: String, description: String, commands: Command*)
   extends CommandLineApplication(name, version, description) {
 
-  protected val prompt   : String      = ManagementFactory.getRuntimeMXBean.getName + ">"
+  protected val prompt   : String      = name + ">"
   protected val out      : PrintStream = System.out
   protected val in       : InputStream = System.in
-  protected val completer: Completer   = defaultCompleter
+  protected val completer: Completer   = new DefaultCompleter
 
   private val command   = parameter[String]("command", "sub command name.")
   private val arguments = parameter[Array[String]]("arguments", "sub command arguments.")
 
-  private val _commandLines = commandLines :+ Help
+  private val _commands = commands :+ Help
 
-  override def main(arguments: Array[String]) {
-    if (arguments.isEmpty) interact() else super.main(arguments)
-  }
+  override def main(arguments: Array[String]) { if (arguments.isEmpty) interact() else super.main(arguments) }
 
-  override def run() {
-    run(command(), arguments())
-  }
-
-  private lazy val defaultCompleter = new Completer {
-    private val RE0 = """\s+""".r
-    private val RE1 = """\s*(\w+)""".r
-    private val RE2 = """\s*(\w+)(.+)""".r
-
-    def complete(buffer: String, cursor: Int, candidates: List[CharSequence]) = buffer match {
-      case null | RE0()   =>
-        commandLines foreach { c => candidates.add(c.name) }; 0
-      case RE1(part)      =>
-        commandLines.collect { case c if c.name.startsWith(part) => c.name }.sorted.foreach {candidates.add}; 0
-      case RE2(cmd, part) =>
-        commandLines find {_.name == cmd} match {
-          case Some(cl) if cl.isInstanceOf[Completer] => cl.asInstanceOf[Completer].complete(part, cursor, candidates)
-          case _                                      => -1
-        }
-    }
-  }
+  override def run() { run(command(), arguments()) }
 
   private def interact() {
     val reader = new ConsoleReader(in, out)
@@ -74,27 +51,57 @@ abstract class CommandSuiteApplication(name: String, version: String, descriptio
 
     @tailrec
     def parse(line: String) {
-      if (line != null) {
-        val array = line.trim.split("\\s+")
-        run(array.head, array.tail)
-        parse(reader.readLine())
-      }
+      if (line == null) return
+      val array = line.trim.split("\\s+")
+      run(array.head, array.tail)
+      parse(reader.readLine())
     }
 
     parse(reader.readLine())
   }
 
   private def run(name: String, arguments: Array[String]) {
-    _commandLines find {_.name == name} match {
+    _commands find {_.name == name} match {
       case Some(c) => c.parse(arguments); c.run()
       case None    => throw new IllegalArgumentException("Unknown command: " + name)
     }
   }
 
-  object Help extends CommandLine("help", "show help infomation.") {
+  object Help extends Command("help", "display this infomation.") {
     private val command = parameter[String]("command", "sub command name.")
 
     def run() {}
+  }
+
+  object Quit extends Command("quit", "terminate the process.") {
+    private val command = parameter[String]("command", "sub command name.")
+
+    def run() {}
+  }
+
+  protected class DefaultCompleter extends Completer {
+
+    import collection.JavaConversions._
+
+    private val RE0 = """\s+""".r
+    private val RE1 = """\s*(\w+)""".r
+    private val RE2 = """\s*(\w+)(.+)""".r
+
+    def complete(buffer: String, cursor: Int, candidates: List[CharSequence]) = buffer match {
+      case null | RE0() => candidates.addAll(commandNames); 0
+      case RE1(p)       => candidates.addAll(commandNamesStartsWith(p)); 0
+      case RE2(n, p)    => completerOfCommand(n).complete(p, cursor, candidates)
+    }
+
+    def completerOfCommand(name: String): Completer = _commands find {_.name == name} match {
+      case Some(cl) if cl.isInstanceOf[Completer] => cl.asInstanceOf[Completer]
+      case _                                      => NullCompleter.INSTANCE
+    }
+
+    def commandNamesStartsWith(prefix: String): List[_ <: CharSequence] =
+      _commands.collect { case cl if cl.name.startsWith(prefix) => cl.name }.sorted
+
+    def commandNames: List[_ <: CharSequence] = _commands.map(_.name).sorted
   }
 
 }

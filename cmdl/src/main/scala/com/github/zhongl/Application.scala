@@ -16,10 +16,11 @@
 
 package com.github.zhongl
 
-/**
- * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
- */
+import Console.err
 
+/**
+* @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
+*/
 abstract class Application(name: String, val version: String, description: String)
   extends Command(name, description) {
 
@@ -30,9 +31,9 @@ abstract class Application(name: String, val version: String, description: Strin
       parse(arguments)
       if (printHelp()) print(help) else run()
     } catch {
-      case UnknownOptionException(option)          => println("Unknown option: " + option)
-      case MissingParameterException(parameter)    => println("Missing parameter: " + parameter)
-      case ConvertingException(id, value, explain) => println("Invalid " + id + " value: " + value + explain)
+      case UnknownOptionException(option)          => err.println("Unknown option: " + option)
+      case MissingParameterException(parameter)    => err.println("Missing parameter: " + parameter)
+      case ConvertingException(id, value, explain) => err.println("Invalid " + id + " value: " + value + explain)
     }
   }
 

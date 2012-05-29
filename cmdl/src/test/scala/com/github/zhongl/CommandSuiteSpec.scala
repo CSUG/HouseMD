@@ -66,6 +66,30 @@ class CommandSuiteSpec extends FunSpec with ShouldMatchers {
       acs main (Array())
       acs.bout.toString should be("acs> help q" + moveCursor(11) + backspace + "quit")
     }
+
+    it("should complete nothing") {
+      val acs = new ACommandSuite("help help a\t")
+      acs main (Array())
+      acs.bout.toString should be("acs> help help a")
+    }
+
+    it("should complain unknown command name") {
+      val acs = new ACommandSuite("unknow\n")
+      acs main (Array())
+      acs.bout.toString should be(
+        """acs> unknow
+          |Unknown command: unknow
+          |acs> """.stripMargin)
+    }
+
+    it("should complain unknown command name in help") {
+      val acs = new ACommandSuite("help unknow\n")
+      acs main (Array())
+      acs.bout.toString should be(
+        """acs> help unknow
+          |Unknown command: unknow
+          |acs> """.stripMargin)
+    }
   }
 
 }

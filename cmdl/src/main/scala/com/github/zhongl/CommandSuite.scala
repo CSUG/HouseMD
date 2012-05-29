@@ -33,7 +33,7 @@ abstract class CommandSuite(name: String, version: String, description: String, 
   protected val prompt   : String      = name + "> "
   protected val out      : PrintStream = System.out
   protected val in       : InputStream = System.in
-  protected val completer: Completer   = new DefaultCompleter {}
+  protected val completer: Completer   = DefaultCompleter
 
   private val command   = parameter[String]("command", "sub command name.")
   private val arguments = parameter[Array[String]]("arguments", "sub command arguments.", Some(Array()))
@@ -42,7 +42,9 @@ abstract class CommandSuite(name: String, version: String, description: String, 
 
   override def main(arguments: Array[String]) { if (arguments.isEmpty) interact() else super.main(arguments) }
 
-  override def run() { run(command(), arguments()) }
+  override def run() {
+    run(command(), arguments()) { n => throw new IllegalArgumentException("Unknown command: " + n) }
+  }
 
   private def interact() {
     val reader = new ConsoleReader(in, out)
@@ -53,43 +55,56 @@ abstract class CommandSuite(name: String, version: String, description: String, 
     def parse(line: String) {
       if (line == null) return
       val array = line.trim.split("\\s+")
-      run(array.head, array.tail)
+      try {
+        run(array.head, array.tail) { n => out.println("Unknown command: " + n) }
+      } catch {
+        case e: QuitException => return
+      }
       parse(reader.readLine())
     }
 
     parse(reader.readLine())
   }
 
-  private def run(name: String, arguments: Array[String]) {
+  private def run(name: String, arguments: Array[String])(handleUnknownCommand: String => Unit) {
     _commands find {_.name == name} match {
       case Some(c) => c.parse(arguments); c.run()
-      case None    => throw new IllegalArgumentException("Unknown command: " + name)
+      case None    => handleUnknownCommand(name)
     }
   }
 
-  object Help extends Command("help", "display this infomation.") with DefaultCompleter {
+  object Help extends Command("help", "display this infomation.") with CommandCompleter {
     private val command = parameter[String]("command", "sub command name.", Some("*"))
 
-    private lazy val format = "%1$-" + _commands.map(_.name.length).max + "s\t%2$s\n"
+    private lazy val pattern = "%1$-" + _commands.map(_.name.length).max + "s\t%2$s\n"
 
     def run() {
-      out.println()
-      command() match {
-        case "*"       => _commands foreach { c => out.printf(format, c.name, c.description) }
-        case n: String => _commands find (_.name == n) match {
-          case Some(c) => out.println(c.help)
-          case None    => out.println("Unknown command: " + n)
+      try {
+        val info = command() match {
+          case "*"       => _commands.foldLeft[String]("") { (a, c) => a + pattern.format(c.name, c.description) }
+          case n: String => _commands find (_.name == n) match {
+            case Some(c) => c.help + "\n"
+            case None    => throw new IllegalArgumentException("Unknown command: " + n)
+          }
         }
+        out.println()
+        out.print(info)
+        out.println()
+      } catch {
+        case e: IllegalArgumentException => out.println(e.getMessage)
       }
-      out.println()
     }
+
+    protected def argumentComplete(name: String, prefix: String, cursor: Int, candidates: List[CharSequence]) = -1
   }
 
   object Quit extends Command("quit", "terminate the process.") {
-    def run() { sys.exit() }
+    def run() { throw new QuitException }
   }
 
-  trait DefaultCompleter extends Completer {
+  class QuitException extends Exception
+
+  trait CommandCompleter extends Completer {
 
     import collection.JavaConversions._
 
@@ -100,18 +115,26 @@ abstract class CommandSuite(name: String, version: String, description: String, 
     def complete(buffer: String, cursor: Int, candidates: List[CharSequence]) = buffer match {
       case null | RE0() => candidates.addAll(commandNames); cursor
       case RE1(p)       => candidates.addAll(commandNamesStartsWith(p)); cursor - p.length
-      case RE2(n, p)    => completerOfCommand(n).complete(p, cursor, candidates)
+      case RE2(n, p)    => argumentComplete(n, p, cursor, candidates)
     }
 
-    private def completerOfCommand(name: String): Completer = _commands find {_.name == name} match {
-      case Some(cl) if cl.isInstanceOf[Completer] => cl.asInstanceOf[Completer]
-      case _                                      => NullCompleter.INSTANCE
-    }
+    protected def argumentComplete(name: String, prefix: String, cursor: Int, candidates: List[CharSequence]): Int
 
     private def commandNamesStartsWith(prefix: String): List[_ <: CharSequence] =
       _commands.collect { case cl if cl.name.startsWith(prefix) => cl.name }.sorted
 
     private def commandNames: List[_ <: CharSequence] = _commands.map(_.name).sorted
+  }
+
+  object DefaultCompleter extends CommandCompleter {
+
+    protected def argumentComplete(name: String, prefix: String, cursor: Int, candidates: List[CharSequence]) =
+      completerOfCommand(name).complete(prefix, cursor, candidates)
+
+    private def completerOfCommand(name: String): Completer = _commands find {_.name == name} match {
+      case Some(cl) if cl.isInstanceOf[Completer] => cl.asInstanceOf[Completer]
+      case _                                      => NullCompleter.INSTANCE
+    }
   }
 
 }

@@ -14,23 +14,23 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl
+package com.github.zhongl.command
 
 import jline.console.ConsoleReader
 import java.io.PrintStream
 import java.io.InputStream
 import annotation.tailrec
-import java.util.List
 import Convertors._
+import java.util.List
 import jline.console.completer.{NullCompleter, Completer}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-abstract class CommandSuite(name: String, version: String, description: String, commands: Command*)
-  extends Application(name, version, description) {
+abstract class CommandSuite extends Application {
 
-  protected val prompt   : String      = name + "> "
+  protected val commands: Seq[Command]
+
   protected val out      : PrintStream = System.out
   protected val in       : InputStream = System.in
   protected val completer: Completer   = DefaultCompleter
@@ -38,13 +38,15 @@ abstract class CommandSuite(name: String, version: String, description: String, 
   private val command   = parameter[String]("command", "sub command name.")
   private val arguments = parameter[Array[String]]("arguments", "sub command arguments.", Some(Array()))
 
-  private val _commands = commands :+ Help :+ Quit
+  private lazy val _commands = commands :+ Help :+ Quit
 
   override def main(arguments: Array[String]) { if (arguments.isEmpty) interact() else super.main(arguments) }
 
   override def run() {
     run(command(), arguments()) { n => throw new IllegalArgumentException("Unknown command: " + n) }
   }
+
+  protected def prompt: String = name + "> "
 
   private def interact() {
     val reader = new ConsoleReader(in, out)
@@ -73,7 +75,10 @@ abstract class CommandSuite(name: String, version: String, description: String, 
     }
   }
 
-  object Help extends Command("help", "display this infomation.") with CommandCompleter {
+  object Help extends Command with CommandCompleter {
+    override val name        = "help"
+    override val description = "display this infomation."
+
     private val command = parameter[String]("command", "sub command name.", Some("*"))
 
     private lazy val pattern = "%1$-" + _commands.map(_.name.length).max + "s\t%2$s\n"
@@ -87,7 +92,7 @@ abstract class CommandSuite(name: String, version: String, description: String, 
             case None    => throw new IllegalArgumentException("Unknown command: " + n)
           }
         }
-        out.print("\n"+info+"\n")
+        out.print("\n" + info + "\n")
       } catch {
         case e: IllegalArgumentException => out.println(e.getMessage)
       }
@@ -96,7 +101,10 @@ abstract class CommandSuite(name: String, version: String, description: String, 
     protected def argumentComplete(name: String, prefix: String, cursor: Int, candidates: List[CharSequence]) = -1
   }
 
-  object Quit extends Command("quit", "terminate the process.") {
+  object Quit extends Command {
+    override val name        = "quit"
+    override val description = "terminate the process."
+
     def run() { throw new QuitException }
   }
 
@@ -105,6 +113,7 @@ abstract class CommandSuite(name: String, version: String, description: String, 
   trait CommandCompleter extends Completer {
 
     import collection.JavaConversions._
+    import java.util.List
 
     private val RE0 = """\s+""".r
     private val RE1 = """\s*(\w+)""".r

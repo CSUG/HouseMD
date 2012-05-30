@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl
+package com.github.zhongl.command
 
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
@@ -25,8 +25,15 @@ import java.io.{ByteArrayInputStream, PrintStream, ByteArrayOutputStream}
  */
 class CommandSuiteSpec extends FunSpec with ShouldMatchers {
 
-  class ACommandSuite(line: String) extends CommandSuite("acs", "0.1.0", "A command suite") {
+  class ACommandSuite(line: String) extends CommandSuite {
     val bout = new ByteArrayOutputStream()
+
+    override val name        = "acs"
+    override val version     = "0.1.0"
+    override val description = "A command suite"
+
+    override protected val commands = Seq.empty[Command]
+
     override protected val out = new PrintStream(bout)
     override protected val in  = new ByteArrayInputStream(line.getBytes)
   }

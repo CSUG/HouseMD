@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl
+package com.github.zhongl.command
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>

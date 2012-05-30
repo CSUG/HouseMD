@@ -14,15 +14,16 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl
+package com.github.zhongl.command
 
 import Console.err
 
 /**
 * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
 */
-abstract class Application(name: String, val version: String, description: String)
-  extends Command(name, description) {
+abstract class Application extends Command {
+
+  val version: String
 
   private val printHelp = flag("-h" :: "--help" :: Nil, "show help infomation of this command.")
 

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl
+package com.github.zhongl.command
 
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
@@ -28,7 +28,9 @@ class CommandSpec extends FunSpec with ShouldMatchers {
 
   import Convertors._
 
-  abstract class Base extends Command("app name", "some description") {
+  abstract class Base extends Command {
+    override val name = "app name"
+    override val description = "some description"
 
     def run() {}
 

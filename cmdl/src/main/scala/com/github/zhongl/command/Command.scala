@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl
+package com.github.zhongl.command
 
 import collection.mutable.{ListBuffer, Map}
 import annotation.tailrec
@@ -22,12 +22,16 @@ import annotation.tailrec
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-abstract class Command(val name: String, val description: String) {
-  implicit val enhanceBoolean = (b: Boolean) => new {def ?(t: => String, f: => String = "") = if (b) t else f}
+abstract class Command {
+
+  val name       : String
+  val description: String
 
   private val options    = ListBuffer.empty[Option[_]]
   private val parameters = ListBuffer.empty[Parameter[_]]
   private val values     = Map.empty[String, String]
+
+  implicit private val enhanceBoolean = (b: Boolean) => new {def ?(t: => String, f: => String = "") = if (b) t else f}
 
   def help = "Usage: " + name +
     !options.isEmpty ? (" [OPTIONS]") +

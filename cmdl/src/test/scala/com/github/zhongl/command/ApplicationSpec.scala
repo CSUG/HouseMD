@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl
+package com.github.zhongl.command
 
 import org.scalatest.FunSpec
 import java.io.ByteArrayOutputStream
@@ -26,7 +26,10 @@ import org.scalatest.matchers.ShouldMatchers
 
 class ApplicationSpec extends FunSpec with ShouldMatchers {
 
-  object App extends Application("App", "0.1.0", "desc") {
+  object App extends Application {
+    override val name        = "App"
+    override val version     = "0.1.0"
+    override val description = "desc"
 
     val param = parameter[String]("param", "parameter")(manifest[String], { value: String =>
       if (value.contains("@")) value else throw new IllegalArgumentException(", it should contains @")

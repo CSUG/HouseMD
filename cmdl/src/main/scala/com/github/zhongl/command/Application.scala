@@ -16,23 +16,24 @@
 
 package com.github.zhongl.command
 
+import java.io.OutputStream
+
 /**
 * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
 */
-abstract class Application extends Command {
-
-  val version: String
+abstract class Application(name: String, val version: String, description: String, out: OutputStream = System.out)
+  extends Command(name, description, out) {
 
   private val printHelp = flag("-h" :: "--help" :: Nil, "show help infomation of this command.")
 
   def main(arguments: Array[String]) {
     try {
       parse(arguments)
-      if (printHelp()) out.println(help) else run()
+      if (printHelp()) println(help) else run()
     } catch {
-      case UnknownOptionException(option)          => out.println("Unknown option: " + option)
-      case MissingParameterException(parameter)    => out.println("Missing parameter: " + parameter)
-      case ConvertingException(id, value, explain) => out.println("Invalid " + id + " value: " + value + explain)
+      case UnknownOptionException(option)          => println("Unknown option: " + option)
+      case MissingParameterException(parameter)    => println("Missing parameter: " + parameter)
+      case ConvertingException(id, value, explain) => println("Invalid " + id + " value: " + value + explain)
     }
   }
 

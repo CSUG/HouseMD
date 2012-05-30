@@ -18,7 +18,7 @@ package com.github.zhongl.command
 
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
-import java.io.{PrintStream, ByteArrayOutputStream}
+import java.io.{OutputStream, ByteArrayOutputStream}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -26,10 +26,7 @@ import java.io.{PrintStream, ByteArrayOutputStream}
 
 class ApplicationSpec extends FunSpec with ShouldMatchers {
 
-  abstract class Base extends Application {
-    override val name        = "App"
-    override val version     = "0.1.0"
-    override val description = "desc"
+  class Base(out: OutputStream) extends Application("App", "0.1.0", "desc", out) {
 
     val param = parameter[String]("param", "parameter")(manifest[String], { value: String =>
       if (value.contains("@")) value else throw new IllegalArgumentException(", it should contains @")
@@ -52,14 +49,14 @@ class ApplicationSpec extends FunSpec with ShouldMatchers {
 
     it("should print help by short option") {
       val bout = new ByteArrayOutputStream()
-      val app = new Base {override protected val out = new PrintStream(bout)}
+      val app = new Base(bout)
       app main (Array("-h"))
       bout.toString should be(help)
     }
 
     it("should print help by long option") {
       val bout = new ByteArrayOutputStream()
-      val app = new Base {override protected val out = new PrintStream(bout)}
+      val app = new Base(bout)
       app main (Array("--help"))
       bout.toString should be(help)
     }

@@ -28,11 +28,7 @@ class CommandSpec extends FunSpec with ShouldMatchers {
 
   import Convertors._
 
-  abstract class Base extends Command {
-    override val name = "app name"
-    override val description = "some description"
-
-    override protected val out = System.out
+  abstract class Base extends Command("app name","some description", System.out) {
 
     def run() {}
 

@@ -18,17 +18,12 @@ package com.github.zhongl.command
 
 import collection.mutable.{ListBuffer, Map}
 import annotation.tailrec
-import java.io.PrintStream
+import java.io.{OutputStream, PrintStream}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-abstract class Command {
-
-  val name       : String
-  val description: String
-
-  protected val out: PrintStream
+abstract class Command(val name: String, val description: String, out: OutputStream) extends PrintStream(out) {
 
   private val options    = ListBuffer.empty[Option[_]]
   private val parameters = ListBuffer.empty[Parameter[_]]
@@ -137,9 +132,3 @@ abstract class Command {
   }
 
 }
-
-case class UnknownOptionException(name: String) extends Exception
-
-case class MissingParameterException(name: String) extends Exception
-
-case class ConvertingException(name: String, value: String, explain: String) extends Exception

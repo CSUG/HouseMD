@@ -17,26 +17,27 @@
 package com.github.zhongl.command
 
 import jline.console.ConsoleReader
-import java.io.InputStream
 import annotation.tailrec
 import Convertors._
 import java.util.List
 import jline.console.completer.{NullCompleter, Completer}
+import java.io.{OutputStream, InputStream}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-abstract class CommandSuite extends Application {
-
-  protected val commands: Seq[Command]
-  protected val in      : InputStream
-
-  protected val completer: Completer = DefaultCompleter
+abstract class CommandSuite(
+  name: String,
+  version: String,
+  description: String,
+  in: InputStream = System.in,
+  out: OutputStream = System.out,
+  commands: Set[Command]) extends Application(name, version, description, out) {
 
   private val command   = parameter[String]("command", "sub command name.")
   private val arguments = parameter[Array[String]]("arguments", "sub command arguments.", Some(Array()))
 
-  private lazy val _commands = commands :+ Help :+ Quit
+  private val _commands = Help :: Quit :: commands.toList
 
   override def main(arguments: Array[String]) { if (arguments.isEmpty) interact() else super.main(arguments) }
 
@@ -49,14 +50,14 @@ abstract class CommandSuite extends Application {
   private def interact() {
     val reader = new ConsoleReader(in, out)
     reader.setPrompt(prompt)
-    reader.addCompleter(completer)
+    reader.addCompleter(DefaultCompleter)
 
     @tailrec
     def parse(line: String) {
       if (line == null) return
       val array = line.trim.split("\\s+")
       try {
-        run(array.head, array.tail) { n => out.println("Unknown command: " + n) }
+        run(array.head, array.tail) { n => println("Unknown command: " + n) }
       } catch {
         case e: QuitException => return
       }
@@ -73,11 +74,7 @@ abstract class CommandSuite extends Application {
     }
   }
 
-  object Help extends Command with CommandCompleter {
-    override val name        = "help"
-    override val description = "display this infomation."
-
-    protected val out = CommandSuite.this.out
+  object Help extends Command("help", "display this infomation.", out) with CommandCompleter {
 
     private val command = parameter[String]("command", "sub command name.", Some("*"))
 
@@ -92,9 +89,9 @@ abstract class CommandSuite extends Application {
             case None    => throw new IllegalArgumentException("Unknown command: " + n)
           }
         }
-        out.print("\n" + info + "\n")
+        print("\n" + info + "\n")
       } catch {
-        case e: IllegalArgumentException => out.println(e.getMessage)
+        case e: IllegalArgumentException => println(e.getMessage)
       }
     }
 
@@ -102,12 +99,7 @@ abstract class CommandSuite extends Application {
 
   }
 
-  object Quit extends Command {
-    override val name        = "quit"
-    override val description = "terminate the process."
-
-    protected val out = CommandSuite.this.out
-
+  object Quit extends Command("quit", "terminate the process.", out) {
     def run() { throw new QuitException }
   }
 
@@ -116,7 +108,6 @@ abstract class CommandSuite extends Application {
   trait CommandCompleter extends Completer {
 
     import collection.JavaConversions._
-    import java.util.List
 
     private val RE0 = """\s+""".r
     private val RE1 = """\s*(\w+)""".r

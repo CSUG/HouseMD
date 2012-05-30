@@ -17,7 +17,6 @@
 package com.github.zhongl.command
 
 import jline.console.ConsoleReader
-import java.io.PrintStream
 import java.io.InputStream
 import annotation.tailrec
 import Convertors._
@@ -30,10 +29,9 @@ import jline.console.completer.{NullCompleter, Completer}
 abstract class CommandSuite extends Application {
 
   protected val commands: Seq[Command]
+  protected val in      : InputStream
 
-  protected val out      : PrintStream = System.out
-  protected val in       : InputStream = System.in
-  protected val completer: Completer   = DefaultCompleter
+  protected val completer: Completer = DefaultCompleter
 
   private val command   = parameter[String]("command", "sub command name.")
   private val arguments = parameter[Array[String]]("arguments", "sub command arguments.", Some(Array()))
@@ -79,6 +77,8 @@ abstract class CommandSuite extends Application {
     override val name        = "help"
     override val description = "display this infomation."
 
+    protected val out = CommandSuite.this.out
+
     private val command = parameter[String]("command", "sub command name.", Some("*"))
 
     private lazy val pattern = "%1$-" + _commands.map(_.name.length).max + "s\t%2$s\n"
@@ -99,11 +99,14 @@ abstract class CommandSuite extends Application {
     }
 
     protected def argumentComplete(name: String, prefix: String, cursor: Int, candidates: List[CharSequence]) = -1
+
   }
 
   object Quit extends Command {
     override val name        = "quit"
     override val description = "terminate the process."
+
+    protected val out = CommandSuite.this.out
 
     def run() { throw new QuitException }
   }

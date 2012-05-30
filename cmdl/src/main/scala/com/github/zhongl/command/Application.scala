@@ -16,8 +16,6 @@
 
 package com.github.zhongl.command
 
-import Console.err
-
 /**
 * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
 */
@@ -30,11 +28,11 @@ abstract class Application extends Command {
   def main(arguments: Array[String]) {
     try {
       parse(arguments)
-      if (printHelp()) print(help) else run()
+      if (printHelp()) out.print(help) else run()
     } catch {
-      case UnknownOptionException(option)          => err.println("Unknown option: " + option)
-      case MissingParameterException(parameter)    => err.println("Missing parameter: " + parameter)
-      case ConvertingException(id, value, explain) => err.println("Invalid " + id + " value: " + value + explain)
+      case UnknownOptionException(option)          => out.println("Unknown option: " + option)
+      case MissingParameterException(parameter)    => out.println("Missing parameter: " + parameter)
+      case ConvertingException(id, value, explain) => out.println("Invalid " + id + " value: " + value + explain)
     }
   }
 

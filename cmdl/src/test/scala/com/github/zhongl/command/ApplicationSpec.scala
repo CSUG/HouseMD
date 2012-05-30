@@ -17,8 +17,8 @@
 package com.github.zhongl.command
 
 import org.scalatest.FunSpec
-import java.io.ByteArrayOutputStream
 import org.scalatest.matchers.ShouldMatchers
+import java.io.{PrintStream, ByteArrayOutputStream}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -26,7 +26,7 @@ import org.scalatest.matchers.ShouldMatchers
 
 class ApplicationSpec extends FunSpec with ShouldMatchers {
 
-  object App extends Application {
+  abstract class Base extends Application {
     override val name        = "App"
     override val version     = "0.1.0"
     override val description = "desc"
@@ -52,17 +52,15 @@ class ApplicationSpec extends FunSpec with ShouldMatchers {
 
     it("should print help by short option") {
       val bout = new ByteArrayOutputStream()
-      Console.withOut(bout) {
-        App.main(Array("-h"))
-      }
+      val app = new Base {override protected val out = new PrintStream(bout)}
+      app main (Array("-h"))
       bout.toString should be(help)
     }
 
     it("should print help by long option") {
       val bout = new ByteArrayOutputStream()
-      Console.withOut(bout) {
-        App.main(Array("--help"))
-      }
+      val app = new Base {override protected val out = new PrintStream(bout)}
+      app main (Array("--help"))
       bout.toString should be(help)
     }
   }

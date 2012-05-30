@@ -18,6 +18,7 @@ package com.github.zhongl.command
 
 import collection.mutable.{ListBuffer, Map}
 import annotation.tailrec
+import java.io.PrintStream
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -26,6 +27,8 @@ abstract class Command {
 
   val name       : String
   val description: String
+
+  protected val out: PrintStream
 
   private val options    = ListBuffer.empty[Option[_]]
   private val parameters = ListBuffer.empty[Parameter[_]]

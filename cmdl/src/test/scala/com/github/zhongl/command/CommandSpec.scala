@@ -32,6 +32,8 @@ class CommandSpec extends FunSpec with ShouldMatchers {
     override val name = "app name"
     override val description = "some description"
 
+    override protected val out = System.out
+
     def run() {}
 
     def main(arguments: Array[String]) {

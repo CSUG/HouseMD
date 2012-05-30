@@ -38,7 +38,7 @@ class OptionsSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should get closure executor name") {
-      options.closureExecutorName() should be("com.github.zhongl.house.Executor")
+      options.mainClass() should be("com.github.zhongl.house.Executor")
     }
 
     it("should get console address") {

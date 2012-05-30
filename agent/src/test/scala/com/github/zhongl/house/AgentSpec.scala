@@ -23,9 +23,7 @@ import java.util.concurrent.{TimeUnit, CountDownLatch}
 class AgentSpec extends FunSpec {
   describe("Agent") {
     it("should start closure executor") {
-      val arguments = """class.loader.urls=a.jar
-       closure.executor.name=com.github.zhongl.house.MockExecutor
-       console.address=localhost:54321"""
+      val arguments = "a.jar com.github.zhongl.house.MockExecutor 54321"
 
       Agent.agentmain(arguments, null)
 
@@ -38,7 +36,7 @@ object Flag {
   val latch = new CountDownLatch(1)
 }
 
-class MockExecutor(consoleAddress: String, inst: Instrumentation) extends Runnable {
+class MockExecutor(port: Int, inst: Instrumentation) extends Runnable {
   def run() {
     Flag.latch.countDown()
   }

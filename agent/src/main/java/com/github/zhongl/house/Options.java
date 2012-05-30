@@ -65,7 +65,7 @@ class Options {
      * @return closure executor class full name.
      * @see Class#getName()
      */
-    public String closureExecutorName() {
+    public String mainClass() {
         return map.get("closure.executor.name");
     }
 

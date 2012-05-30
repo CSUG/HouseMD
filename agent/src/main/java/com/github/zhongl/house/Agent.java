@@ -32,13 +32,18 @@ public class Agent {
         ClassLoader parentClassLoader = Agent.class.getClassLoader();
         URLClassLoader classLoader = URLClassLoader.newInstance(options.classLoaderUrls(), parentClassLoader);
 
-        Runnable executor = (Runnable) classLoader.loadClass(options.closureExecutorName())
+        Runnable executor = (Runnable) classLoader.loadClass(options.mainClass())
                                                   .getConstructor(String.class, Instrumentation.class)
                                                   .newInstance(options.consoleAddress(), instrumentation);
 
-        Thread thread = new Thread(executor, "Closure Executor");
-        thread.setDaemon(true);
-        thread.start();
+        start(executor);
+    }
+
+    private static void start(Runnable executor) {
+        executor.run();
+//        Thread thread = new Thread(executor, "Closure Executor");
+//        thread.setDaemon(true);
+//        thread.start();
     }
 
 }

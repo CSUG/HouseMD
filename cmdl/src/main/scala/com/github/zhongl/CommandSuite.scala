@@ -87,9 +87,7 @@ abstract class CommandSuite(name: String, version: String, description: String, 
             case None    => throw new IllegalArgumentException("Unknown command: " + n)
           }
         }
-        out.println()
-        out.print(info)
-        out.println()
+        out.print("\n"+info+"\n")
       } catch {
         case e: IllegalArgumentException => out.println(e.getMessage)
       }

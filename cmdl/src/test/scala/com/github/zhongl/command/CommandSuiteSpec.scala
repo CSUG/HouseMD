@@ -19,6 +19,7 @@ package com.github.zhongl.command
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 import java.io.{OutputStream, ByteArrayInputStream, PrintStream, ByteArrayOutputStream}
+import jline.console.ConsoleReader
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -29,8 +30,7 @@ class CommandSuiteSpec extends FunSpec with ShouldMatchers {
     name = "acs",
     version = "0.1.0",
     description = "A command suite",
-    in = new ByteArrayInputStream(line.getBytes),
-    out = new PrintStream(out),
+    reader = new ConsoleReader(new ByteArrayInputStream(line.getBytes),new PrintStream(out)),
     commands = Set.empty[Command]
   )
 
@@ -44,7 +44,7 @@ class CommandSuiteSpec extends FunSpec with ShouldMatchers {
       val bout = new ByteArrayOutputStream()
       val acs = new ACommandSuite("", bout)
       acs main ("help quit".split("\\s+"))
-      bout.toString should be("\nUsage: quit\n\tterminate the process.\n\n")
+      bout.toString should be("\nUsage: quit\n    terminate the process.\n\n")
     }
 
     it("should run as interactive") {
@@ -54,10 +54,10 @@ class CommandSuiteSpec extends FunSpec with ShouldMatchers {
       bout.toString should be(
         """acs> help
           |
-          |help        display this infomation.
-          |quit        terminate the process.
+          |help    display this infomation.
+          |quit    terminate the process.
           |
-          |acs> """.stripMargin.replaceAll("        ", "\t"))
+          |acs> """.stripMargin)
     }
 
     it("should complete help command") {

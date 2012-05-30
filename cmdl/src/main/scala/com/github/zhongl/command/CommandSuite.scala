@@ -21,7 +21,6 @@ import annotation.tailrec
 import Convertors._
 import java.util.List
 import jline.console.completer.{NullCompleter, Completer}
-import java.io.{OutputStream, InputStream}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -30,9 +29,8 @@ abstract class CommandSuite(
   name: String,
   version: String,
   description: String,
-  in: InputStream = System.in,
-  out: OutputStream = System.out,
-  commands: Set[Command]) extends Application(name, version, description, out) {
+  reader: ConsoleReader = new ConsoleReader(System.in, System.out),
+  commands: Set[Command]) extends Application(name, version, description, PrintOut(reader)) {
 
   private val command   = parameter[String]("command", "sub command name.")
   private val arguments = parameter[Array[String]]("arguments", "sub command arguments.", Some(Array()))
@@ -48,7 +46,6 @@ abstract class CommandSuite(
   protected def prompt: String = name + "> "
 
   private def interact() {
-    val reader = new ConsoleReader(in, out)
     reader.setPrompt(prompt)
     reader.addCompleter(DefaultCompleter)
 
@@ -74,7 +71,7 @@ abstract class CommandSuite(
     }
   }
 
-  object Help extends Command("help", "display this infomation.", out) with CommandCompleter {
+  object Help extends Command("help", "display this infomation.", PrintOut(reader)) with CommandCompleter {
 
     private val command = parameter[String]("command", "sub command name.", Some("*"))
 
@@ -99,7 +96,7 @@ abstract class CommandSuite(
 
   }
 
-  object Quit extends Command("quit", "terminate the process.", out) {
+  object Quit extends Command("quit", "terminate the process.", PrintOut(reader)) {
     def run() { throw new QuitException }
   }
 

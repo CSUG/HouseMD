@@ -26,7 +26,7 @@ import java.io.{OutputStream, ByteArrayOutputStream}
 
 class ApplicationSpec extends FunSpec with ShouldMatchers {
 
-  class Base(out: OutputStream) extends Application("App", "0.1.0", "desc", out) {
+  class Base(out: OutputStream) extends Application("App", "0.1.0", "desc", PrintOut(out)) {
 
     val param = parameter[String]("param", "parameter")(manifest[String], { value: String =>
       if (value.contains("@")) value else throw new IllegalArgumentException(", it should contains @")

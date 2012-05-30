@@ -18,16 +18,16 @@ package com.github.zhongl.command
 
 import collection.mutable.{ListBuffer, Map}
 import annotation.tailrec
-import java.io.{OutputStream, PrintStream}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-abstract class Command(val name: String, val description: String, out: OutputStream) extends PrintStream(out) {
+abstract class Command(val name: String, val description: String, out: PrintOut) {
 
   private val options    = ListBuffer.empty[Option[_]]
   private val parameters = ListBuffer.empty[Parameter[_]]
   private val values     = Map.empty[String, String]
+  private val CR         = System.getProperty("line.separator")
 
   implicit private val enhanceBoolean = (b: Boolean) => new {def ?(t: => String, f: => String = "") = if (b) t else f}
 
@@ -53,6 +53,12 @@ abstract class Command(val name: String, val description: String, out: OutputStr
   }
 
   def run()
+
+  protected final def print(a: Any) { out.print(a.toString) }
+
+  protected final def println() { print(CR) }
+
+  protected final def println(a: Any) { print(a.toString + CR) }
 
   protected final def flag(names: List[String], description: String) =
     option[Boolean](names, description, false)(manifest[Boolean], Convertors.string2Boolean)

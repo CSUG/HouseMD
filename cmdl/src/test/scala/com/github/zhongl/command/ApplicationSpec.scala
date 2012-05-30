@@ -46,7 +46,7 @@ class ApplicationSpec extends FunSpec with ShouldMatchers {
                |                show help infomation of this command.
                |Parameters:
                |        param
-               |                parameter""".stripMargin.replaceAll("        ", "\t")
+               |                parameter""".stripMargin.replaceAll("        ", "\t") + "\n"
 
   describe("Application") {
 

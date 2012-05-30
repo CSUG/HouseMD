@@ -28,7 +28,7 @@ abstract class Application extends Command {
   def main(arguments: Array[String]) {
     try {
       parse(arguments)
-      if (printHelp()) out.print(help) else run()
+      if (printHelp()) out.println(help) else run()
     } catch {
       case UnknownOptionException(option)          => out.println("Unknown option: " + option)
       case MissingParameterException(parameter)    => out.println("Missing parameter: " + parameter)

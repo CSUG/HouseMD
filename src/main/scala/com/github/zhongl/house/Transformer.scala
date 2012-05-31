@@ -38,14 +38,12 @@ class Transformer(inst: Instrumentation, methodRegexs: Traversable[String], agen
   private[this] lazy val probeTransformer = classFileTransformer {
     (loader: ClassLoader, className: String, classfileBuffer: Array[Byte]) =>
     // TODO LOGGER.info(format("probe class {1} from {0}", loader, className))
-      println("probe " + className)
       ClassDecorator.decorate(classfileBuffer, methodRegexs)
   }
 
   private[this] lazy val resetTransformer = classFileTransformer {
     (loader: ClassLoader, className: String, classfileBuffer: Array[Byte]) =>
     // TODO log "reset class {1} from {0}", loader, className
-      println("reset " + className)
       getOriginClassFileBytes(loader, className)
   }
 
@@ -64,7 +62,7 @@ class Transformer(inst: Instrumentation, methodRegexs: Traversable[String], agen
   }
 
   private[this] def transformBy(t: ClassFileTransformer) {
-    val classes = toProbeClasses.toArray
+    val classes = toProbeClasses.toArray // eval first for avoiding ClassCircularityError cause be retransforming.
     inst.addTransformer(t, true)
     try {
       inst.retransformClasses(classes: _*)

@@ -15,13 +15,11 @@ import sys.process._
 
 println("Test started")
 
-"rm -f TraceTarget.class" !
+"rm -f *.class diagnosis.report" !
 
-"rm -f diagnosis.report" !
+"javac TestMain.java TraceTarget.java" !
 
-"javac TraceTarget.java" !
-
-val target = "java TraceTarget" run
+val target = "java TestMain" run
 
 println("TraceTarget ran")
 
@@ -30,7 +28,7 @@ val jarPath = sys.props("user.dir") + "/../target/house-assembly-0.1.0.jar"
 val LineRE = """(\d+).+\n""".r
 
 try {
-  val LineRE(pid) = "jps" #| "grep TraceTarget" !!
+  val LineRE(pid) = "jps" #| "grep TestMain" !!
 
   println("Diagnosing")
 

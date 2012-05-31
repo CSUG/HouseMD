@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2012 zhongl
  *
@@ -19,17 +18,7 @@ import java.lang.Exception;
 import java.lang.Thread;
 
 public class TraceTarget {
-
-    public static void main(String[] args) {
-        while (true){
-            addOne(0);
-            try{
-                Thread.sleep(1000L);
-            }catch (Exception e){
-                break;
-            }
-        }
+    public int addOne(int i) {
+        return i + 1;
     }
-
-    public static int addOne(int i){ return i + 1; }
 }

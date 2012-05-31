@@ -24,9 +24,9 @@ trait Suite {self: Command =>
 
   protected lazy val helpCommand = new Command("help", "display this infomation.", self.out) {
 
-    private      val command = parameter[String]("command", "sub command name.", Some("*"))
-    private lazy val length  = (name.length :: commands.map(_.name.length)).max
+    private val command = parameter[String]("command", "sub command name.", Some("*"))
 
+    private lazy val length  = (name.length :: commands.map(_.name.length)).max
     private lazy val pattern = "%1$-" + length + "s\t%2$s\n"
 
     def list = commands.foldLeft[String]("") { (a, c) => a + pattern.format(c.name, c.description) }

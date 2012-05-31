@@ -32,7 +32,7 @@ class SuiteSpec extends FunSpec with ShouldMatchers {
   class ASuiteAppcation(os: OutputStream)
     extends SuiteAppcation(name = "acs", description = "A command suite", out = PrintOut(os))
             with Application {
-    protected def commands = helpCommand :: new ACommand(out) :: Nil
+    override protected lazy val commands = helpCommand :: new ACommand(out) :: Nil
   }
 
   describe("Suite Application") {

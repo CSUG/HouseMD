@@ -31,7 +31,7 @@ class TransformerSpec extends FunSpec {
   class Mock2
 
   describe("Transformer") {
-    it("should probe classes that filtered by method regex patterns"){
+    ignore("should probe classes that filtered by method regex patterns"){
       val inst = mock(classOf[Instrumentation])
       val methodRegexs = Array(".*Mock1.*")
 

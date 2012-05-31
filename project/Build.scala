@@ -17,6 +17,7 @@
 import sbt._
 import sbt.Keys._
 import sbtassembly.Plugin._
+import AssemblyKeys._
 
 object Build extends sbt.Build {
 
@@ -47,7 +48,8 @@ object Build extends sbt.Build {
         ("Premain-Class","com.github.zhongl.house.Diagnosis"),
         ("Can-Retransform-Classes","true"),
         ("Can-Redefine-Classes","true")
-      )
+      ),
+      test in assembly := {}
       // add other settings here
     )
   )

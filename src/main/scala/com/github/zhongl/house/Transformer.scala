@@ -17,70 +17,44 @@
 package com.github.zhongl.house
 
 import java.lang.System.{currentTimeMillis => now}
-import java.lang.reflect.Method
 import java.io.FileNotFoundException
 import scala.Predef._
 import scala.Array
-import instrument.{ClassDefinition, ClassFileTransformer, Instrumentation}
+import instrument.{ClassFileTransformer, Instrumentation}
 import java.security.ProtectionDomain
+import java.lang.reflect.Modifier
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Transformer(inst: Instrumentation, methodRegexs: Traversable[String], agentJarPath:String) {
+class Transformer(inst: Instrumentation, methodRegexs: Traversable[String], agentJarPath: String) {
 
-  private[this] lazy val toProbeClasses = inst.getAllLoadedClasses.filter(toProbe).toSet
+  private[this] lazy val toProbeClasses = inst.getAllLoadedClasses filter { c =>
+    (!Modifier.isFinal(c.getModifiers)) && (c.getDeclaredMethods ++ c.getMethods).find { m =>
+      methodRegexs.find((c.getName + "." + m.getName).matches).isDefined
+    }.isDefined
+  }
 
   private[this] lazy val probeTransformer = classFileTransformer {
     (loader: ClassLoader, className: String, classfileBuffer: Array[Byte]) =>
     // TODO LOGGER.info(format("probe class {1} from {0}", loader, className))
+      println("probe " + className)
       ClassDecorator.decorate(classfileBuffer, methodRegexs)
   }
 
   private[this] lazy val resetTransformer = classFileTransformer {
     (loader: ClassLoader, className: String, classfileBuffer: Array[Byte]) =>
     // TODO log "reset class {1} from {0}", loader, className
+      println("reset " + className)
       getOriginClassFileBytes(loader, className)
   }
 
-  private[this] lazy val log = classFileTransformer {
-    (loader: ClassLoader, className: String, classfileBuffer: Array[Byte]) =>
-      classfileBuffer
-  }
-
   def probe() {
-    inst.addTransformer(log)
-    redefine {
-      c: Class[_] =>
-        val loader: ClassLoader = c.getClassLoader
-//        if (loader.isInstanceOf[URLClassLoader]) {
-//          import java.net.URL
-//          import java.io.File
-//
-//          AccessController.doPrivileged(new PrivilegedAction[Unit] {
-//            def run() {
-//              val method = loader.getClass.getDeclaredMethod("addURL", classOf[URL])
-//              method.invoke(loader, new File(agentJarPath).toURI.toURL)
-//            }
-//          })
-//        }
-        val origin = getOriginClassFileBytes(loader, c.getName.replace('.', '/'))
-        val decorated = ClassDecorator.decorate(origin, methodRegexs)
-        new ClassDefinition(c, decorated)
-    }
+    transformBy(probeTransformer)
   }
 
   def reset() {
-    redefine {
-      c: Class[_] =>
-        val origin = getOriginClassFileBytes(c.getClassLoader, c.getName.replace('.', '/'))
-        new ClassDefinition(c, origin)
-    }
-    inst.removeTransformer(log)
-  }
-
-  private[this] def redefine(fun: Class[_] => ClassDefinition) {
-    inst.redefineClasses(toProbeClasses.toArray.map {fun}: _*)
+    transformBy(resetTransformer)
   }
 
   private[this] def getOriginClassFileBytes(loader: ClassLoader, className: String): Array[Byte] = {
@@ -90,40 +64,32 @@ class Transformer(inst: Instrumentation, methodRegexs: Traversable[String], agen
   }
 
   private[this] def transformBy(t: ClassFileTransformer) {
-    inst.addTransformer(t)
+    val classes = toProbeClasses.toArray
+    inst.addTransformer(t, true)
     try {
-      inst.retransformClasses(toProbeClasses.toArray: _*)
+      inst.retransformClasses(classes: _*)
     } finally {
       inst.removeTransformer(t)
     }
   }
 
-  private[this] def toProbe(method: Method) = {
-    val fullName = method.getDeclaringClass.getName + "." + method.getName
-    !methodRegexs.find(fullName.matches).isEmpty
-  }
-
-  private[this] def toProbe(klass: Class[_]): Boolean = {
-    val methods = (klass.getDeclaredMethods ++ klass.getMethods).toSet
-    !methods.find(toProbe).isEmpty
-  }
-
   private[this] def classFileTransformer(fun: (ClassLoader, String, Array[Byte]) => Array[Byte]) =
     new ClassFileTransformer {
       def transform(
-                     loader: ClassLoader,
-                     className: String,
-                     classBeingRedefined: Class[_],
-                     protectionDomain: ProtectionDomain,
-                     classfileBuffer: Array[Byte]) = {
+        loader: ClassLoader,
+        className: String,
+        classBeingRedefined: Class[_],
+        protectionDomain: ProtectionDomain,
+        classfileBuffer: Array[Byte]) = {
         var bytes = classfileBuffer
         try {
-          if (toProbeClasses.contains(classBeingRedefined)) {
-            // TODO clean this
-            bytes = fun(loader, className, classfileBuffer)
+          toProbeClasses.find {_.getName.replace('.', '/') == className} match {
+            case Some(_) => bytes = fun(loader, className, classfileBuffer)
+            case None    => // ignore
           }
         } catch {
           case e =>
+            e.printStackTrace()
           // TODO log "transfor but not reset class {1} from {0}", loader, className
         }
         bytes

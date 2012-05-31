@@ -26,7 +26,7 @@ import java.io.File
 
 class CommandSpec extends FunSpec with ShouldMatchers {
 
-  import Convertors._
+  import Converters._
 
   abstract class Base extends Command("app name","some description", PrintOut(System.out)) {
 

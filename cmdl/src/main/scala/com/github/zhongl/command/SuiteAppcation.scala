@@ -16,7 +16,7 @@
 
 package com.github.zhongl.command
 
-import Convertors._
+import Converters._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>

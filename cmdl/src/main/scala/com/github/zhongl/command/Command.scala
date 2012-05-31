@@ -59,7 +59,7 @@ abstract class Command(val name: String, val description: String, val out: Print
   protected final def println(a: Any) { print(a.toString + CR) }
 
   protected final def flag(names: List[String], description: String) =
-    option[Boolean](names, description, false)(manifest[Boolean], Convertors.string2Boolean)
+    option[Boolean](names, description, false)(manifest[Boolean], Converters.string2Boolean)
 
   protected final def option[T](names: List[String], description: String, defaultValue: T)
     (implicit m: Manifest[T], convert: String => T) = {
@@ -114,6 +114,12 @@ abstract class Command(val name: String, val description: String, val out: Print
       case t: Throwable => throw ConvertingException(name, value, t.getMessage)
     }
   }
+
+  protected final def info(s: String) { println("INFO: " + s) }
+
+  protected final def warn(s: String) { println("WARN: " + s) }
+
+  protected final def error(s: String) { println("ERROR: " + s) }
 
   case class Option[T: Manifest](names: List[String], description: String, defaultValue: T) {
     override def toString = {

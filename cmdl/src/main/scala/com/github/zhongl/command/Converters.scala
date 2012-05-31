@@ -16,12 +16,15 @@
 
 package com.github.zhongl.command
 
+import java.util.regex.Pattern
+
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-object Convertors {
-  implicit val string2Int     = (s: String) => s.toInt
-  implicit val string2Boolean = (s: String) => s.toBoolean
-  implicit val string2Array   = (s: String) => s.split("\\s+")
+object Converters {
+  implicit val string2Int     = (_: String).toInt
+  implicit val string2Boolean = (_: String).toBoolean
+  implicit val string2Array   = (_: String).split("\\s+")
+  implicit val string2Pattern = Pattern.compile(_: String)
 }

@@ -59,5 +59,5 @@ object Utils {
     Array(hours, minutes, seconds)
   }
 
-
+  def classNameOf[T: Manifest] = manifest[T].erasure.getName
 }

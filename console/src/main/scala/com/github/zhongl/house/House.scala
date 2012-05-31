@@ -16,8 +16,7 @@
 
 package com.github.zhongl.house
 
-import com.github.zhongl.command.Application
-import actors.Actor.{actor => fork}
+import actors.Actor.{actor => fork, self}
 import com.sun.tools.attach.VirtualMachine
 import java.net.InetSocketAddress
 import collection.JavaConversions._
@@ -25,12 +24,15 @@ import java.nio.ByteBuffer
 import java.nio.channels._
 import annotation.tailrec
 import java.io.{IOException, File}
+import com.github.zhongl.command.{PrintOut, Command, Application}
+import actors.Actor
+import Utils._
 
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-object House extends Application(name = "house", version = "0.2.0", description = "a runtime diagnosis tool of JVM.") {
+object House extends Command("house", "a runtime diagnosis tool of JVM.", PrintOut(System.out)) with Application {
 
   implicit private val string2Port = { value: String =>
     val p = value.toInt
@@ -42,12 +44,11 @@ object House extends Application(name = "house", version = "0.2.0", description 
     if (file.exists() && file.isFile) file else throw new IllegalArgumentException(", it should be an existed file")
   }
 
-  private val defaultFile = new File("agent.jar")
+  private val port = option[Int]("-p" :: "--port" :: Nil, "set console local socket server port number.", 54321)
+  private val pid  = parameter[String]("pid", "id of process to be diagnosing.")
 
-  private val debug = flag("-d" :: "--debug" :: Nil, "enable debug mode.")
-  private val port  = option[Int]("-p" :: "--port" :: Nil, "set console local socket server port number.", 54321)
-  private val agent = option[File]("-a" :: "--agent" :: Nil, "set java agent jar file.", defaultFile)
-  private val pid   = parameter[String]("pid", "id of process to be diagnosing.")
+  private lazy val agentJarFile = sourceOf(getClass)
+  private lazy val agentOptions = port() :: classNameOf[Duck] :: classNameOf[Trace] :: Nil
 
   def run() {
     val server = ServerSocketChannel.open()
@@ -56,18 +57,39 @@ object House extends Application(name = "house", version = "0.2.0", description 
     try {
       server.configureBlocking(false)
       server.socket().bind(new InetSocketAddress(port()))
-      debug("bound localhost socket at " + port())
+      info("bound localhost socket at " + port())
       server.register(selector, SelectionKey.OP_ACCEPT)
 
-      fork {driveAgentLoading()}
+      val actor = fork {loop(selector)}
 
-      loop(selector)
+      registerCtrlCHandler(actor)
+
+      driveAgentLoading()
     } catch {
       case e => error(e.toString)
     }
 
     silentClose(selector)
     silentClose(server)
+    info("bye")
+  }
+
+  private def registerCtrlCHandler(actor: Actor) {
+    val main = Thread.currentThread()
+
+    @tailrec
+    def waitForAgentExit() {
+      try {main.join(5000L)} catch {
+        case e: InterruptedException =>
+          println("Something goes wrong, agent couldn't exit normally, you may wait more 5 seconds, or force kill it.")
+          waitForAgentExit()
+      }
+    }
+
+    sys.addShutdownHook {
+      actor ! "exit"
+      waitForAgentExit()
+    }
   }
 
   private def silentClose(closable: {def close()}) {
@@ -109,18 +131,29 @@ object House extends Application(name = "house", version = "0.2.0", description 
 
   private def write(key: SelectionKey) {
     val available = System.in.available()
+
     if (available > 0) {
-      val channel = key.channel().asInstanceOf[WritableByteChannel]
+      val channel = key.channel()
       val bytes = new Array[Byte](available)
 
       System.in.read(bytes)
-      val write = channel.write(ByteBuffer.wrap(bytes))
-      if (write < available)
-        throw new IllegalStateException("Can't send all input, you should enlarge socket send buffer.")
+      write(channel, bytes)
     }
   }
 
-  def loop(selector: Selector) {
+  private def write(channel: Channel, bytes: Array[Byte]) {
+    val write = channel.asInstanceOf[WritableByteChannel].write(ByteBuffer.wrap(bytes))
+    if (write < bytes.length)
+      throw new IllegalStateException("Can't send all input, you should enlarge socket send buffer.")
+  }
+
+  private def loop(selector: Selector) {
+    def sendQuitTo(c: Channel) {
+      write(c, "quit\n".getBytes)
+    }
+
+    var quit = false
+
     while (true) {
       val selected = selector.select(500L)
 
@@ -128,31 +161,30 @@ object House extends Application(name = "house", version = "0.2.0", description 
         selector.selectedKeys() foreach {
           case k if k.isAcceptable => accept(k, selector)
           case k if k.isReadable   => read(k)
-          case k if k.isWritable   => write(k)
+          case k if k.isWritable   => if (quit) sendQuitTo(k.channel()) else write(k)
           case _                   => //ignore
         }
+      }
+
+      self.receiveWithin(10L) {
+        case "exit" => quit = true
       }
     }
   }
 
   private def driveAgentLoading() {
     val vm = VirtualMachine.attach(pid())
-    debug("attached vm " + pid())
+    info("attached vm " + pid())
     try {
-      vm.loadAgent(agent().getAbsolutePath, port().toString)
-      debug("loaded agent " + agent())
+      vm.loadAgent(agentJarFile, agentOptions mkString (" "))
+      info("loaded agent " + agentJarFile + ", options: " + agentOptions)
     } catch {
       case e => error(e.toString)
     } finally {
       vm.detach()
-      debug("detached vm " + pid())
+      info("detached vm " + pid())
     }
   }
 
-  private def debug(s: String) { if (debug()) println(s) }
-
-  private def error(s: String) { Console.err.println(s) }
-
   class ExitException extends Exception
-
 }

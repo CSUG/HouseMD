@@ -26,7 +26,7 @@ import java.io.{OutputStream, ByteArrayOutputStream}
 
 class ApplicationSpec extends FunSpec with ShouldMatchers {
 
-  class Base(out: OutputStream) extends Application("App", "0.1.0", "desc", PrintOut(out)) {
+  class Base(out: OutputStream) extends Command("App", "desc", PrintOut(out)) with Application {
 
     val param = parameter[String]("param", "parameter")(manifest[String], { value: String =>
       if (value.contains("@")) value else throw new IllegalArgumentException(", it should contains @")
@@ -35,8 +35,7 @@ class ApplicationSpec extends FunSpec with ShouldMatchers {
     def run() {}
   }
 
-  val help = """0.1.0
-               |Usage: App [OPTIONS] param
+  val help = """Usage: App [OPTIONS] param
                |        desc
                |Options:
                |        -h, --help

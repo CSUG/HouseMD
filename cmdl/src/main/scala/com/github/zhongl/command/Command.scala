@@ -22,7 +22,7 @@ import annotation.tailrec
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-abstract class Command(val name: String, val description: String, out: PrintOut) {
+abstract class Command(val name: String, val description: String, val out: PrintOut) extends Runnable {
 
   private val options    = ListBuffer.empty[Option[_]]
   private val parameters = ListBuffer.empty[Parameter[_]]
@@ -51,8 +51,6 @@ abstract class Command(val name: String, val description: String, out: PrintOut)
 
     read(arguments.toList)
   }
-
-  def run()
 
   protected final def print(a: Any) { out.print(a.toString) }
 

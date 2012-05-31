@@ -24,81 +24,73 @@ import jline.console.ConsoleReader
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class CommandSuiteSpec extends FunSpec with ShouldMatchers {
+class ShellSpec extends FunSpec with ShouldMatchers {
 
-  class ACommandSuite(line: String, out: OutputStream) extends CommandSuite(
-    name = "acs",
-    version = "0.1.0",
-    description = "A command suite",
-    reader = new ConsoleReader(new ByteArrayInputStream(line.getBytes),new PrintStream(out)),
-    commands = Set.empty[Command]
-  )
+  class AShell(line: String, out: OutputStream) extends Shell(
+    name = "shell",
+    description = "a shell example",
+    reader = new ConsoleReader(new ByteArrayInputStream(line.getBytes), new PrintStream(out))) {
+    protected def commands = helpCommand :: Quit :: Nil
+  }
 
   private val backspace = "\u001B[K"
 
   private def moveCursor(i: Int) = "\u001B[" + i + "G"
 
-  describe("Command suite") {
+  describe("Shell") {
 
-    it("should run as non-interactive") {
+    it("should get help") {
       val bout = new ByteArrayOutputStream()
-      val acs = new ACommandSuite("", bout)
-      acs main ("help quit".split("\\s+"))
-      bout.toString should be("\nUsage: quit\n    terminate the process.\n\n")
-    }
-
-    it("should run as interactive") {
-      val bout = new ByteArrayOutputStream()
-      val acs = new ACommandSuite("help\n", bout)
-      acs main (Array())
+      val shell = new AShell("help\n", bout)
+      shell main (Array())
       bout.toString should be(
-        """acs> help
+        """shell> help
           |
           |help    display this infomation.
           |quit    terminate the process.
           |
-          |acs> """.stripMargin)
+          |shell> """.stripMargin)
     }
 
     it("should complete help command") {
       val bout = new ByteArrayOutputStream()
-      val acs = new ACommandSuite("h\t", bout)
-      acs main (Array())
-      bout.toString should be("acs> h" + moveCursor(6) + backspace + "help")
+      val shell = new AShell("h\t", bout)
+      shell main (Array())
+      bout.toString should be("shell> h" + moveCursor(8) + backspace + "help")
     }
 
     it("should complete help command argument") {
       val bout = new ByteArrayOutputStream()
-      val acs = new ACommandSuite("help q\t", bout)
-      acs main (Array())
-      bout.toString should be("acs> help q" + moveCursor(11) + backspace + "quit")
+      val shell = new AShell("help q\t", bout)
+      shell main (Array())
+      bout.toString should be("shell> help q" + moveCursor(13) + backspace + "quit")
     }
 
     it("should complete nothing") {
       val bout = new ByteArrayOutputStream()
-      val acs = new ACommandSuite("help help a\t", bout)
-      acs main (Array())
-      bout.toString should be("acs> help help a")
+      val shell = new AShell("help help a\t", bout)
+      shell main (Array())
+      bout.toString should be("shell> help help a")
     }
 
     it("should complain unknown command name") {
       val bout = new ByteArrayOutputStream()
-      val acs = new ACommandSuite("unknow\n", bout)
-      acs main (Array())
+      val shell = new AShell("unknow\n", bout)
+      shell main (Array())
       bout.toString should be(
-        """acs> unknow
+        """shell> unknow
           |Unknown command: unknow
-          |acs> """.stripMargin)
+          |shell> """.stripMargin)
     }
 
     it("should complain unknown command name in help") {
       val bout = new ByteArrayOutputStream()
-      val acs = new ACommandSuite("help unknow\n", bout)
-      acs main (Array())
+      val shell = new AShell("help unknow\n", bout)
+      shell main (Array())
       bout.toString should be(
-        """acs> help unknow
+        """shell> help unknow
           |Unknown command: unknow
-          |acs> """.stripMargin)
+          |shell> """.stripMargin)
     }
   }
 

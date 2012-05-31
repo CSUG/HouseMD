@@ -19,8 +19,7 @@ package com.github.zhongl.command
 /**
 * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
 */
-abstract class Application(name: String, val version: String, description: String, out: PrintOut = PrintOut(System.out))
-  extends Command(name, description, out) {
+trait Application {self: Command =>
 
   private val printHelp = flag("-h" :: "--help" :: Nil, "show help infomation of this command.")
 
@@ -34,6 +33,4 @@ abstract class Application(name: String, val version: String, description: Strin
       case ConvertingException(id, value, explain) => println("Invalid " + id + " value: " + value + explain)
     }
   }
-
-  override def help = version + "\n" + super.help
 }

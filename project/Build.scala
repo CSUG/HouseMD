@@ -32,7 +32,7 @@ object Build extends sbt.Build {
       scalacOptions                 ++= Seq("-unchecked", "-deprecation"),
       libraryDependencies           :=  consoleDependencies ++ test,
       packageOptions                +=  Package.ManifestAttributes(
-        ("Main-Class","com.github.zhongl.house.HouseMD")
+        ("Main-Class","com.github.zhongl.housemd.HouseMD")
       )
     ) ++ classpathSettings
   ).dependsOn(cmdl)
@@ -53,7 +53,7 @@ object Build extends sbt.Build {
       artifactName        :=  { (scalaVersion, moduleID, artifact) => moduleID.name + "-" + moduleID.revision + ".jar" },
       javacOptions        ++= Seq("-source", "1.6", "-target", "1.6"),
       packageOptions      +=  Package.ManifestAttributes(
-        ("Agent-Class","com.github.zhongl.house.Agent"),
+        ("Agent-Class","com.github.zhongl.housemd.Agent"),
         ("Can-Retransform-Classes","true"),
         ("Can-Redefine-Classes","true")
       )

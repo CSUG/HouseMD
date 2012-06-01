@@ -52,6 +52,12 @@ abstract class Command(val name: String, val description: String, val out: Print
     read(arguments.toList)
   }
 
+  protected final def info(s: String) { println("INFO: " + s) }
+
+  protected final def warn(s: String) { println("WARN: " + s) }
+
+  protected final def error(s: String) { println("ERROR: " + s) }
+
   protected final def print(a: Any) { out.print(a.toString) }
 
   protected final def println() { print(CR) }
@@ -115,11 +121,6 @@ abstract class Command(val name: String, val description: String, val out: Print
     }
   }
 
-  protected final def info(s: String) { println("INFO: " + s) }
-
-  protected final def warn(s: String) { println("WARN: " + s) }
-
-  protected final def error(s: String) { println("ERROR: " + s) }
 
   case class Option[T: Manifest](names: List[String], description: String, defaultValue: T) {
     override def toString = {

@@ -54,8 +54,8 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
   private val timeout        = option[Second]("-t" :: "--timeout" :: Nil, "limited trace seconds.", 10)
   private val limit          = option[Int]("-l" :: "--limit" :: Nil, "limited limited times.", 1000)
   private val interval       = option[Second]("-i" :: "--interval" :: Nil, "display trace statistics interval.", 1)
-  private val detailable     = flag("-d" :: "--trace-detail" :: Nil, "enable append invocation detail to " + detailFile + ".")
-  private val stackable      = flag("-s" :: "--calling-stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
+  private val detailable     = flag("-d" :: "--detail" :: Nil, "enable append invocation detail to " + detailFile + ".")
+  private val stackable      = flag("-s" :: "--stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
 
   private val classPattern   = parameter[Pattern]("class", "class name regex pattern.")
   private val methodPatterns = parameter[Array[Pattern]]("method", "method name regex pattern.", Some(Array[Pattern](".+")))
@@ -66,9 +66,8 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
   private lazy val candidates = {
     val pp = packagePattern()
     val cp = classPattern()
-    inst.getAllLoadedClasses filter {
-      c =>
-        isNotFinal(c) && pp.matcher(c.getPackage.getName).matches() && cp.matcher(c.getSimpleName).matches()
+    inst.getAllLoadedClasses filter { c =>
+      pp.matcher(c.getPackage.getName).matches() && cp.matcher(c.getSimpleName).matches() && isNotFinal(c)
     }
   }
 
@@ -184,12 +183,14 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
   }
 
   private def isNotFinal(c: Class[_]) = if (Modifier.isFinal(c.getModifiers)) {
-    warn("Can't trace " + c + ", because it is final.")
+    warn("Can't trace " + c + ", because it is final")
     false
   } else true
 
   class Second(val value: Int) {
     def toMillis = TimeUnit.SECONDS.toMillis(value)
+
+    override def toString = value.toString
   }
 
   case class OverLimit()

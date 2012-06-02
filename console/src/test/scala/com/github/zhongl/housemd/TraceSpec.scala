@@ -35,7 +35,7 @@ class TraceSpec extends FunSpec with ShouldMatchers {
   def parseAndRun(arguments: String)(verify: (String, File, File) => Unit) {
     val out = new ByteArrayOutputStream
     val inst = mock(classOf[Instrumentation])
-    doReturn(Array(classOf[A])).when(inst).getAllLoadedClasses
+    doReturn(Array(classOf[A], classOf[String])).when(inst).getAllLoadedClasses
 
     val trace = new Trace(inst, PrintOut(out))
 
@@ -92,6 +92,21 @@ class TraceSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should end tracing by cancel")(pending)
+
+    it("should disable trace final class") {
+      parseAndRun("String") { (out, detail, stack) =>
+        out.split("\n").head should be("WARN: Can't trace " + classOf[String] + ", because it is final")
+      }
+    }
+
+    it("should only include package com.github") {
+      parseAndRun("-p com\\.github .+ m") { (out, detail, stack) =>
+        out.split("\n").head should not be ("WARN: Can't trace " + classOf[String] + ", because it is final")
+      }
+    }
+
+    it("should output invocation stack")(pending)
+
   }
 
 }

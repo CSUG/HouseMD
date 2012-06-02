@@ -42,13 +42,13 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
   private implicit val string2Seconds           = (s: String) => new Second(s)
   private implicit val arrayString2ArrayPattern = (_: String).split("\\s+") map (Pattern.compile)
 
-  private val outputRoot = {
+  val outputRoot = {
     val dir = new File("/tmp/" + name + "/" + ManagementFactory.getRuntimeMXBean.getName)
     dir.mkdirs()
     dir
   }
-  private val detailFile = new File(outputRoot, "detail")
-  private val stackFile  = new File(outputRoot, "stack")
+  val detailFile = new File(outputRoot, "detail")
+  val stackFile  = new File(outputRoot, "stack")
 
   private val packagePattern = option[Pattern]("-p" :: "--package" :: Nil, "package regex pattern for filtering.", ".*")
   private val timeout        = option[Second]("-t" :: "--timeout" :: Nil, "limited trace seconds.", 10)
@@ -130,8 +130,8 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
 
     while (cond) {
       receiveWithin(500) {
-        case OverLimit                 => cond = false; info("End traceing by overlimit")
-        case Cancel                    => cond = false; info("End traceing by cancel.")
+        case OverLimit                 => cond = false; info("End tracing by overlimit")
+        case Cancel                    => cond = false; info("End tracing by cancel.")
         case HandleInvocation(context) =>
           if (enableDetail) detailWriter.write(context)
           if (enableStack) stackWriter.write(context)
@@ -153,7 +153,7 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
 
       if (t - start >= timoutMillis) {
         cond = false
-        info("End traceing by timeout.")
+        info("End tracing by timeout")
       }
     }
 
@@ -220,14 +220,16 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
       totalElapseMills = totalElapseMills + elapseMillis
     }
 
-    override def toString =
-      "%1$-30s %2$#9s %3$#9s %4$#9s %5$#9s %6$#9s" format(
-        (className.split("\\.").last + "." + methodName),
-        totalTimes,
-        failureTimes,
-        (if (minElapseMillis == -1) NaN else minElapseMillis),
-        (if (maxElapseMillis == -1) NaN else maxElapseMillis),
-        (if (totalTimes == 0) NaN else totalElapseMills / totalTimes))
+    def avgElapseMillis =
+      if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes
+
+    override def toString = "%1$-30s %2$#9s %3$#9s %4$#9s %5$#9s %6$#9s" format(
+      (className.split("\\.").last + "." + methodName),
+      totalTimes,
+      failureTimes,
+      (if (minElapseMillis == -1) NaN else minElapseMillis),
+      (if (maxElapseMillis == -1) NaN else maxElapseMillis),
+      avgElapseMillis)
 
   }
 

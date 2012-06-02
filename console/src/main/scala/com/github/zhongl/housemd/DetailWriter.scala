@@ -26,7 +26,7 @@ class DetailWriter(writer: BufferedWriter) {
   def write(context: Context) {
     val started = "%1$tF %1$tT" format (new Date(context.started))
     val elapse = "%,dms" format (context.stopped.get - context.started)
-    val thread = context.thread.getName
+    val thread = "[" + context.thread.getName + "]"
     val method = context.className + "." + context.methodName
     val arguments = context.arguments.mkString("[", " ", "]")
     val resultOrExcption = context.resultOrException match {

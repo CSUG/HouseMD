@@ -39,6 +39,23 @@ object Reflections {
   private val D = classOf[Double]
   private val d = Double.TYPE
 
+  // FIXME this is ugly, because i don't know how to get class of byte[]
+  private lazy val defineClassMethod = {
+    val m = classOf[ClassLoader].getDeclaredMethods.find { m =>
+      m.getName == "defineClass" && (m.getParameterTypes match {
+        case Array(S, _, `i`, `i`) => true
+        case _                     => false
+      })
+    }.get
+    m.setAccessible(true)
+    m
+  }
+
+  def is(m: java.lang.reflect.Method) = (m.getParameterTypes match {
+    case Array(S, _, `i`, `i`) => true
+    case _                     => false
+  })
+
   def convert(c: Class[_], s: String): AnyRef = {
     c match {
       case B | `b` => Boolean.valueOf(s)
@@ -53,7 +70,7 @@ object Reflections {
   def nativeToStringOf(instance: AnyRef) = instance.getClass.getName + "@" + Integer
     .toHexString(identityHashCode(instance))
 
-  /** see https://github.com/zhongl/HouseMD/issues/17 */
+  /**see https://github.com/zhongl/HouseMD/issues/17 */
   def loadOrDefine(clazz: Class[_], inClassLoader: ClassLoader) = {
     val name = clazz.getName
     try {
@@ -62,17 +79,13 @@ object Reflections {
       case _: ClassNotFoundException =>
         import Utils._
 
-        val parameterTypes = Array(classOf[String], classOf[Array[Byte]], Integer.TYPE, Integer.TYPE)
-
-        val defineClass = inClassLoader.getClass.getDeclaredMethod("defineClass", parameterTypes: _*)
-        defineClass.setAccessible(true)
-
-        val bytes = toBytes(clazz.getResourceAsStream(name))
+        val bytes = toBytes(clazz.getResourceAsStream("/" + name.replace('.', '/') + ".class"))
         val zero: java.lang.Integer = 0
         val length: java.lang.Integer = bytes.length
 
-        defineClass.invoke(inClassLoader, name, bytes, zero, length).asInstanceOf[Class[_]]
+        defineClassMethod.invoke(inClassLoader, name, bytes, zero, length).asInstanceOf[Class[_]]
     }
   }
+
 
 }

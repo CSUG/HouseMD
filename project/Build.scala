@@ -79,8 +79,7 @@ object Build extends sbt.Build {
       "asm"             % "asm-commons"     % "3.3.1",
       "jline"           % "jline"           % "2.6",
       "com.beust"       % "jcommander"      % "1.20",
-      "org.scala-lang"  % "scala-library"   % "2.9.2",
-      "org.clapper"     %% "classutil"      % "0.4.6"
+      "org.scala-lang"  % "scala-library"   % "2.9.2"
     )
 
     lazy val cmdlDependencies =  Seq(

@@ -77,11 +77,13 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
 
     @tailrec
     def waitForAgentExit() {
+      var interrupted = false
       try {main.join(5000L)} catch {
         case e: InterruptedException =>
+          interrupted = true
           warn("Something goes wrong, agent couldn't exit normally, you may wait more 5 seconds, or force kill it.")
-          waitForAgentExit()
       }
+      if (interrupted) waitForAgentExit()
     }
 
     sys.addShutdownHook {

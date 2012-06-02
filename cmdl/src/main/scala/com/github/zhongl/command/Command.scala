@@ -52,11 +52,11 @@ abstract class Command(val name: String, val description: String, val out: Print
     read(arguments.toList)
   }
 
-  protected final def info(s: String) { println("INFO: " + s) }
+  protected final def info(s: Any) { println("INFO: " + s) }
 
-  protected final def warn(s: String) { println("WARN: " + s) }
+  protected final def warn(s: Any) { println("WARN: " + s) }
 
-  protected final def error(s: String) { println("ERROR: " + s) }
+  protected final def error(s: Any) { println("ERROR: " + s) }
 
   protected final def print(a: Any) { out.print(a.toString) }
 

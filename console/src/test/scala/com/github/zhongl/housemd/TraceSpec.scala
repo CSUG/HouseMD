@@ -17,14 +17,50 @@
 package com.github.zhongl.housemd
 
 import org.scalatest.FunSpec
+import org.mockito.Mockito._
+import instrument.Instrumentation
+import com.github.zhongl.command.PrintOut
+import actors.Actor._
+import actors.TIMEOUT
+import java.io.ByteArrayOutputStream
+import org.scalatest.matchers.ShouldMatchers
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class TraceSpec extends FunSpec {
+class TraceSpec extends FunSpec with ShouldMatchers {
   describe("Trace") {
-    it("should output invocation detail")
+    it("should display statistics") {
+      val inst = mock(classOf[Instrumentation])
+      val out = new ByteArrayOutputStream // System.out
+
+      doReturn(Array(classOf[A])).when(inst).getAllLoadedClasses
+
+      val trace = new Trace(inst, PrintOut(out))
+
+      trace.parse("-t 3 A m".split("\\s+"))
+
+      val host = self
+      actor {trace.run(); host ! "exit"}
+
+      var cond = true
+
+      while (cond) {
+        host.receiveWithin(10) {
+          case TIMEOUT =>
+            Advice.onMethodBegin(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef])
+            Advice.onMethodEnd(null)
+          case "exit"  => cond = false
+        }
+      }
+
+      out.toString.split("\n") filter (s => !s.startsWith("INFO") && !s.isEmpty) foreach (_ should startWith("A.m"))
+    }
   }
 
+}
+
+class A {
+  def m() {}
 }

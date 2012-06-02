@@ -28,6 +28,7 @@ import management.ManagementFactory
 import com.github.zhongl.command.{PrintOut, Command}
 import actors.Actor._
 import java.io.{BufferedWriter, FileWriter, File}
+import actors.TIMEOUT
 
 
 /**
@@ -37,11 +38,15 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
 
   import com.github.zhongl.command.Converters._
 
-  private implicit val int2Seconds    = new Second(_: Int)
-  private implicit val string2Seconds = (s: String) => new Second(s)
+  private implicit val int2Seconds              = new Second(_: Int)
+  private implicit val string2Seconds           = (s: String) => new Second(s)
+  private implicit val arrayString2ArrayPattern = (_: String).split("\\s+") map (Pattern.compile)
 
-  private val name       = ManagementFactory.getRuntimeMXBean.getName
-  private val outputRoot = new File("/tmp/housemd/" + name)
+  private val outputRoot = {
+    val dir = new File("/tmp/" + name + "/" + ManagementFactory.getRuntimeMXBean.getName)
+    dir.mkdirs()
+    dir
+  }
   private val detailFile = new File(outputRoot, "detail")
   private val stackFile  = new File(outputRoot, "stack")
 
@@ -61,15 +66,40 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
   private lazy val candidates = {
     val pp = packagePattern()
     val cp = classPattern()
-    inst.getAllLoadedClasses filter { c =>
-      isFinal(c) && pp.matcher(c.getPackage.getName).matches() && cp.matcher(c.getSimpleName).matches()
+    inst.getAllLoadedClasses filter {
+      c =>
+        isNotFinal(c) && pp.matcher(c.getPackage.getName).matches() && cp.matcher(c.getSimpleName).matches()
     }
   }
 
   def run() {
+    if (candidates.isEmpty) {warn("no matched class"); return}
     probe(candidates)
     waitForTimeoutOrOverLimitOrCancel()
     reset(candidates)
+  }
+
+  def cancel() { advice.host ! Cancel }
+
+  private def probe(candidates: Array[Class[_]]) {
+    val p = probeTransformer
+    val a = advice
+    inst.addTransformer(p, true)
+    retransform(candidates, "probe ")(_.getMethod(Advice.SET_DELEGATE, classOf[Object]).invoke(null, a))
+    inst.removeTransformer(p)
+  }
+
+  private def probeTransformer = new ClassFileTransformer {
+    val patterns = methodPatterns()
+
+    def transform(
+      loader: ClassLoader,
+      className: String,
+      classBeingRedefined: Class[_],
+      protectionDomain: ProtectionDomain,
+      classfileBuffer: Array[Byte]) = {
+      if (candidates.contains(classBeingRedefined)) ClassDecorator.decorate(classfileBuffer, patterns) else null
+    }
   }
 
   private def advice = new Advice {
@@ -87,23 +117,8 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
     }
   }
 
-  private def probeTransformer = new ClassFileTransformer {
-    val patterns = methodPatterns()
-
-    def transform(
-      loader: ClassLoader,
-      className: String,
-      classBeingRedefined: Class[_],
-      protectionDomain: ProtectionDomain,
-      classfileBuffer: Array[Byte]) = {
-      if (candidates.contains(classBeingRedefined)) ClassDecorator.decorate(classfileBuffer, patterns) else null
-    }
-  }
-
-  def cancel() { advice.host ! Cancel }
-
   private def waitForTimeoutOrOverLimitOrCancel() {
-    val statistics = initializeStatistics
+    val statistics = initializeStatistics.sortBy(s => s.className + s.methodName)
 
     var cond = true
     var last = now
@@ -113,8 +128,8 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
     val enableDetail = detailable()
     val enableStack = stackable()
 
-    loopWhile(cond) {
-      reactWithin(100) {
+    while (cond) {
+      receiveWithin(500) {
         case OverLimit                 => cond = false; info("End traceing by overlimit")
         case Cancel                    => cond = false; info("End traceing by cancel.")
         case HandleInvocation(context) =>
@@ -124,21 +139,22 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
             case Some(s) => s + context
             case None    => // ignore
           }
+        case TIMEOUT                   => //ignore
+        case x                         => error("Unknown case: " + x)
       }
 
       val t = now
+
+      if (t - last >= intervalMillis) {
+        last = t
+        statistics foreach println
+        println()
+      }
 
       if (t - start >= timoutMillis) {
         cond = false
         info("End traceing by timeout.")
       }
-
-      if (t - last >= intervalMillis) {
-        statistics foreach println
-        println()
-      }
-
-      last = t
     }
 
     detailWriter.close()
@@ -149,17 +165,9 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
     val mp = methodPatterns()
     for (
       c <- candidates;
-      m <- c.getMethods
+      m <- (c.getMethods ++ c.getDeclaredMethods).toSet
       if mp.find(_.matcher(m.getName).matches()).isDefined
     ) yield new Statistic(c.getName, m.getName)
-  }
-
-  private def probe(candidates: Array[Class[_]]) {
-    val p = probeTransformer
-    val a = advice
-    inst.addTransformer(p, true)
-    retransform(candidates, "probe ")(_.getMethod(Advice.SET_DELEGATE, classOf[Object]).invoke(null, a))
-    inst.removeTransformer(p)
   }
 
   private def reset(candidates: Array[Class[_]]) {
@@ -175,7 +183,7 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
     }
   }
 
-  private def isFinal(c: Class[_]) = if (Modifier.isFinal(c.getModifiers)) {
+  private def isNotFinal(c: Class[_]) = if (Modifier.isFinal(c.getModifiers)) {
     warn("Can't trace " + c + ", because it is final.")
     false
   } else true
@@ -199,6 +207,8 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
     var maxElapseMillis: Long = -1,
     var totalElapseMills: Long = 0) {
 
+    val NaN = "-"
+
     def +(context: Context) {
       import scala.math._
       val elapseMillis = context.stopped.get - context.started
@@ -211,12 +221,14 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
     }
 
     override def toString =
-      ((className.split("\\.").last + "." + methodName) ::
-        totalTimes ::
-        failureTimes ::
-        minElapseMillis ::
-        maxElapseMillis ::
-        (totalElapseMills / totalTimes) :: Nil).mkString("\t")
+      "%1$-30s %2$#9s %3$#9s %4$#9s %5$#9s %6$#9s" format(
+        (className.split("\\.").last + "." + methodName),
+        totalTimes,
+        failureTimes,
+        (if (minElapseMillis == -1) NaN else minElapseMillis),
+        (if (maxElapseMillis == -1) NaN else maxElapseMillis),
+        (if (totalTimes == 0) NaN else totalElapseMills / totalTimes))
+
   }
 
 }

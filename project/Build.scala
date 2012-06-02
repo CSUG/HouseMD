@@ -17,76 +17,46 @@
 import sbt._
 import sbt.Keys._
 import sbtassembly.Plugin._
+import AssemblyKeys._
 
 object Build extends sbt.Build {
-  import BaseSettings._
   import Dependencies._
   import Unmanaged._
 
-  lazy val root = Project(id = "HouseMD", base = file("."), settings = baseSettings) aggregate(console, agent)
-
-  lazy val console = Project(
-    id = "console",
-    base = file("console"),
-    settings = baseSettings ++ assemblySettings ++ Seq(
-      scalacOptions                 ++= Seq("-unchecked", "-deprecation"),
-      libraryDependencies           :=  consoleDependencies ++ test,
-      packageOptions                +=  Package.ManifestAttributes(
-        ("Main-Class","com.github.zhongl.housemd.HouseMD")
-      )
-    ) ++ classpathSettings
-  ).dependsOn(cmdl)
-
-  lazy val cmdl = Project(
-    id = "cmdl",
-    base = file("cmdl"),
-    settings = baseSettings ++ Seq(
-      libraryDependencies :=  cmdlDependencies ++ test
-    )
-  )
-
-  lazy val agent = Project(
-    id = "agent",
-    base = file("agent"),
-    settings = baseSettings ++ Seq(
-      libraryDependencies :=  test,
-      artifactName        :=  { (scalaVersion, moduleID, artifact) => moduleID.name + "-" + moduleID.revision + ".jar" },
-      javacOptions        ++= Seq("-source", "1.6", "-target", "1.6"),
+  lazy val root = Project(
+    id       = "housemd",
+    base     = file("."),
+    settings = Defaults.defaultSettings ++ classpathSettings ++ assemblySettings ++ Seq(
+      name                := "housemd",
+      organization        := "com.github.zhongl",
+      version             := "0.2.0",
+      scalaVersion        := "2.9.2",
+      scalacOptions       ++= Seq("-unchecked", "-deprecation"),
+      libraryDependencies :=  compile ++ test,
       packageOptions      +=  Package.ManifestAttributes(
+        ("Main-Class","com.github.zhongl.housemd.HouseMD"),
         ("Agent-Class","com.github.zhongl.housemd.Agent"),
         ("Can-Retransform-Classes","true"),
         ("Can-Redefine-Classes","true")
-      )
+      ),
+      excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
+        cp filter {_.data.getName == "tool.jar"}
+      }
     )
   )
 
-  object BaseSettings {
-    lazy val baseSettings = Defaults.defaultSettings ++ Seq(
-      organization  := "com.github.zhongl",
-      version       := "0.2.0",
-      scalaVersion  := "2.9.2"
-    )
-  }
-
   object Dependencies {
-    lazy val test = Seq(
-      "org.mockito"     %   "mockito-all"   % "1.9.0" % "test",
-      "org.scalatest"   %%  "scalatest"     % "1.7.2" % "test"
+    lazy val test    = Seq(
+      "org.mockito"       %   "mockito-all" % "1.9.0" % "test",
+      "org.scalatest"     %%  "scalatest"   % "1.7.2" % "test"
     )
 
-    lazy val consoleDependencies =  Seq(
-      "asm"             % "asm"             % "3.3.1",
-      "asm"             % "asm-commons"     % "3.3.1",
-      "jline"           % "jline"           % "2.6",
-      "com.beust"       % "jcommander"      % "1.20",
-      "org.scala-lang"  % "scala-library"   % "2.9.2"
+    lazy val compile = Seq(
+      "asm"               %  "asm"          % "3.3.1",
+      "asm"               %  "asm-commons"  % "3.3.1",
+      "com.github.zhongl" %% "yascli"       % "0.0.1",
+      "org.scala-lang"    % "scala-library" % "2.9.2"
     )
-
-    lazy val cmdlDependencies =  Seq(
-      "jline"           % "jline"           % "2.6",
-      "org.scala-lang"  % "scala-library"   % "2.9.2"
-    )
-
   }
 
   object Unmanaged {
@@ -95,8 +65,8 @@ object Build extends sbt.Build {
     lazy val classpathSettings =
       if (sys.props("os.name").contains("Linux")) Seq(
         unmanagedClasspath in Compile +=  Attributed.blank(toolsFile),
-        unmanagedClasspath in Test    <<= unmanagedClasspath in Compile,
-        unmanagedClasspath in Runtime <<= unmanagedClasspath in Compile
+        unmanagedClasspath in Test    <<= unmanagedClasspath in Compile//,
+        //unmanagedClasspath in Runtime <<= unmanagedClasspath in Compile
       )
       else Seq()
   }

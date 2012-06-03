@@ -14,11 +14,11 @@ import annotation.tailrec
 class LoadedSpec extends FunSpec with ShouldMatchers {
   describe("Loaded") {
     it("should display the source jar of String") {
-      parseAndRun("String@java.lang") {_ should startWith("java.lang.String -> ")}
+      parseAndRun("String") {_ should startWith("java.lang.String -> ")}
     }
 
     it("should display the classloader hierarchies") {
-      parseAndRun("-h Loaded@com.github.zhongl.housemd") { out =>
+      parseAndRun("-h Loaded") { out =>
         val lines = out.split("\n")
         lines.head should startWith("com.github.zhongl.housemd.Loaded -> ")
 

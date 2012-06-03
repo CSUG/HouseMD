@@ -81,13 +81,13 @@ class TraceSpec extends FunSpec with ShouldMatchers {
 
     it("should end by overlimit") {
       parseAndRun("-l 1 -t 1000 A") { (out, detail, stack) =>
-        out.split("\n").dropRight(1).last should be("INFO: End tracing by overlimit")
+        out.split("\n").dropRight(1).last should be("INFO : End tracing by overlimit")
       }
     }
 
     it("should end tracing by timeout") {
       parseAndRun("-l 100000 -t 1 A") { (out, detail, stack) =>
-        out.split("\n").dropRight(1).last should be("INFO: End tracing by timeout")
+        out.split("\n").dropRight(1).last should be("INFO : End tracing by timeout")
       }
     }
 
@@ -95,7 +95,7 @@ class TraceSpec extends FunSpec with ShouldMatchers {
 
     it("should disable trace final class") {
       parseAndRun("String") { (out, detail, stack) =>
-        out.split("\n").head should be("WARN: Can't trace " + classOf[String] + ", because it is final")
+        out.split("\n").head should be("WARN : Can't trace " + classOf[String] + ", because it is final")
       }
     }
 

@@ -27,6 +27,7 @@ import java.io.{IOException, File}
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
 import Utils._
 import actors.{TIMEOUT, Actor}
+import jline.TerminalFactory
 
 
 /**
@@ -47,10 +48,15 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   private val port = option[Int]("-p" :: "--port" :: Nil, "set console local socket server port number.", 54321)
   private val pid  = parameter[String]("pid", "id of process to be diagnosing.")
 
+  private val terminal = TerminalFactory.get()
+  private val sout     = terminal.wrapOutIfNeeded(System.out)
+  private val sin      = terminal.wrapInIfNeeded(System.in)
+
   private lazy val agentJarFile = sourceOf(getClass)
   private lazy val agentOptions = classNameOf[Cellphone] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: Nil
 
   def run() {
+
     val server = ServerSocketChannel.open()
     val selector = Selector.open()
 
@@ -123,7 +129,6 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   }
 
   private def read(key: SelectionKey) {
-    info("readable")
     val channel = key.channel().asInstanceOf[ReadableByteChannel]
 
     @tailrec
@@ -134,7 +139,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
         silentClose(channel)
         throw new ExitException()
       }
-      System.out.write(bytes, 0, read)
+      sout.write(bytes, 0, read)
       if (read == bytes.length) output()
     }
 
@@ -143,12 +148,12 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   }
 
   private def write(key: SelectionKey) {
-    val available = System.in.available()
+    val available = sin.available()
     if (available > 0) {
       val channel = key.channel()
       val bytes = new Array[Byte](available)
 
-      System.in.read(bytes)
+      sin.read(bytes)
       write(channel, bytes)
     }
     interestOps(SelectionKey.OP_WRITE, key)
@@ -165,6 +170,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   }
 
   private def loop(selector: Selector) {
+
     def sendQuitTo(c: Channel) {
       write(c, "quit\n".getBytes)
     }

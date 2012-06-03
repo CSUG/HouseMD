@@ -22,20 +22,20 @@ import java.lang.reflect.Array;
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl</a>
  */
-public class Agent {
+public class Duck {
     public static void agentmain(String arguments, Instrumentation instrumentation) throws Exception {
         String[] parts = arguments.split("\\s+", 3);
         String duckClassName = parts[0];
         int port = Integer.parseInt(parts[1]);
 
-        ClassLoader parentClassLoader = Agent.class.getClassLoader();
+        ClassLoader parentClassLoader = Duck.class.getClassLoader();
         ClassLoader classLoader = new ClassLoader(parentClassLoader) {
         };
 
         Class<?>[] commandClasses = loadClasses(parts[2].split("\\s+"), classLoader);
 
         Runnable executor = (Runnable) classLoader.loadClass(duckClassName)
-                .getConstructor(String.class, Instrumentation.class)
+                .getConstructor(Instrumentation.class, int.class, Class[].class)
                 .newInstance(instrumentation, port, commandClasses);
 
         executor.run();

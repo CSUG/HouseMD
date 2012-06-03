@@ -21,10 +21,7 @@ import instrument.Instrumentation
 import scala.annotation.tailrec
 import com.github.zhongl.yascli.{Command, PrintOut}
 import Reflections._
-import collection.immutable.SortedSet
 import jline.console.completer.Completer
-
-import collection.breakOut
 
 
 class Loaded(inst: Instrumentation, out: PrintOut)
@@ -34,29 +31,29 @@ class Loaded(inst: Instrumentation, out: PrintOut)
   private val tab = "\t"
 
   private val hierarchyable = flag("-h" :: "--classloader-hierarchies" :: Nil, "display classloader hierarchies of loaded class.")
-  private val className     = parameter[String]("classname", "specical class name, eg: String@java.lang")
+  private val keyword       = parameter[String]("keyword", "keyword which class name contains.")
 
   override def run() {
-    inst.getAllLoadedClasses find {classNameOf(_) == className()} match {
-      case Some(c) => println(c.getName + originOf(c)); if (hierarchyable()) layout(c.getClassLoader)
-      case None    => println("No matched class")
-    }
+    val k = keyword()
+    val matched = inst.getAllLoadedClasses filter {_.getName.contains(k)}
+    if (matched.isEmpty) println("No matched class")
+    else matched foreach { c => println(c.getName + originOf(c)); if (hierarchyable()) layout(c.getClassLoader) }
   }
 
   override def complete(buffer: String, cursor: Int, candidates: java.util.List[CharSequence]) = {
     val trimmed = buffer.trim
     if (trimmed.isEmpty) {
-      import collection.JavaConversions._
-
-      candidates.addAll(allCandidates)
+      inst.getAllLoadedClasses.map {_.getName}.sorted foreach (candidates.add)
       cursor
     } else {
-      allCandidates.from(trimmed) filter {_.startsWith(trimmed)} foreach {candidates.add}
-      if (candidates.isEmpty) -1 else cursor - trimmed.size
+      val matched = inst.getAllLoadedClasses filter (_.getName.contains(trimmed))
+      if (matched.isEmpty) -1
+      else {
+        matched sortBy (_.getName) foreach { c => candidates.add(c.getName) }
+        cursor - trimmed.size
+      }
     }
   }
-
-  private def allCandidates: SortedSet[String] = inst.getAllLoadedClasses.map(classNameOf)(breakOut)
 
   @tailrec
   private def layout(cl: ClassLoader, lastIndents: String = "- ") {
@@ -71,7 +68,6 @@ class Loaded(inst: Instrumentation, out: PrintOut)
 
   private def originOf(c: Class[_]): String = " -> " + Utils.sourceOf(c)
 
-  private def classNameOf(c: Class[_]): String = c.getSimpleName + "@" + c.getPackage.getName
 }
 
 

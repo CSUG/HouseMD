@@ -25,8 +25,8 @@ import java.nio.channels._
 import annotation.tailrec
 import java.io.{IOException, File}
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
-import actors.Actor
 import Utils._
+import actors.{TIMEOUT, Actor}
 
 
 /**
@@ -48,7 +48,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   private val pid  = parameter[String]("pid", "id of process to be diagnosing.")
 
   private lazy val agentJarFile = sourceOf(getClass)
-  private lazy val agentOptions = classNameOf[Duck] :: port() :: classNameOf[Trace]:: classOf[Loaded] :: Nil
+  private lazy val agentOptions = classNameOf[Cellphone] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: Nil
 
   def run() {
     val server = ServerSocketChannel.open()
@@ -60,16 +60,27 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
       info("bound localhost socket at " + port())
       server.register(selector, SelectionKey.OP_ACCEPT)
 
-      val actor = fork {loop(selector)}
+      val actor = fork {
+        try {loop(selector)} catch {
+          case ignore: ExitException =>
+          case t: Throwable          => error(t)
+        } // TODO collect StackTrace to file
+      }
+
       registerCtrlCHandler(actor)
       driveAgentLoading()
     } catch {
-      case e => error(e.toString)
+      case e => error(e)
     }
 
     silentClose(selector)
     silentClose(server)
     info("bye")
+  }
+
+  override protected def error(a: Any) {
+    super.error(a)
+    if (a.isInstanceOf[Throwable]) a.asInstanceOf[Throwable].getStackTrace.foreach(println)
   }
 
   private def registerCtrlCHandler(actor: Actor) {
@@ -112,6 +123,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   }
 
   private def read(key: SelectionKey) {
+    info("readable")
     val channel = key.channel().asInstanceOf[ReadableByteChannel]
 
     @tailrec
@@ -127,11 +139,11 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
     }
 
     output()
+    interestOps(SelectionKey.OP_READ, key)
   }
 
   private def write(key: SelectionKey) {
     val available = System.in.available()
-
     if (available > 0) {
       val channel = key.channel()
       val bytes = new Array[Byte](available)
@@ -139,6 +151,11 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
       System.in.read(bytes)
       write(channel, bytes)
     }
+    interestOps(SelectionKey.OP_WRITE, key)
+  }
+
+  private def interestOps(op: Int, key: SelectionKey) {
+    key.interestOps(key.interestOps() | op)
   }
 
   private def write(channel: Channel, bytes: Array[Byte]) {
@@ -164,10 +181,12 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
           case k if k.isWritable   => if (quit) sendQuitTo(k.channel()) else write(k)
           case _                   => //ignore
         }
+        selector.selectedKeys().clear()
       }
 
       self.receiveWithin(10L) {
-        case "exit" => quit = true
+        case "exit"  => quit = true
+        case TIMEOUT => // ignore
       }
     }
   }
@@ -176,10 +195,8 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
     val vm = VirtualMachine.attach(pid())
     info("attached vm " + pid())
     try {
+      info("load agent " + agentJarFile + ", options: " + agentOptions)
       vm.loadAgent(agentJarFile, agentOptions mkString (" "))
-      info("loaded agent " + agentJarFile + ", options: " + agentOptions)
-    } catch {
-      case e => error(e.toString)
     } finally {
       vm.detach()
       info("detached vm " + pid())

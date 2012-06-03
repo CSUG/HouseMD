@@ -24,38 +24,33 @@ import com.github.zhongl.yascli.{Shell, PrintOut, Command}
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Duck(inst: Instrumentation, port: Int, classes: Array[Class[Command]]) extends Runnable {
+class Cellphone(inst: Instrumentation, port: Int, classes: Array[Class[Command]]) extends Runnable {
 
   def run() {
-    new Cellphone() dail(port, classes)
-  }
+    val socket = new Socket("localhost", port)
+    val reader = new ConsoleReader(socket.getInputStream, socket.getOutputStream)
 
-  class Cellphone {
-    def dail(port: Int, classes: Array[Class[Command]]) {
-      val socket = new Socket("localhost", port)
-      val reader = new ConsoleReader(socket.getInputStream, socket.getOutputStream)
-
+    try {
       new Shell(name = "housemd", description = "a runtime diagnosis tool of jvm.", reader = reader) {
         override protected def commands = Quit :: helpCommand :: classes.map {toCommand(_, PrintOut(reader))}.toList
       } main (Array.empty[String])
-
+    } finally {
       socket.shutdownOutput()
       socket.shutdownInput()
       socket.close()
     }
+  }
 
-    private def toCommand(c: Class[Command], out: PrintOut) = {
-      val I = classOf[Instrumentation]
-      val O = classOf[PrintOut]
-      val constructors = c.getConstructors
-      val args = constructors(0).getParameterTypes map {
-        case I => inst
-        case O => out
-        case x => throw new IllegalStateException("Unsupport parameter type: " + x)
-      }
-      constructors(0).newInstance(args).asInstanceOf[Command]
+  private def toCommand(c: Class[Command], out: PrintOut) = {
+    val I = classOf[Instrumentation]
+    val O = classOf[PrintOut]
+    val constructors = c.getConstructors
+    val args = constructors(0).getParameterTypes map {
+      case I => inst
+      case O => out
+      case x => throw new IllegalStateException("Unsupport parameter type: " + x)
     }
-
+    constructors(0).newInstance(args: _*).asInstanceOf[Command]
   }
 
 }

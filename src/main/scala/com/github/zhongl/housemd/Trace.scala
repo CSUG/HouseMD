@@ -63,19 +63,25 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
   private lazy val detailWriter = new DetailWriter(new BufferedWriter(new FileWriter(detailFile, true)))
   private lazy val stackWriter  = new StackWriter(new BufferedWriter(new FileWriter(stackFile, true)))
 
-  private lazy val candidates = {
+  private def candidates = {
     val pp = packagePattern()
     val cp = classPattern()
+    def packageOf(c: Class[_]): String = if (c.getPackage == null) "" else c.getPackage.getName
     inst.getAllLoadedClasses filter { c =>
-      pp.matcher(c.getPackage.getName).matches() && cp.matcher(c.getSimpleName).matches() && isNotFinal(c)
+      try {
+        pp.matcher(packageOf(c)).matches() && cp.matcher(c.getSimpleName).matches() && isNotFinal(c)
+      } catch {
+        case e: InternalError        => false
+      }
     }
   }
 
   def run() {
-    if (candidates.isEmpty) {println("No matched class"); return}
-    probe(candidates)
+    val c = candidates
+    if (c.isEmpty) {println("No matched class"); return}
+    probe(c)
     waitForTimeoutOrOverLimitOrCancel()
-    reset(candidates)
+    reset(c)
   }
 
   def cancel() { advice.host ! Cancel }

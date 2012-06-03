@@ -23,7 +23,10 @@ import java.io.BufferedWriter
  */
 class StackWriter(writer: BufferedWriter) {
   def write(context: Context) {
-    // TODO
+    // TODO Avoid duplicated stack
+    writer.write(context.thread.toString)
+    writer.newLine()
+    context.stack foreach { s => writer.write("\t" + s); writer.newLine() }
     writer.newLine()
   }
 

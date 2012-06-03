@@ -32,13 +32,15 @@ object Build extends sbt.Build {
       version             := "0.2.0",
       scalaVersion        := "2.9.2",
       scalacOptions       ++= Seq("-unchecked", "-deprecation"),
-      libraryDependencies :=  compile ++ test,
+      resolvers           += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository",
+      libraryDependencies :=  compileLibs ++ testLibs,
       packageOptions      +=  Package.ManifestAttributes(
         ("Main-Class","com.github.zhongl.housemd.HouseMD"),
-        ("Agent-Class","com.github.zhongl.housemd.Agent"),
+        ("Agent-Class","com.github.zhongl.housemd.Duck"),
         ("Can-Retransform-Classes","true"),
         ("Can-Redefine-Classes","true")
       ),
+      test in assembly := {},
       excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
         cp filter {_.data.getName == "tool.jar"}
       }
@@ -46,15 +48,15 @@ object Build extends sbt.Build {
   )
 
   object Dependencies {
-    lazy val test    = Seq(
+    lazy val testLibs    = Seq(
       "org.mockito"       %   "mockito-all" % "1.9.0" % "test",
       "org.scalatest"     %%  "scalatest"   % "1.7.2" % "test"
     )
 
-    lazy val compile = Seq(
+    lazy val compileLibs = Seq(
       "asm"               %  "asm"          % "3.3.1",
       "asm"               %  "asm-commons"  % "3.3.1",
-      "com.github.zhongl" %% "yascli"       % "0.0.1",
+      "com.github.zhongl" %% "yascli"       % "0.0.2",
       "org.scala-lang"    % "scala-library" % "2.9.2"
     )
   }

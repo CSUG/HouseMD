@@ -39,8 +39,12 @@ object Utils {
   }
 
   def sourceOf(klass: Class[_]): String = {
-    val file = klass.getResource("/" + klass.getName.replace('.', '/') + ".class").getFile
-    extractSource(file)
+    try {
+      val file = klass.getResource("/" + klass.getName.replace('.', '/') + ".class").getFile
+      extractSource(file)
+    } catch {
+      case _ => "null"
+    }
   }
 
   def extractSource(file: String) = {

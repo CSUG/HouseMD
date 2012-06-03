@@ -20,6 +20,7 @@ import instrument.Instrumentation
 import java.net.Socket
 import jline.console.ConsoleReader
 import com.github.zhongl.yascli.{Shell, PrintOut, Command}
+import jline.TerminalFactory
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -35,6 +36,7 @@ class Cellphone(inst: Instrumentation, port: Int, classes: Array[Class[Command]]
         override protected def commands = Quit :: helpCommand :: classes.map {toCommand(_, PrintOut(reader))}.toList
       } main (Array.empty[String])
     } finally {
+      TerminalFactory.reset()
       socket.shutdownOutput()
       socket.shutdownInput()
       socket.close()

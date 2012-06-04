@@ -123,7 +123,7 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
   }
 
   private def waitForTimeoutOrOverLimitOrCancel() {
-    val statistics = initializeStatistics.sortBy(s => s.method.toString)
+    val statistics = initializeStatistics.sortBy(s => s.klass.getName + "." + s.method.getName)
 
     var cond = true
     var last = now
@@ -174,7 +174,7 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
       c <- candidates;
       m <- (c.getMethods ++ c.getDeclaredMethods).toSet
       if mp.find(_.matcher(m.getName).matches()).isDefined
-    ) yield new Statistic(m)
+    ) yield new Statistic(c, m)
   }
 
   private def reset(candidates: Array[Class[_]]) {
@@ -212,6 +212,7 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
   case class HandleInvocation(context: Context)
 
   class Statistic(
+    val klass: Class[_],
     val method: Method,
     var totalTimes: Long = 0,
     var failureTimes: Long = 0,
@@ -236,13 +237,13 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
       if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes
 
     override def toString = "%1$-40s %2$#9s %3$#9s %4$#9s %5$#9s %6$#9s %7$s" format(
-      "%1$s.%2$s".format(method.getDeclaringClass.getName.split("\\.").last, method.getName),
+      "%1$s.%2$s".format(klass.getName.split("\\.").last, method.getName),
       totalTimes,
       failureTimes,
       (if (minElapseMillis == -1) NaN else minElapseMillis),
       (if (maxElapseMillis == -1) NaN else maxElapseMillis),
       avgElapseMillis,
-      method.getDeclaringClass.getClassLoader)
+      klass.getClassLoader)
 
   }
 

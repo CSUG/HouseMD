@@ -18,7 +18,6 @@ package com.github.zhongl.housemd
 
 import java.lang.System.{currentTimeMillis => now}
 import java.util.regex.Pattern
-import java.lang.reflect.Modifier
 import instrument.{ClassFileTransformer, Instrumentation}
 import java.security.ProtectionDomain
 import java.util.concurrent.TimeUnit
@@ -29,6 +28,7 @@ import com.github.zhongl.yascli.{PrintOut, Command}
 import actors.Actor._
 import java.io.{BufferedWriter, FileWriter, File}
 import actors.TIMEOUT
+import java.lang.reflect.{Method, Modifier}
 
 
 /**
@@ -71,7 +71,7 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
       try {
         pp.matcher(packageOf(c)).matches() && cp.matcher(c.getSimpleName).matches() && isNotFinal(c)
       } catch {
-        case e: InternalError        => false
+        case e: InternalError => false
       }
     }
   }
@@ -172,7 +172,7 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
       c <- candidates;
       m <- (c.getMethods ++ c.getDeclaredMethods).toSet
       if mp.find(_.matcher(m.getName).matches()).isDefined
-    ) yield new Statistic(c.getName, m.getName)
+    ) yield new Statistic(m)
   }
 
   private def reset(candidates: Array[Class[_]]) {
@@ -182,9 +182,13 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
   private def retransform(candidates: Array[Class[_]], action: String)(handle: Class[_] => Unit) {
     import Reflections._
     candidates foreach { c =>
-      handle(loadOrDefine(classOf[Advice], c.getClassLoader))
-      inst.retransformClasses(c)
-      info(action + c)
+      try {
+        handle(loadOrDefine(classOf[Advice], c.getClassLoader))
+        inst.retransformClasses(c)
+        info(action + c)
+      } catch {
+        case t: Throwable => warn("Failed to " + action + c + " because of " + t)
+      }
     }
   }
 
@@ -206,8 +210,7 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
   case class HandleInvocation(context: Context)
 
   class Statistic(
-    val className: String,
-    val methodName: String,
+    val method: Method,
     var totalTimes: Long = 0,
     var failureTimes: Long = 0,
     var minElapseMillis: Long = -1,
@@ -230,13 +233,14 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
     def avgElapseMillis =
       if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes
 
-    override def toString = "%1$-30s %2$#9s %3$#9s %4$#9s %5$#9s %6$#9s" format(
-      (className.split("\\.").last + "." + methodName),
+    override def toString = "%1$-40s %2$#9s %3$#9s %4$#9s %5$#9s %6$#9s %7$s" format(
+      "%1$s.%2$s".format(method.getDeclaringClass.getName.split("\\.").last, method.getName),
       totalTimes,
       failureTimes,
       (if (minElapseMillis == -1) NaN else minElapseMillis),
       (if (maxElapseMillis == -1) NaN else maxElapseMillis),
-      avgElapseMillis)
+      avgElapseMillis,
+      method.getDeclaringClass.getClassLoader)
 
   }
 

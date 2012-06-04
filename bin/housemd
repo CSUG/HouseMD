@@ -1,0 +1,5 @@
+#! /bin/bash
+
+ROOT=`dirname  "$0"`
+BOOT_CLASSPATH=-Xbootclasspath/a:$JAVA_HOME/lib/tools.jar
+java $BOOT_CLASSPATH -jar $ROOT/housemd.jar "$@"

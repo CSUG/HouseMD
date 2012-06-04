@@ -1,4 +1,5 @@
 #! /bin/bash
-wget --no-check-certificate https://github.com/downloads/zhongl/HouseMD/house-assembly-0.1.0.jar
-wget --no-check-certificate https://raw.github.com/zhongl/HouseMD/master/bin/house
-chmod u+x house
+
+curl -Lk https://github.com/downloads/zhongl/HouseMD/housemd-assembly-0.2.0.jar > housemd.jar
+curl -Lk https://raw.github.com/zhongl/HouseMD/master/bin/housemd > housemd
+chmod u+x housemd

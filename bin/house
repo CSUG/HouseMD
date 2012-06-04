@@ -1,4 +1,0 @@
-#! /bin/bash
-ROOT=`dirname  "$0"`
-NAME=`basename "$0"`
-java -Dprogram.name=$NAME -jar $ROOT/house-assembly-0.1.0.jar "$@"

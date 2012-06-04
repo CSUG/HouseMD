@@ -123,7 +123,7 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
   }
 
   private def waitForTimeoutOrOverLimitOrCancel() {
-    val statistics = initializeStatistics.sortBy(s => s.className + s.methodName)
+    val statistics = initializeStatistics.sortBy(s => s.method.toString)
 
     var cond = true
     var last = now
@@ -140,7 +140,9 @@ class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trac
         case HandleInvocation(context) =>
           if (enableDetail) detailWriter.write(context)
           if (enableStack) stackWriter.write(context)
-          statistics find { s => context.className == s.className && context.methodName == s.methodName } match {
+          statistics find { s =>
+            context.className == s.method.getDeclaringClass.getName && context.methodName == s.method.getName
+          } match {
             case Some(s) => s + context
             case None    => // ignore
           }

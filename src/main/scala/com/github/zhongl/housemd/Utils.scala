@@ -64,4 +64,9 @@ object Utils {
   }
 
   def classNameOf[T: Manifest] = manifest[T].erasure.getName
+
+  def silentClose(closable: {def close()}) {
+    if (closable != null) try {closable.close()} catch {case _ => /*ignore*/ }
+  }
+
 }

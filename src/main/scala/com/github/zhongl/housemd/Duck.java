@@ -38,7 +38,9 @@ public class Duck {
                 .getConstructor(Instrumentation.class, int.class, Class[].class)
                 .newInstance(instrumentation, port, commandClasses);
 
-        executor.run();
+        Thread thread = new Thread(executor, "HouseMD-Duck");
+        thread.setDaemon(true);
+        thread.run();
     }
 
     private static Class<?>[] loadClasses(String[] classNames, ClassLoader classLoader) throws ClassNotFoundException {

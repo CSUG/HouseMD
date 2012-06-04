@@ -25,10 +25,10 @@ import collection.JavaConversions._
 import java.nio.ByteBuffer
 import java.nio.channels._
 import annotation.tailrec
-import java.io.{IOException, File}
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
 import Utils._
 import jline.TerminalFactory
+import java.io.{FileWriter, BufferedWriter, IOException, File}
 
 
 /**
@@ -54,37 +54,59 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   private val sin      = terminal.wrapInIfNeeded(System.in)
 
   private lazy val agentJarFile = sourceOf(getClass)
-  private lazy val agentOptions = classNameOf[Cellphone] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: Nil
+  private lazy val agentOptions = classNameOf[IPhone4] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: Nil
+
+  private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()
+  private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))
+
 
   def run() {
+    val id = pid()
 
     val server = ServerSocketChannel.open()
     val selector = Selector.open()
 
     try {
+      new IPhone4S(port(), {
+        case ListenTo(earphone)  => earphone(sout)
+        case SpeakTo(microphone) => microphone(sin)
+        case BreakOff(reason)    =>
+        case EndCall             =>
+      })
+
+      implicit val iPhone4 = new IPhone4(port(), sin, sout, error).start()
+      info("bound localhost socket at " + port())
       server.configureBlocking(false)
       server.socket().bind(new InetSocketAddress(port()))
-      info("bound localhost socket at " + port())
       server.register(selector, SelectionKey.OP_ACCEPT)
 
       implicit val actor = fork {loop(selector)}
 
       registerCtrlCHandler()
 
-      driveAgentLoading()
+      val vm = driveAgentLoadingAndGetVM(id)
 
     } catch {
       case e => error(e)
     }
 
+    if (actor.getState != Actor.State.Suspended) actor !? Break
+    vm.detach()
+    info("detached vm " + pid)
+
     silentClose(selector)
     silentClose(server)
+    silentClose(errorDetailWriter)
+
     info("bye")
   }
 
   override protected def error(a: Any) {
     super.error(a)
-    if (a.isInstanceOf[Throwable]) a.asInstanceOf[Throwable].getStackTrace.foreach(println)
+    if (a.isInstanceOf[Throwable]) {
+      super.error("You can get more details in " + errorDetailFile)
+      a.asInstanceOf[Throwable].getStackTrace foreach { s => errorDetailWriter.write(s + "\n") }
+    }
   }
 
   private def registerCtrlCHandler()(implicit actor: Actor) {
@@ -105,10 +127,6 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
       actor ! Quit
       waitForAgentExit()
     }
-  }
-
-  private def silentClose(closable: {def close()}) {
-    if (closable != null) try {closable.close()} catch {case _ => /*ignore*/ }
   }
 
   private def accept(key: SelectionKey, selector: Selector) {
@@ -193,26 +211,24 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
 
         receiveWithin(10L) {
           case Quit    => quit = true
-          case Break   => try {select()/* read EOF */} finally {reply()}
+          case Break   => try {select() /* read EOF */ } finally {reply()}
           case TIMEOUT => // ignore
         }
       }
     } catch {
       case ignore: ExitException =>
       case t: Throwable          => error(t)
-    } // TODO collect StackTrace to file
+    }
   }
 
-  private def driveAgentLoading()(implicit actor: Actor) {
-    val vm = VirtualMachine.attach(pid())
-    info("attached vm " + pid())
+  private def driveAgentLoadingAndGetVM(pid: String)(implicit actor: Actor) = {
+    val vm = VirtualMachine.attach(pid)
+    info("attached vm " + pid)
     try {
       info("load agent " + agentJarFile + ", options: " + agentOptions)
       vm.loadAgent(agentJarFile, agentOptions mkString (" "))
     } finally {
-      if (actor.getState != Actor.State.Suspended) actor !? Break
-      vm.detach()
-      info("detached vm " + pid())
+      vm
     }
   }
 
@@ -223,3 +239,5 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   case class Break()
 
 }
+
+

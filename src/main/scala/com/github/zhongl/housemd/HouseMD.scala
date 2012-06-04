@@ -16,7 +16,9 @@
 
 package com.github.zhongl.housemd
 
-import actors.Actor.{actor => fork, self}
+import actors.Actor.{actor => fork}
+import actors.Actor._
+import actors.{Actor, TIMEOUT}
 import com.sun.tools.attach.VirtualMachine
 import java.net.InetSocketAddress
 import collection.JavaConversions._
@@ -26,7 +28,6 @@ import annotation.tailrec
 import java.io.{IOException, File}
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
 import Utils._
-import actors.{TIMEOUT, Actor}
 import jline.TerminalFactory
 
 
@@ -66,15 +67,17 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
       info("bound localhost socket at " + port())
       server.register(selector, SelectionKey.OP_ACCEPT)
 
-      val actor = fork {
+      implicit val actor = fork {
         try {loop(selector)} catch {
           case ignore: ExitException =>
           case t: Throwable          => error(t)
         } // TODO collect StackTrace to file
       }
 
-      registerCtrlCHandler(actor)
+      registerCtrlCHandler()
+
       driveAgentLoading()
+
     } catch {
       case e => error(e)
     }
@@ -89,7 +92,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
     if (a.isInstanceOf[Throwable]) a.asInstanceOf[Throwable].getStackTrace.foreach(println)
   }
 
-  private def registerCtrlCHandler(actor: Actor) {
+  private def registerCtrlCHandler()(implicit actor: Actor) {
     val main = Thread.currentThread()
 
     @tailrec
@@ -104,7 +107,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
     }
 
     sys.addShutdownHook {
-      actor ! "exit"
+      actor ! Quit
       waitForAgentExit()
     }
   }
@@ -170,16 +173,15 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   }
 
   private def loop(selector: Selector) {
+    var quit = false
+    var cond = true
 
     def sendQuitTo(c: Channel) {
       write(c, "quit\n".getBytes)
     }
 
-    var quit = false
-
-    while (true) {
+    def select() {
       val selected = selector.select(500L)
-
       if (selected > 0) {
         selector.selectedKeys() foreach {
           case k if k.isAcceptable => accept(k, selector)
@@ -189,26 +191,36 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
         }
         selector.selectedKeys().clear()
       }
+    }
 
-      self.receiveWithin(10L) {
-        case "exit"  => quit = true
+    while (cond) {
+      select()
+
+      receiveWithin(10L) {
+        case Quit    => quit = true
+        case Break   => cond = false; reply
         case TIMEOUT => // ignore
       }
     }
   }
 
-  private def driveAgentLoading() {
+  private def driveAgentLoading()(implicit actor: Actor) {
     val vm = VirtualMachine.attach(pid())
     info("attached vm " + pid())
     try {
       info("load agent " + agentJarFile + ", options: " + agentOptions)
       vm.loadAgent(agentJarFile, agentOptions mkString (" "))
     } finally {
+      actor !? Break
       vm.detach()
       info("detached vm " + pid())
     }
   }
 
   class ExitException extends Exception
+
+  case class Quit()
+
+  case class Break()
 
 }

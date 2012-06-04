@@ -67,12 +67,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
       info("bound localhost socket at " + port())
       server.register(selector, SelectionKey.OP_ACCEPT)
 
-      implicit val actor = fork {
-        try {loop(selector)} catch {
-          case ignore: ExitException =>
-          case t: Throwable          => error(t)
-        } // TODO collect StackTrace to file
-      }
+      implicit val actor = fork {loop(selector)}
 
       registerCtrlCHandler()
 
@@ -173,13 +168,12 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   }
 
   private def loop(selector: Selector) {
-    var quit = false
-    var cond = true
 
     def sendQuitTo(c: Channel) {
       write(c, "quit\n".getBytes)
     }
 
+    var quit = false
     def select() {
       val selected = selector.select(500L)
       if (selected > 0) {
@@ -187,21 +181,26 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
           case k if k.isAcceptable => accept(k, selector)
           case k if k.isReadable   => read(k)
           case k if k.isWritable   => if (quit) sendQuitTo(k.channel()) else write(k)
-          case _                   => //ignore
+          case ignore              =>
         }
         selector.selectedKeys().clear()
       }
     }
 
-    while (cond) {
-      select()
+    try {
+      while (true) {
+        select()
 
-      receiveWithin(10L) {
-        case Quit    => quit = true
-        case Break   => cond = false; reply
-        case TIMEOUT => // ignore
+        receiveWithin(10L) {
+          case Quit    => quit = true
+          case Break   => try {select()/* read EOF */} finally {reply()}
+          case TIMEOUT => // ignore
+        }
       }
-    }
+    } catch {
+      case ignore: ExitException =>
+      case t: Throwable          => error(t)
+    } // TODO collect StackTrace to file
   }
 
   private def driveAgentLoading()(implicit actor: Actor) {
@@ -211,7 +210,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
       info("load agent " + agentJarFile + ", options: " + agentOptions)
       vm.loadAgent(agentJarFile, agentOptions mkString (" "))
     } finally {
-      actor !? Break
+      if (actor.getState != Actor.State.Suspended) actor !? Break
       vm.detach()
       info("detached vm " + pid())
     }

@@ -25,7 +25,7 @@ import jline.console.completer.Completer
 
 
 class Loaded(inst: Instrumentation, out: PrintOut)
-  extends Command("loaded", "output loaded classes information.", out)
+  extends Command("loaded", "display loaded classes information.", out)
           with Completer {
 
   private val tab = "\t"

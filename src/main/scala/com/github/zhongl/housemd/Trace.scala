@@ -34,7 +34,8 @@ import java.lang.reflect.{Method, Modifier}
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Trace(inst: Instrumentation, out: PrintOut) extends Command("trace", "trace method invocaton.", out) {
+class Trace(inst: Instrumentation, out: PrintOut)
+  extends Command("trace", "display or output infomation of method invocaton.", out) {
 
   import com.github.zhongl.yascli.Converters._
 

@@ -20,7 +20,6 @@ import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Array;
 import java.net.URL;
-import java.net.URLClassLoader;
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl</a>
@@ -32,16 +31,18 @@ public class Duck {
         String telephoneClassName = parts[1];
         int port = Integer.parseInt(parts[2]);
 
-        ClassLoader classLoader = new URLClassLoader(new URL[]{agentJar}) {
-            @Override
-            protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-                if (name.startsWith("java") || name.startsWith("sun") || name.startsWith("com.sun"))
-                    return super.loadClass(name, resolve);
-                Class<?> aClass = findClass(name);
-                if (resolve) resolveClass(aClass);
-                return aClass;
-            }
-        };
+//        ClassLoader classLoader = new URLClassLoader(new URL[]{agentJar}) {
+//            @Override
+//            protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+//                if (name.startsWith("java") || name.startsWith("sun") || name.startsWith("com.sun"))
+//                    return super.loadClass(name, resolve);
+//                Class<?> aClass = findClass(name);
+//                if (resolve) resolveClass(aClass);
+//                return aClass;
+//            }
+//        };
+
+        ClassLoader classLoader= new ClassLoader(){};
 
         Class<?>[] commandClasses = loadClasses(parts[3].split("\\s+"), classLoader);
 

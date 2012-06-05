@@ -234,6 +234,13 @@ class Trace(inst: Instrumentation, out: PrintOut)
       totalElapseMills = totalElapseMills + elapseMillis
     }
 
+    def x(context: Context) = {
+      context.thisObject.getClass == klass &&
+        context.methodName == method.getName &&
+        context.arguments.size == method.getParameterTypes.size &&
+          context.arguments.map(_.getClass) == method.getParameterTypes
+    }
+
     def avgElapseMillis =
       if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes
 

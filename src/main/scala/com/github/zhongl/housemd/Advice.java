@@ -47,29 +47,19 @@ public abstract class Advice {
     public static final Method ON_METHOD_BEGIN;
     public static final Method ON_METHOD_END;
 
-    private static final Method enter;
-    private static final Method exit;
     private static final AtomicReference<Object> delegate;
     private static final Map<Thread, Stack<Map<String, Object>>> threadBoundContexts;
     private static final Advice nullAdvice;
 
     static {
         try {
-            enter = Advice.class.getMethod("enterWith", Map.class);
-            exit = Advice.class.getMethod("exitWith", Map.class);
             ON_METHOD_BEGIN = Advice.class.getMethod("onMethodBegin", String.class, String.class, String.class, Object.class, Object[].class);
             ON_METHOD_END = Advice.class.getMethod("onMethodEnd", Object.class);
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
 
-        nullAdvice = new Advice() {
-            public void enterWith(Map<String, Object> context) {
-            }
-
-            public void exitWith(Map<String, Object> context) {
-            }
-        };
+        nullAdvice = null;
 
         delegate = new AtomicReference<Object>(nullAdvice);
         threadBoundContexts = new ConcurrentHashMap<Thread, Stack<Map<String, Object>>>();
@@ -93,15 +83,24 @@ public abstract class Advice {
         context.put(STACK, currentStackTrace());
         context.put(STARTED, System.currentTimeMillis());
         context.put(THREAD, Thread.currentThread());
-        invoke(enter, delegate.get(), context);
+        invoke("enterWith", context);
         stackPush(context);
+    }
+
+    private static void invoke(String name, Map<String, Object> context) {
+        try {
+            Object o = delegate.get();
+            if (o == null) return;
+            o.getClass().getMethod(name, Map.class).invoke(o, context);
+        } catch (Throwable ignore) {
+        }
     }
 
     public static void onMethodEnd(Object resultOrException) {
         Map<String, Object> context = stackPop();
         context.put(STOPPED, System.currentTimeMillis());
         context.put(RESULT, resultOrException);
-        invoke(exit, delegate.get(), context);
+        invoke("exitWith", context);
     }
 
     private static void stackPush(Map<String, Object> context) {
@@ -116,13 +115,6 @@ public abstract class Advice {
 
     private static Map<String, Object> stackPop() {
         return threadBoundContexts.get(Thread.currentThread()).pop();
-    }
-
-    private static void invoke(Method method, Object obj, Object... arguments) {
-        try {
-            method.invoke(obj, arguments);
-        } catch (Exception ignored) {
-        }
     }
 
     private static StackTraceElement[] currentStackTrace() {

@@ -20,6 +20,7 @@ import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Array;
 import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl</a>
@@ -31,18 +32,18 @@ public class Duck {
         String telephoneClassName = parts[1];
         int port = Integer.parseInt(parts[2]);
 
-//        ClassLoader classLoader = new URLClassLoader(new URL[]{agentJar}) {
-//            @Override
-//            protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-//                if (name.startsWith("java") || name.startsWith("sun") || name.startsWith("com.sun"))
-//                    return super.loadClass(name, resolve);
-//                Class<?> aClass = findClass(name);
-//                if (resolve) resolveClass(aClass);
-//                return aClass;
-//            }
-//        };
-
-        ClassLoader classLoader= new ClassLoader(){};
+        ClassLoader classLoader = new URLClassLoader(new URL[]{agentJar}) {
+            @Override
+            protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+                Class<?> loadedClass = findLoadedClass(name);
+                if (loadedClass != null) return loadedClass;
+                if (name.startsWith("java") || name.startsWith("sun") || name.startsWith("com.sun"))
+                    return super.loadClass(name, resolve);
+                Class<?> aClass = findClass(name);
+                if (resolve) resolveClass(aClass);
+                return aClass;
+            }
+        };
 
         Class<?>[] commandClasses = loadClasses(parts[3].split("\\s+"), classLoader);
 
@@ -58,7 +59,7 @@ public class Duck {
     private static Class<?>[] loadClasses(String[] classNames, ClassLoader classLoader) throws ClassNotFoundException {
         Class<?>[] classes = (Class<?>[]) Array.newInstance(Class.class, classNames.length);
         for (int i = 0; i < classes.length; i++) {
-            classes[i] = classLoader.loadClass(classNames[i]);
+            classes[i] = Class.forName(classNames[i], false, classLoader);
         }
         return classes;
     }

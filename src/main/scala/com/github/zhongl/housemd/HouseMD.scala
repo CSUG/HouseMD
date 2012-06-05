@@ -16,19 +16,11 @@
 
 package com.github.zhongl.housemd
 
-import actors.Actor.{actor => fork}
-import actors.Actor._
-import actors.{Actor, TIMEOUT}
 import com.sun.tools.attach.VirtualMachine
-import java.net.InetSocketAddress
-import collection.JavaConversions._
-import java.nio.ByteBuffer
-import java.nio.channels._
-import annotation.tailrec
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
 import Utils._
 import jline.TerminalFactory
-import java.io.{FileWriter, BufferedWriter, IOException, File}
+import java.io.{FileWriter, BufferedWriter, File}
 
 
 /**
@@ -49,194 +41,52 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   private val port = option[Int]("-p" :: "--port" :: Nil, "set console local socket server port number.", 54321)
   private val pid  = parameter[String]("pid", "id of process to be diagnosing.")
 
-  private val terminal = TerminalFactory.get()
-  private val sout     = terminal.wrapOutIfNeeded(System.out)
-  private val sin      = terminal.wrapInIfNeeded(System.in)
 
   private lazy val agentJarFile = sourceOf(getClass)
-  private lazy val agentOptions = classNameOf[IPhone4] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: Nil
+  private lazy val agentOptions = agentJarFile :: classNameOf[Telephone] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: Nil
 
   private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))
 
-
   def run() {
-    val id = pid()
-
-    val server = ServerSocketChannel.open()
-    val selector = Selector.open()
 
     try {
-      new IPhone4S(port(), {
+      val terminal = TerminalFactory.get()
+      val sout = terminal.wrapOutIfNeeded(System.out)
+      val sin = terminal.wrapInIfNeeded(System.in)
+      val vm = VirtualMachine.attach(pid())
+
+      val iPhone = new Mobilephone(port(), {
+        case PickUp              => info("connection established on " + port())
         case ListenTo(earphone)  => earphone(sout)
         case SpeakTo(microphone) => microphone(sin)
-        case BreakOff(reason)    =>
-        case EndCall             =>
+        case BreakOff(reason)    => error("connection breaked causeby"); error(reason)
+        case HangUp              => silentClose(errorDetailWriter); info("bye");
+
       })
 
-      implicit val iPhone4 = new IPhone4(port(), sin, sout, error).start()
-      info("bound localhost socket at " + port())
-      server.configureBlocking(false)
-      server.socket().bind(new InetSocketAddress(port()))
-      server.register(selector, SelectionKey.OP_ACCEPT)
+//      sys.addShutdownHook {info("hook"); iPhone !? PowerOff}
 
-      implicit val actor = fork {loop(selector)}
+      info("load agent " + agentJarFile)
+      info("options:")
+      agentOptions foreach { o => info("\t" + o) }
 
-      registerCtrlCHandler()
+      vm.loadAgent(agentJarFile, agentOptions mkString (" "))
+      vm.detach()
 
-      val vm = driveAgentLoadingAndGetVM(id)
-
+      iPhone.start()
     } catch {
-      case e => error(e)
+      case e => error(e); silentClose(errorDetailWriter);
     }
-
-    if (actor.getState != Actor.State.Suspended) actor !? Break
-    vm.detach()
-    info("detached vm " + pid)
-
-    silentClose(selector)
-    silentClose(server)
-    silentClose(errorDetailWriter)
-
-    info("bye")
   }
 
   override protected def error(a: Any) {
     super.error(a)
     if (a.isInstanceOf[Throwable]) {
       super.error("You can get more details in " + errorDetailFile)
-      a.asInstanceOf[Throwable].getStackTrace foreach { s => errorDetailWriter.write(s + "\n") }
+      a.asInstanceOf[Throwable].getStackTrace foreach { s => println("\t" + s) /*errorDetailWriter.write(s + "\n") */ }
     }
   }
-
-  private def registerCtrlCHandler()(implicit actor: Actor) {
-    val main = Thread.currentThread()
-
-    @tailrec
-    def waitForAgentExit() {
-      var interrupted = false
-      try {main.join(5000L)} catch {
-        case e: InterruptedException =>
-          interrupted = true
-          warn("Something goes wrong, agent couldn't exit normally, you may wait more 5 seconds, or force kill it.")
-      }
-      if (interrupted) waitForAgentExit()
-    }
-
-    sys.addShutdownHook {
-      actor ! Quit
-      waitForAgentExit()
-    }
-  }
-
-  private def accept(key: SelectionKey, selector: Selector) {
-    val channel = key.channel().asInstanceOf[ServerSocketChannel].accept()
-    if (channel == null) return
-    try {
-      channel.socket().setSoLinger(true, 1)
-      channel.socket().setTcpNoDelay(true)
-      channel.socket().setSendBufferSize(1024)
-      channel.configureBlocking(false)
-      channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE)
-    } catch {
-      case e: IOException => silentClose(channel); throw e
-    }
-    key.interestOps(key.interestOps() & ~SelectionKey.OP_ACCEPT)
-  }
-
-  private def read(key: SelectionKey) {
-    val channel = key.channel().asInstanceOf[ReadableByteChannel]
-
-    @tailrec
-    def output() {
-      val bytes = new Array[Byte](4096)
-      val read = channel.read(ByteBuffer.wrap(bytes))
-      if (read == -1) {
-        silentClose(channel)
-        throw new ExitException()
-      }
-      sout.write(bytes, 0, read)
-      if (read == bytes.length) output()
-    }
-
-    output()
-    interestOps(SelectionKey.OP_READ, key)
-  }
-
-  private def write(key: SelectionKey) {
-    val available = sin.available()
-    if (available > 0) {
-      val channel = key.channel()
-      val bytes = new Array[Byte](available)
-
-      sin.read(bytes)
-      write(channel, bytes)
-    }
-    interestOps(SelectionKey.OP_WRITE, key)
-  }
-
-  private def interestOps(op: Int, key: SelectionKey) {
-    key.interestOps(key.interestOps() | op)
-  }
-
-  private def write(channel: Channel, bytes: Array[Byte]) {
-    val write = channel.asInstanceOf[WritableByteChannel].write(ByteBuffer.wrap(bytes))
-    if (write < bytes.length)
-      throw new IllegalStateException("Can't send all input, you should enlarge socket send buffer.")
-  }
-
-  private def loop(selector: Selector) {
-
-    def sendQuitTo(c: Channel) {
-      write(c, "quit\n".getBytes)
-    }
-
-    var quit = false
-    def select() {
-      val selected = selector.select(500L)
-      if (selected > 0) {
-        selector.selectedKeys() foreach {
-          case k if k.isAcceptable => accept(k, selector)
-          case k if k.isReadable   => read(k)
-          case k if k.isWritable   => if (quit) sendQuitTo(k.channel()) else write(k)
-          case ignore              =>
-        }
-        selector.selectedKeys().clear()
-      }
-    }
-
-    try {
-      while (true) {
-        select()
-
-        receiveWithin(10L) {
-          case Quit    => quit = true
-          case Break   => try {select() /* read EOF */ } finally {reply()}
-          case TIMEOUT => // ignore
-        }
-      }
-    } catch {
-      case ignore: ExitException =>
-      case t: Throwable          => error(t)
-    }
-  }
-
-  private def driveAgentLoadingAndGetVM(pid: String)(implicit actor: Actor) = {
-    val vm = VirtualMachine.attach(pid)
-    info("attached vm " + pid)
-    try {
-      info("load agent " + agentJarFile + ", options: " + agentOptions)
-      vm.loadAgent(agentJarFile, agentOptions mkString (" "))
-    } finally {
-      vm
-    }
-  }
-
-  class ExitException extends Exception
-
-  case class Quit()
-
-  case class Break()
 
 }
 

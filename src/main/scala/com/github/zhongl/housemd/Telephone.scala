@@ -23,11 +23,11 @@ import com.github.zhongl.yascli.{Shell, PrintOut, Command}
 import jline.TerminalFactory
 
 /**
- * Nokia is used by Duck to communicate with HouseMD.
+ * Telephone is used by Duck to communicate with HouseMD.
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Nokia(inst: Instrumentation, port: Int, classes: Array[Class[Command]]) extends Runnable {
+class Telephone(inst: Instrumentation, port: Int, classes: Array[Class[Command]]) extends Runnable {
 
   def run() {
     val socket = new Socket("localhost", port)

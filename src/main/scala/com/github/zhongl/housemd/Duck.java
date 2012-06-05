@@ -16,31 +16,43 @@
 
 package com.github.zhongl.housemd;
 
+import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Array;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl</a>
  */
 public class Duck {
     public static void agentmain(String arguments, Instrumentation instrumentation) throws Exception {
-        String[] parts = arguments.split("\\s+", 3);
-        String duckClassName = parts[0];
-        int port = Integer.parseInt(parts[1]);
+        String[] parts = arguments.split("\\s+", 4);
+        URL agentJar = new File(parts[0]).toURI().toURL();
+        String telephoneClassName = parts[1];
+        int port = Integer.parseInt(parts[2]);
 
-        ClassLoader parentClassLoader = Duck.class.getClassLoader();
-        ClassLoader classLoader = new ClassLoader(parentClassLoader) {
+//        ClassLoader parentClassLoader = Duck.class.getClassLoader();
+        ClassLoader classLoader = new URLClassLoader(new URL[]{agentJar}) {
+            @Override
+            protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+                if (name.startsWith("java") || name.startsWith("sun") || name.startsWith("com.sun"))
+                    return super.loadClass(name, resolve);
+                Class<?> aClass = findClass(name);
+                if (resolve) resolveClass(aClass);
+                return aClass;
+            }
         };
 
-        Class<?>[] commandClasses = loadClasses(parts[2].split("\\s+"), classLoader);
+        Class<?>[] commandClasses = loadClasses(parts[3].split("\\s+"), classLoader);
 
-        Runnable executor = (Runnable) classLoader.loadClass(duckClassName)
+        Runnable executor = (Runnable) classLoader.loadClass(telephoneClassName)
                 .getConstructor(Instrumentation.class, int.class, Class[].class)
                 .newInstance(instrumentation, port, commandClasses);
 
         Thread thread = new Thread(executor, "HouseMD-Duck");
         thread.setDaemon(true);
-        thread.run();
+        thread.start();
     }
 
     private static Class<?>[] loadClasses(String[] classNames, ClassLoader classLoader) throws ClassNotFoundException {

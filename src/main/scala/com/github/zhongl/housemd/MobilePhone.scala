@@ -16,67 +16,78 @@
 
 package com.github.zhongl.housemd
 
-import Utils._
 import java.net.InetSocketAddress
-import actors.{TIMEOUT, Actor}
-import annotation.tailrec
-import java.nio.ByteBuffer
+import java.io.{IOException, OutputStream, InputStream}
 import java.nio.channels._
-import java.io.{OutputStream, InputStream, IOException}
+import annotation.tailrec
 import collection.JavaConversions._
+import actors.Actor._
+import com.github.zhongl.housemd.Utils._
+import java.nio.ByteBuffer
+import actors.{Actor, OutputChannel, TIMEOUT}
+
 
 /**
+ * Mobilephone is used by HouseMD to communicate with Duck
+ *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
+class Mobilephone(port: Int, handle: PartialFunction[Signal, Any]) extends Actor {
 
-/**
-* IPhone4 is used by HouseMD to communicate with Duck.
-*/
-class IPhone4(port: Int, in: InputStream, out: OutputStream, error: Throwable => Unit) extends Actor {
-  val server   = ServerSocketChannel.open()
-  val selector = Selector.open()
+  private val server   = ServerSocketChannel.open()
+  private val selector = Selector.open()
 
   server.configureBlocking(false)
   server.socket().bind(new InetSocketAddress(port))
   server.register(selector, SelectionKey.OP_ACCEPT)
 
   def act() {
+    val a = self
+    val hook = sys.addShutdownHook {a !? PowerOff}
+    var killer = Option.empty[OutputChannel[Any]]
 
-    def sendQuitTo(c: Channel) {
-      write(c, "quit\n".getBytes)
-    }
-
-    var quit = false
     def select() {
       val selected = selector.select(500L)
       if (selected > 0) {
         selector.selectedKeys() foreach {
           case k if k.isAcceptable => accept(k, selector)
           case k if k.isReadable   => read(k)
-          case k if k.isWritable   => if (quit) sendQuitTo(k.channel()) else write(k)
+          case k if k.isWritable   => if (killer.isEmpty) write(k) else sendExit(k)
           case ignore              =>
         }
         selector.selectedKeys().clear()
       }
     }
 
-    try {
-      while (true) {
-        select()
-
-        receiveWithin(10L) {
-          case Quit    => quit = true
-          case Break   => try {select() /* read EOF */ } finally {reply()}
-          case TIMEOUT => // ignore
-        }
-      }
-    } catch {
-      case ignore: ExitException =>
-      case t: Throwable          => error(t)
+    def endCall {
+      if (killer.isEmpty) hook.remove();
+      self ! EndCall
     }
+    loop {
+      reactWithin(1L) {
+        case PowerOff => killer = Some(sender)
+        case EndCall  =>
+          handle(HangUp)
+          killer foreach { o => o !() } // reply to killer
+          exit()
+        case TIMEOUT  =>
+          try {select()} catch {
+            case Closed => endCall
+            case t      => handle(BreakOff(t)); hook.remove(); self ! EndCall
+          }
+      }
+    }
+  }
 
-    silentClose(selector)
-    silentClose(server)
+  def endCall() { val a = self; actor {a ! EndCall} }
+
+  private def sendExit(key: SelectionKey) {
+    write(key.channel(), "quit\n".getBytes)
+    //      val ctrl:Char = 0x0004
+    //      val cb = CharBuffer.allocate(1)
+    //      cb.append(ctrl)
+    //      val array = Charset.defaultCharset().encode(cb).array()
+    //      write(c, array)
   }
 
   private def accept(key: SelectionKey, selector: Selector) {
@@ -88,45 +99,47 @@ class IPhone4(port: Int, in: InputStream, out: OutputStream, error: Throwable =>
       channel.socket().setSendBufferSize(1024)
       channel.configureBlocking(false)
       channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE)
+      handle(PickUp)
     } catch {
       case e: IOException => silentClose(channel); throw e
     }
-    key.interestOps(key.interestOps() & ~SelectionKey.OP_ACCEPT)
+    uninterestOps(SelectionKey.OP_ACCEPT, key)
   }
 
   private def read(key: SelectionKey) {
     val channel = key.channel().asInstanceOf[ReadableByteChannel]
 
     @tailrec
-    def output() {
+    def output(stream: OutputStream) /*: Unit =*/ {
       val bytes = new Array[Byte](4096)
       val read = channel.read(ByteBuffer.wrap(bytes))
       if (read == -1) {
         silentClose(channel)
-        throw new ExitException()
+        throw Closed
       }
-      out.write(bytes, 0, read)
-      if (read == bytes.length) output()
+      stream.write(bytes, 0, read)
+      if (read == bytes.length) output(stream)
     }
 
-    output()
+    handle(ListenTo(output))
     interestOps(SelectionKey.OP_READ, key)
   }
 
   private def write(key: SelectionKey) {
-    val available = in.available()
-    if (available > 0) {
-      val channel = key.channel()
-      val bytes = new Array[Byte](available)
 
-      in.read(bytes)
-      write(channel, bytes)
+    def input(stream: InputStream) {
+      val available = stream.available()
+      if (available > 0) {
+        val channel = key.channel()
+        val bytes = new Array[Byte](available)
+
+        stream.read(bytes)
+        write(channel, bytes)
+      }
     }
-    interestOps(SelectionKey.OP_WRITE, key)
-  }
 
-  private def interestOps(op: Int, key: SelectionKey) {
-    key.interestOps(key.interestOps() | op)
+    handle(SpeakTo(input))
+    interestOps(SelectionKey.OP_WRITE, key)
   }
 
   private def write(channel: Channel, bytes: Array[Byte]) {
@@ -135,10 +148,14 @@ class IPhone4(port: Int, in: InputStream, out: OutputStream, error: Throwable =>
       throw new IllegalStateException("Can't send all input, you should enlarge socket send buffer.")
   }
 
-  class ExitException extends Exception
+  private def interestOps(op: Int, key: SelectionKey) = key.interestOps(key.interestOps() | op)
 
-  case class Quit()
+  private def uninterestOps(op: Int, key: SelectionKey) = key.interestOps(key.interestOps() & ~op)
 
-  case class Break()
+  private case object EndCall
+
+  private case object Closed extends Exception
 
 }
+
+

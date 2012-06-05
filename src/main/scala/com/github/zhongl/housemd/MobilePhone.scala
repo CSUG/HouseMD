@@ -59,10 +59,11 @@ class Mobilephone(port: Int, handle: PartialFunction[Signal, Any]) extends Actor
       }
     }
 
-    def endCall {
-      if (killer.isEmpty) hook.remove();
+    def endCall() {
+      if (killer.isEmpty) hook.remove()
       self ! EndCall
     }
+
     loop {
       reactWithin(1L) {
         case PowerOff => killer = Some(sender)
@@ -72,14 +73,12 @@ class Mobilephone(port: Int, handle: PartialFunction[Signal, Any]) extends Actor
           exit()
         case TIMEOUT  =>
           try {select()} catch {
-            case Closed => endCall
-            case t      => handle(BreakOff(t)); hook.remove(); self ! EndCall
+            case Closed => endCall()
+            case t      => handle(BreakOff(t)); hook.remove(); endCall()
           }
       }
     }
   }
-
-  def endCall() { val a = self; actor {a ! EndCall} }
 
   private def sendExit(key: SelectionKey) {
     write(key.channel(), "quit\n".getBytes)

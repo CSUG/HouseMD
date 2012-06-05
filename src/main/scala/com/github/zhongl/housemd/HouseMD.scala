@@ -61,11 +61,9 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
         case ListenTo(earphone)  => earphone(sout)
         case SpeakTo(microphone) => microphone(sin)
         case BreakOff(reason)    => error("connection breaked causeby"); error(reason)
-        case HangUp              => silentClose(errorDetailWriter); info("bye");
+        case HangUp              => silentClose(errorDetailWriter); info("bye")
 
       })
-
-//      sys.addShutdownHook {info("hook"); iPhone !? PowerOff}
 
       info("load agent " + agentJarFile)
       info("options:")
@@ -76,7 +74,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
 
       iPhone.start()
     } catch {
-      case e => error(e); silentClose(errorDetailWriter);
+      case e => error(e); silentClose(errorDetailWriter)
     }
   }
 
@@ -84,7 +82,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
     super.error(a)
     if (a.isInstanceOf[Throwable]) {
       super.error("You can get more details in " + errorDetailFile)
-      a.asInstanceOf[Throwable].getStackTrace foreach { s => println("\t" + s) /*errorDetailWriter.write(s + "\n") */ }
+      a.asInstanceOf[Throwable].getStackTrace foreach { s => errorDetailWriter.write(s + "\n")  }
     }
   }
 

@@ -32,7 +32,6 @@ public class Duck {
         String telephoneClassName = parts[1];
         int port = Integer.parseInt(parts[2]);
 
-//        ClassLoader parentClassLoader = Duck.class.getClassLoader();
         ClassLoader classLoader = new URLClassLoader(new URL[]{agentJar}) {
             @Override
             protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {

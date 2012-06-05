@@ -51,22 +51,6 @@ object Reflections {
     m
   }
 
-  def is(m: java.lang.reflect.Method) = (m.getParameterTypes match {
-    case Array(S, _, `i`, `i`) => true
-    case _                     => false
-  })
-
-  def convert(c: Class[_], s: String): AnyRef = {
-    c match {
-      case B | `b` => Boolean.valueOf(s)
-      case I | `i` => Integer.valueOf(s)
-      case L | `l` => Long.valueOf(s)
-      case D | `d` => Double.valueOf(s)
-      case S       => s
-      case _       => throw new IllegalArgumentException("Unsupported converting type: " + c)
-    }
-  }
-
   def nativeToStringOf(instance: AnyRef) = instance.getClass.getName + "@" + Integer
     .toHexString(identityHashCode(instance))
 

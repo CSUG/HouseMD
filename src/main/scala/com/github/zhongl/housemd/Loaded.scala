@@ -42,16 +42,16 @@ class Loaded(inst: Instrumentation, out: PrintOut)
 
   override def complete(buffer: String, cursor: Int, candidates: java.util.List[CharSequence]) = {
     val split = buffer.split("\\s+")
-    val prefix = split.last
-    if (split.isEmpty || prefix == "-h") {
+    if (split.isEmpty) {
       inst.getAllLoadedClasses.map {simpleNameOf}.sorted.distinct foreach {candidates.add}
       cursor
     } else {
+      val prefix = split.last
       val matched = inst.getAllLoadedClasses collect {case SimpleName(c) if c.startsWith(prefix) => c }
       if (matched.isEmpty) -1
       else {
         matched.sorted.distinct foreach {candidates.add}
-        cursor - prefix.size
+        cursor - prefix.length
       }
     }
   }

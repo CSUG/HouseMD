@@ -51,6 +51,10 @@ class LoadedSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should complete class simple name") {
+      complete("Lo") { (cursor, candidates) =>
+        cursor should be(0)
+        candidates should contain("Loaded".asInstanceOf[CharSequence])
+      }
       complete("-h Lo") { (cursor, candidates) =>
         cursor should be(3)
         candidates should contain("Loaded".asInstanceOf[CharSequence])
@@ -58,8 +62,8 @@ class LoadedSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should complete all class simple name") {
-      complete("-h ") { (cursor, candidates) =>
-        cursor should be(3)
+      complete("") { (cursor, candidates) =>
+        cursor should be(0)
         candidates should not be ('empty)
       }
     }

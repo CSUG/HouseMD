@@ -35,10 +35,11 @@ import java.lang.reflect.InvocationTargetException;
 public class TraceTarget {
 
     public static void main(String[] args) throws Exception {
-        loadClass();
+        Object o = loadClass();
 
         while (true) {
             addOne(0);
+            o.getClass().getMethod("m", String.class).invoke(o, "");
             try {
                 Thread.sleep(500L);
             } catch (Exception e) {
@@ -47,10 +48,8 @@ public class TraceTarget {
         }
     }
 
-    private static void loadClass() throws Exception {
-        Class<?> aClass = new CL().loadClass("TraceTarget$A");
-        Object o = aClass.getConstructor(String.class).newInstance("123");
-        System.out.println(o);
+    private static Object loadClass() throws Exception {
+        return Class.forName("TraceTarget$A", false, new CL()).getConstructor(String.class).newInstance("123");
     }
 
     public static int addOne(int i) {
@@ -60,6 +59,8 @@ public class TraceTarget {
     public static class CL extends ClassLoader {
         @Override
         public Class<?> loadClass(String name) throws ClassNotFoundException {
+            Class<?> aClass = findLoadedClass(name);
+            if (aClass != null) return aClass;
             if (name.startsWith("Trace")) {
                 try {
                     InputStream inputStream = getResourceAsStream(name + ".class");
@@ -84,7 +85,14 @@ public class TraceTarget {
             this.s = s;
             new B();
         }
+
+        public void m(int i, String s) {
+        }
+
+        public void m(String s) {
+        }
     }
 
-    public static class B {}
+    public static class B {
+    }
 }

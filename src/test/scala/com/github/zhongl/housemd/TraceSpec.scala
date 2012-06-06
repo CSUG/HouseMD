@@ -59,7 +59,7 @@ class TraceSpec extends FunSpec with ShouldMatchers {
 
   describe("Trace") {
     it("should display statistics") {
-      parseAndRun("-t 3 A m") { (out, detail, stack) =>
+      parseAndRun("-t 3 A.m") { (out, detail, stack) =>
         out.split("\n") filter (s => !s.startsWith("INFO") && !s.isEmpty) foreach (_ should startWith("A.m"))
       }
     }

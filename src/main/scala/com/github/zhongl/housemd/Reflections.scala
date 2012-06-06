@@ -71,5 +71,9 @@ object Reflections {
     }
   }
 
-  def simpleNameOf(klass: Class[_]) = klass.getName.split("\\.").last
+  def simpleNameOf(c: Class[_]):String = simpleNameOf(c.getName)
+
+  def simpleNameOf(className: String) = className.split("\\.").last
+
+  def allMethodsOf(c: Class[_]) = (c.getMethods ++ c.getDeclaredMethods).toSet
 }

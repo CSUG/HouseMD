@@ -20,7 +20,6 @@ import java.lang.System.{currentTimeMillis => now}
 import java.util.regex.Pattern
 import instrument.{ClassFileTransformer, Instrumentation}
 import java.security.ProtectionDomain
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.Map
 import management.ManagementFactory
@@ -29,6 +28,7 @@ import actors.Actor._
 import java.io.{BufferedWriter, FileWriter, File}
 import actors.TIMEOUT
 import java.lang.reflect.{Method, Modifier}
+import Reflections.allMethodsOf
 
 
 /**
@@ -39,8 +39,6 @@ class Trace(inst: Instrumentation, out: PrintOut)
 
   import com.github.zhongl.yascli.Converters._
 
-  private implicit val int2Seconds              = new Second(_: Int)
-  private implicit val string2Seconds           = (s: String) => new Second(s)
   private implicit val arrayString2ArrayPattern = (_: String).split("\\s+") map (Pattern.compile)
 
   val outputRoot = {
@@ -58,22 +56,17 @@ class Trace(inst: Instrumentation, out: PrintOut)
   private val detailable     = flag("-d" :: "--detail" :: Nil, "enable append invocation detail to " + detailFile + ".")
   private val stackable      = flag("-s" :: "--stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
 
-  private val classPattern   = parameter[Pattern]("class", "class name regex pattern.")
-  private val methodPatterns = parameter[Array[Pattern]]("method", "method name regex pattern.", Some(Array[Pattern](".+")))
+  private val methodFilters = parameter[Array[MethodFilter]]("method-filter", "method filter pattern like \"ClassSimpleName.methodName\" or \"ClassSimpleName\".")
 
   private lazy val detailWriter = new DetailWriter(new BufferedWriter(new FileWriter(detailFile, true)))
   private lazy val stackWriter  = new StackWriter(new BufferedWriter(new FileWriter(stackFile, true)))
 
   private def candidates = {
     val pp = packagePattern()
-    val cp = classPattern()
+    val mfs = methodFilters()
     def packageOf(c: Class[_]): String = if (c.getPackage == null) "" else c.getPackage.getName
     inst.getAllLoadedClasses filter { c =>
-      try {
-        pp.matcher(packageOf(c)).matches() && cp.matcher(c.getSimpleName).matches() && isNotFinal(c)
-      } catch {
-        case e: InternalError => false
-      }
+      pp.matcher(packageOf(c)).matches() && mfs.find(_.filter(c)).isDefined && isNotFinal(c)
     }
   }
 
@@ -96,7 +89,7 @@ class Trace(inst: Instrumentation, out: PrintOut)
   }
 
   private def probeTransformer = new ClassFileTransformer {
-    val patterns = methodPatterns()
+    val mfs = methodFilters()
 
     def transform(
       loader: ClassLoader,
@@ -104,7 +97,7 @@ class Trace(inst: Instrumentation, out: PrintOut)
       classBeingRedefined: Class[_],
       protectionDomain: ProtectionDomain,
       classfileBuffer: Array[Byte]) = {
-      if (candidates.contains(classBeingRedefined)) ClassDecorator.decorate(classfileBuffer, patterns) else null
+      if (candidates.contains(classBeingRedefined)) ClassDecorator.decorate(classfileBuffer, mfs) else null
     }
   }
 
@@ -170,12 +163,8 @@ class Trace(inst: Instrumentation, out: PrintOut)
   }
 
   private def initializeStatistics = {
-    val mp = methodPatterns()
-    for (
-      c <- candidates;
-      m <- (c.getMethods ++ c.getDeclaredMethods).toSet
-      if mp.find(_.matcher(m.getName).matches()).isDefined
-    ) yield new Statistic(c, m)
+    val mfs = methodFilters()
+    for (c <- candidates; m <- allMethodsOf(c) if mfs.find(_.filter(c, m)).isDefined) yield new Statistic(c, m)
   }
 
   private def reset(candidates: Array[Class[_]]) {
@@ -199,12 +188,6 @@ class Trace(inst: Instrumentation, out: PrintOut)
     warn("Can't trace " + c + ", because it is final")
     false
   } else true
-
-  class Second(val value: Int) {
-    def toMillis = TimeUnit.SECONDS.toMillis(value)
-
-    override def toString = value.toString
-  }
 
   case class OverLimit()
 
@@ -238,7 +221,7 @@ class Trace(inst: Instrumentation, out: PrintOut)
       context.thisObject.getClass == klass &&
         context.methodName == method.getName &&
         context.arguments.size == method.getParameterTypes.size &&
-          context.arguments.map(_.getClass) == method.getParameterTypes
+        context.arguments.map(_.getClass) == method.getParameterTypes
     }
 
     def avgElapseMillis =

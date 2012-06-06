@@ -20,19 +20,18 @@ import org.objectweb.asm._
 import commons.{Method, AdviceAdapter}
 import org.objectweb.asm.Opcodes._
 import org.objectweb.asm.Type._
-import java.util.regex.Pattern
 import scala.Predef._
 
 object ClassDecorator {
 
-  def decorate(classfileBuffer: Array[Byte], toDecorateMethodRegexs: Array[Pattern]) = {
+  def decorate(classfileBuffer: Array[Byte], methodFilters: Array[MethodFilter]) = {
     val cr: ClassReader = new ClassReader(classfileBuffer)
     val cw: ClassWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS)
-    cr.accept(classAdapter(cw, toDecorateMethodRegexs), ClassReader.EXPAND_FRAMES)
+    cr.accept(classAdapter(cw, methodFilters), ClassReader.EXPAND_FRAMES)
     cw.toByteArray
   }
 
-  def classAdapter(cw: ClassWriter, methodRegexs: Array[Pattern]) =
+  def classAdapter(cw: ClassWriter, methodFilters: Array[MethodFilter]) =
     new ClassAdapter(cw) {
 
       override def visit(
@@ -56,13 +55,14 @@ object ClassDecorator {
         if ((mv != null && containsMethod(name))) methodAdapter(mv, access, name, desc) else mv
       }
 
-      private[this] def containsMethod(methodName: String) = methodRegexs.find(_.matcher(methodName).matches).isDefined
+      private[this] def containsMethod(methodName: String) =
+        methodFilters.find(_.filter(className, methodName)).isDefined
 
       private[this] def methodAdapter(mv: MethodVisitor, access: Int, methodName: String, desc: String): MethodAdapter =
         new AdviceAdapter(mv, access, methodName, desc) {
-          val advice         = Type.getType(classOf[Advice])
-          val enter          = Method.getMethod(Advice.ON_METHOD_BEGIN)
-          val exit           = Method.getMethod(Advice.ON_METHOD_END)
+          val advice = Type.getType(classOf[Advice])
+          val enter  = Method.getMethod(Advice.ON_METHOD_BEGIN)
+          val exit   = Method.getMethod(Advice.ON_METHOD_END)
 
           override def visitMaxs(maxStack: Int, maxLocals: Int) {
             mark(end)

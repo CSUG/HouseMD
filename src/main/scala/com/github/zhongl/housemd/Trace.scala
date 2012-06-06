@@ -22,12 +22,14 @@ import com.github.zhongl.yascli.{PrintOut, Command}
 import java.io.{BufferedWriter, FileWriter, File}
 import java.lang.reflect.Method
 import Reflections.allMethodsOf
+import jline.console.completer.Completer
+import java.util.List
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 class Trace(val inst: Instrumentation, out: PrintOut)
-  extends Command("trace", "display or output infomation of method invocaton.", out) with Transformer {
+  extends Command("trace", "display or output infomation of method invocaton.", out) with Transformer with Completer {
 
   val outputRoot = {
     val dir = new File("/tmp/" + name + "/" + ManagementFactory.getRuntimeMXBean.getName)
@@ -40,6 +42,14 @@ class Trace(val inst: Instrumentation, out: PrintOut)
   private val interval   = option[Second]("-i" :: "--interval" :: Nil, "display trace statistics interval.", 1)
   private val detailable = flag("-d" :: "--detail" :: Nil, "enable append invocation detail to " + detailFile + ".")
   private val stackable  = flag("-s" :: "--stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
+
+  def complete(buffer: String, cursor: Int, candidates: List[CharSequence]) = {
+//    buffer.split("\\s+") match {
+//      case Array() =>
+//      case Array
+//    }
+  }
+
 
   override protected def hook = new Hook() {
     val enableDetail   = detailable()
@@ -111,7 +121,7 @@ class Trace(val inst: Instrumentation, out: PrintOut)
     def avgElapseMillis =
       if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes
 
-    override def toString = "%1$-40s %2$#9s %3$#9s %4$#9s %5$#9s %6$#9s %7$s" format(
+    override def toString = "%1$-30s %2$#9s %3$#9s %4$#9s %5$#9s %6$#9s %7$s" format(
       "%1$s.%2$s".format(klass.getName.split("\\.").last, method.getName),
       totalTimes,
       failureTimes,
@@ -120,6 +130,7 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       avgElapseMillis,
       klass.getClassLoader)
   }
+
 }
 
 

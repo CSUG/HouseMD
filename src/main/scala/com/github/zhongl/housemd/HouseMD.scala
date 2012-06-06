@@ -56,7 +56,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
       val sin = terminal.wrapInIfNeeded(System.in)
       val vm = VirtualMachine.attach(pid())
 
-      val iPhone = new Mobilephone(port(), {
+      val mobilephone = new Mobilephone(port(), {
         case PickUp              => info("connection established on " + port())
         case ListenTo(earphone)  => earphone(sout)
         case SpeakTo(microphone) => microphone(sin)
@@ -72,7 +72,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
       vm.loadAgent(agentJarFile, agentOptions mkString (" "))
       vm.detach()
 
-      iPhone.start()
+      mobilephone.start()
     } catch {
       case e => error(e); silentClose(errorDetailWriter)
     }

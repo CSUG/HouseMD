@@ -53,7 +53,7 @@ trait Transformer extends Runnable {this: Command =>
     }
 
     def exitWith(context: Map[String, AnyRef]) {
-      host ! exitWith(context)
+      host ! ExitWith(context)
       if (count.incrementAndGet() >= max) host ! OverLimit
     }
   }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012 zhongl
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package com.github.zhongl.housemd
 
 import org.scalatest.FunSpec
@@ -34,6 +50,34 @@ class LoadedSpec extends FunSpec with ShouldMatchers {
       }
     }
 
+    it("should complete class simple name") {
+      complete("-h Lo") { (cursor, candidates) =>
+        cursor should be(3)
+        candidates should contain("Loaded".asInstanceOf[CharSequence])
+      }
+    }
+
+    it("should complete all class simple name") {
+      complete("-h ") { (cursor, candidates) =>
+        cursor should be(3)
+        candidates should not be ('empty)
+      }
+    }
+
+  }
+
+  def complete(buffer: String)(verify: (Int, java.util.List[CharSequence]) => Unit) {
+
+    val inst = mock(classOf[Instrumentation])
+    val out = new ByteArrayOutputStream()
+
+    doReturn(Array(classOf[String], classOf[Loaded])).when(inst).getAllLoadedClasses
+
+    val loaded = new Loaded(inst, PrintOut(out))
+
+    val candidates = new java.util.ArrayList[CharSequence]()
+    val cursor = loaded.complete(buffer, buffer.length, candidates)
+    verify(cursor, candidates)
   }
 
 
@@ -49,4 +93,5 @@ class LoadedSpec extends FunSpec with ShouldMatchers {
     loaded.run()
     verify(out.toString)
   }
+
 }

@@ -41,16 +41,17 @@ class Loaded(inst: Instrumentation, out: PrintOut)
   }
 
   override def complete(buffer: String, cursor: Int, candidates: java.util.List[CharSequence]) = {
-    val trimmed = buffer.trim
-    if (trimmed.isEmpty) {
-      inst.getAllLoadedClasses.map {_.getName}.sorted foreach (candidates.add)
+    val split = buffer.split("\\s+")
+    val prefix = split.last
+    if (split.isEmpty || prefix == "-h") {
+      inst.getAllLoadedClasses.map {simpleNameOf}.sorted.distinct foreach {candidates.add}
       cursor
     } else {
-      val matched = inst.getAllLoadedClasses filter (_.getName.contains(trimmed))
+      val matched = inst.getAllLoadedClasses collect {case SimpleName(c) if c.startsWith(prefix) => c }
       if (matched.isEmpty) -1
       else {
-        matched sortBy (_.getName) foreach { c => candidates.add(c.getName) }
-        cursor - trimmed.size
+        matched.sorted.distinct foreach {candidates.add}
+        cursor - prefix.size
       }
     }
   }
@@ -67,6 +68,10 @@ class Loaded(inst: Instrumentation, out: PrintOut)
   }
 
   private def originOf(c: Class[_]): String = " -> " + Utils.sourceOf(c)
+
+  object SimpleName {
+    def unapply(c: Class[_]) = Some(simpleNameOf(c))
+  }
 
 }
 

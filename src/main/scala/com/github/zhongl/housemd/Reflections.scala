@@ -71,5 +71,5 @@ object Reflections {
     }
   }
 
-
+  def simpleNameOf(klass: Class[_]) = klass.getName.split("\\.").last
 }

@@ -108,6 +108,4 @@ You can also input `help loaded` and get help infomation of `loaded` as blow:
 - The delimiter is one `white space`,
 - method full name contains: package, class name and method name
 
-
-
 Having fun!

@@ -43,6 +43,7 @@ public abstract class Advice {
     public static final String THREAD = "thread";
     public static final String SET_DELEGATE = "setDelegate";
     public static final String SET_DEFAULT_DELEGATE = "setDefaultDelegate";
+    public static final String CLASS_LOADER = "classLoader";
 
     public static final Method ON_METHOD_BEGIN;
     public static final Method ON_METHOD_END;
@@ -50,11 +51,13 @@ public abstract class Advice {
     private static final AtomicReference<Object> delegate;
     private static final Map<Thread, Stack<Map<String, Object>>> threadBoundContexts;
     private static final Advice nullAdvice;
+    private static final ClassLoader loader;
 
     static {
         try {
             ON_METHOD_BEGIN = Advice.class.getMethod("onMethodBegin", String.class, String.class, String.class, Object.class, Object[].class);
             ON_METHOD_END = Advice.class.getMethod("onMethodEnd", Object.class);
+            loader = Advice.class.getClassLoader();
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -77,6 +80,7 @@ public abstract class Advice {
         Map<String, Object> context = new HashMap<String, Object>();
         context.put(CLASS, className);
         context.put(METHOD, methodName);
+        context.put(CLASS_LOADER, loader);
         context.put(VOID_RETURN, isVoidReturn(descriptor));
         context.put(THIS, thisObject);
         context.put(ARGUMENTS, arguments);

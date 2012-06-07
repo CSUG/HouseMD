@@ -64,11 +64,9 @@ trait Transformer extends Runnable {this: Command =>
     val mfs = methodFilters()
     def packageOf(c: Class[_]): String = if (c.getPackage == null) "" else c.getPackage.getName
 
-    val cls = inst.getAllLoadedClasses filter { c =>
+    inst.getAllLoadedClasses filter { c =>
       pp.matcher(packageOf(c)).matches() && mfs.find(_.filter(c)).isDefined && isNotFinal(c)
     }
-    cls foreach { c => info("===========" + c) }
-    cls
   }
 
   protected lazy val probeTransformer = new ClassFileTransformer {
@@ -120,8 +118,8 @@ trait Transformer extends Runnable {this: Command =>
         h.heartbeat(t)
 
         if (t - start >= timoutMillis) {
-          break()
           info("Ended by timeout")
+          break()
         }
       }
     }

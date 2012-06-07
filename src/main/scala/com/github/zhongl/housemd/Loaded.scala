@@ -29,12 +29,12 @@ class Loaded(val inst: Instrumentation, out: PrintOut)
 
   private val tab = "\t"
 
-  private val hierarchyable = flag("-h" :: "--classloader-hierarchies" :: Nil, "display classloader hierarchies of loaded class.")
-  private val keyword       = parameter[String]("keyword", "keyword which class name contains.")
+  private val hierarchyable   = flag("-h" :: "--classloader-hierarchies" :: Nil, "display classloader hierarchies of loaded class.")
+  private val classSimpleName = parameter[String]("name", "class name without package name.")
 
   override def run() {
-    val k = keyword()
-    val matched = inst.getAllLoadedClasses filter {_.getName.contains(k)}
+    val k = classSimpleName()
+    val matched = inst.getAllLoadedClasses filter {simpleNameOf(_) == k}
     if (matched.isEmpty) println("No matched class")
     else matched foreach { c => println(c.getName + originOf(c)); if (hierarchyable()) layout(c.getClassLoader) }
   }

@@ -24,6 +24,7 @@ import java.lang.ClassNotFoundException;
 import java.lang.Exception;
 import java.lang.IllegalAccessException;
 import java.lang.InstantiationException;
+import java.lang.Integer;
 import java.lang.NoSuchMethodException;
 import java.lang.Object;
 import java.lang.Override;
@@ -79,6 +80,9 @@ public class TraceTarget {
     }
 
     public static class A {
+        static {
+            System.out.println(A.class.getClassLoader());
+        }
         public final String s;
 
         public A(String s) {

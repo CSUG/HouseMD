@@ -33,11 +33,20 @@ object Reflections {
   private val L = classOf[Long]
   private val l = Long.TYPE
 
-  private val B = classOf[Boolean]
-  private val b = Boolean.TYPE
+  private val T = classOf[Boolean]
+  private val t = Boolean.TYPE
 
   private val D = classOf[Double]
   private val d = Double.TYPE
+
+  private val F = classOf[Float]
+  private val f = Float.TYPE
+
+  private val C = classOf[Char]
+  private val c = Character.TYPE
+
+  private val B = classOf[Byte]
+  private val b = Byte.TYPE
 
   // FIXME this is ugly, because i don't know how to get class of byte[]
   private lazy val defineClassMethod = {
@@ -49,6 +58,17 @@ object Reflections {
     }.get
     m.setAccessible(true)
     m
+  }
+
+  def toBoxClass(k: Class[_]) = k match {
+    case `i` => I
+    case `l` => L
+    case `d` => D
+    case `f` => F
+    case `t` => T
+    case `b` => B
+    case `c` => C
+    case _   => k
   }
 
   def nativeToStringOf(instance: AnyRef) = instance.getClass.getName + "@" + Integer
@@ -71,7 +91,7 @@ object Reflections {
     }
   }
 
-  def simpleNameOf(c: Class[_]):String = simpleNameOf(c.getName)
+  def simpleNameOf(c: Class[_]): String = simpleNameOf(c.getName)
 
   def simpleNameOf(className: String) = className.split("\\.").last
 

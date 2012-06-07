@@ -52,15 +52,16 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       for (c <- candidates; m <- allMethodsOf(c) if mfs.find(_.filter(c, m)).isDefined) yield new Statistic(c, m)
     }.sortBy(s => s.klass.getName + "." + s.method.getName)
 
+    val maxMethodSignLength  = statistics.map {_.methodSign.length}.max
+    val maxClassLoaderLength = statistics.map {_.klass.getClassLoader.toString.length}.max
+
     lazy val detailWriter = new DetailWriter(new BufferedWriter(new FileWriter(detailFile, true)))
     lazy val stackWriter  = new StackWriter(new BufferedWriter(new FileWriter(stackFile, true)))
 
     override def exitWith(context: Context) {
       if (enableDetail) detailWriter.write(context)
       if (enableStack) stackWriter.write(context)
-      statistics find { s =>
-        context.className == s.method.getDeclaringClass.getName && context.methodName == s.method.getName
-      } match {
+      statistics find {_.filter(context)} match {
         case Some(s) => s + context
         case None    => // ignore
       }
@@ -69,7 +70,7 @@ class Trace(val inst: Instrumentation, out: PrintOut)
     override def heartbeat(now: Long) {
       if (now - last >= intervalMillis) {
         last = now
-        statistics foreach println
+        statistics foreach { s => println(s.reps(maxMethodSignLength, maxClassLoaderLength)) }
         println()
       }
     }
@@ -91,6 +92,10 @@ class Trace(val inst: Instrumentation, out: PrintOut)
 
     val NaN = "-"
 
+    lazy val methodSign = "%1$s.%2$s(%3$s)"
+      .format(klass.getName.split("\\.").last, method.getName,
+      method.getParameterTypes.map(simpleNameOf).mkString(", "))
+
     def +(context: Context) {
       import scala.math._
       val elapseMillis = context.stopped.get - context.started
@@ -102,24 +107,20 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       totalElapseMills = totalElapseMills + elapseMillis
     }
 
-    def x(context: Context) = {
-      context.thisObject.getClass == klass &&
-        context.methodName == method.getName &&
-        context.arguments.size == method.getParameterTypes.size &&
-        context.arguments.map(_.getClass) == method.getParameterTypes
+    def filter(context: Context) = {
+      context.classEquals(klass) && context.methodEquals(method)
     }
 
     def avgElapseMillis =
       if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes
 
-    override def toString = "%1$-30s %2$#9s %3$#9s %4$#9s %5$#9s %6$#9s %7$s" format(
-      "%1$s.%2$s".format(klass.getName.split("\\.").last, method.getName),
-      totalTimes,
-      failureTimes,
-      (if (minElapseMillis == -1) NaN else minElapseMillis),
-      (if (maxElapseMillis == -1) NaN else maxElapseMillis),
-      avgElapseMillis,
-      klass.getClassLoader)
+    def reps(maxMethodSignLength: Int, maxClassLoaderLength: Int) =
+      "%1$-" + maxMethodSignLength + "s    %2$-" + maxClassLoaderLength + "s    %3$#9s    %4$#9sms" format(
+        methodSign,
+        klass.getClassLoader,
+        totalTimes,
+        avgElapseMillis)
+
   }
 
 }

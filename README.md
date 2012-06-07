@@ -110,4 +110,4 @@ You can also input `help loaded` and get help infomation of `loaded` as blow:
 
 
 
-Have fun!
+Having fun!

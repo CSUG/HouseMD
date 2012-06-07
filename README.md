@@ -1,4 +1,4 @@
-[中文使用指南](https://github.com/zhongl/HouseMD/wiki/UseGuideCN)
+[中文使用指南](https://github.com/zhongl/HouseMD/wiki/UseGuideCN_0_2_0)
 
 HouseMD is a interactive command-line tool for dianosing Java process in runtime.
 It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more easier to use.
@@ -9,11 +9,10 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
     - name
     - source file(.class or .jar)
     - classloaders
-- Display invocation trace statistics
-    - total times
-    - failure times
-    - min elapse millis
-    - max elapse millis
+- Display invocation trace summary
+    - method full name and sign
+    - class loader of method declaring class
+    - total invoked times
     - avg elapse millis
 - Output invocation detail
     - timestamp
@@ -34,7 +33,7 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 
 ## One-command install (On Linux or MacOSX)
 
-    > curl https://raw.github.com/zhongl/HouseMD/master/bin/install | bash
+    > curl -Lk https://raw.github.com/zhongl/HouseMD/master/bin/install | bash
 
     > housemd
 
@@ -47,13 +46,32 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 
     > java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd-assembly-x.x.x.jar
 
+> Caution: In Mac OSX, the `-Xbootclasspath` is no needed.
+
 # How to use
 
-First all, type
+First all, type:
+
+    > housemd -h
+
+A help infomation shows up like:
+
+    Usage: housemd [OPTIONS] pid
+    	a runtime diagnosis tool of JVM.
+    Options:
+    	-h, --help
+    		show help infomation of this command.
+    	-p, --port=[INT]
+    		set console local socket server port number.
+    		default: 54321
+    Parameters:
+    	pid
+    		id of process to be diagnosing.
+
 
 Suppost your target pid is `1234` (you can use `jps` or `ps` get it), and then input:
 
-    housemd 1234
+    > housemd 1234
 
 After seen prompt `housemd>`, input `help` then you get help infomation like this:
 
@@ -64,50 +82,34 @@ After seen prompt `housemd>`, input `help` then you get help infomation like thi
     trace     display or output infomation of method invocaton.
     loaded    display loaded classes information.
 
-You can also input `help loaded` and get help infomation of `loaded`, as:
+You can also input `help loaded` and get help infomation of `loaded` as blow:
 
     housemd> help loaded
-    Usage: loaded [OPTIONS] keyword
+    Usage: loaded [OPTIONS] name
         display loaded classes information.
     Options:
         -h, --classloader-hierarchies
             display classloader hierarchies of loaded class.
     Parameters:
-        keyword
-            keyword which class name contains.
+        name
+            class name without package name.
 
-Your can make it faster or slower by `-t <seconds>`, eg:
+# Trace schemas
 
-    house -t 3 1234 .*TraceTraget.*
+## Summary statistics
 
-, or let `diagnosis.report` created wherever you want:
-
-    house -o /path/to/diagnosis.report 1234 .*TraceTraget.*
-
-# More usage
-
-Execute command without any argument, you will see:
-
-    Usage: house [options] <pid> <method regex> [more method regex...]
-      Options:
-        -l, --loaded            regex pattern for loaded class filter
-                                Default: .+
-        -c, --max-probe-count   max probe count for diagnosing last
-                                Default: 1000
-        -o, --output            output file pattern for diagnosis report
-                                Default: /path/to/diagnosis.report
-        -t, --timeout           seconds for diagnosing last
-                                Default: 60
+    | method full name         | class loader                              | invoked   |  avg elapse|
+    TraceTarget.addOne(int)    sun.misc.Launcher$AppClassLoader@1cde100            2           34ms
 
 
-
-# Trace line schema
+## Detail line
 
     | date     | time   | elapse | thread name | method full name  | arguemnt(s) |result or exception
-    2012-04-30 16:37:28 0ms      main          TraceTarget.addOne  0             1
+    2012-06-07 14:30:57  67ms      [main]       TraceTarget.addOne  [0]           1
 
 - The delimiter is one `white space`,
 - method full name contains: package, class name and method name
+
 
 
 Have fun!

@@ -26,7 +26,7 @@ class MethodFilter(classSimpleName: String, methodName: String = "*") {
   def filter(c: Class[_]) = simpleNameOf(c) == classSimpleName
 
   def filter(className: String, methodName: String) =
-    simpleNameOf(className) == classSimpleName && this.methodName == "*" && methodName == this.methodName
+    simpleNameOf(className) == classSimpleName && (this.methodName == "*" || methodName == this.methodName)
 
   def filter(c: Class[_], m: Method): Boolean = filter(c.getName, m.getName)
 

@@ -21,15 +21,14 @@ import management.ManagementFactory
 import com.github.zhongl.yascli.{PrintOut, Command}
 import java.io.{BufferedWriter, FileWriter, File}
 import java.lang.reflect.Method
-import Reflections.allMethodsOf
-import jline.console.completer.Completer
-import java.util.List
+import com.github.zhongl.housemd.Reflections._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 class Trace(val inst: Instrumentation, out: PrintOut)
-  extends Command("trace", "display or output infomation of method invocaton.", out) with Transformer with Completer {
+  extends Command("trace", "display or output infomation of method invocaton.", out)
+          with Transformer with MethodFilterCompleter {
 
   val outputRoot = {
     val dir = new File("/tmp/" + name + "/" + ManagementFactory.getRuntimeMXBean.getName)
@@ -42,14 +41,6 @@ class Trace(val inst: Instrumentation, out: PrintOut)
   private val interval   = option[Second]("-i" :: "--interval" :: Nil, "display trace statistics interval.", 1)
   private val detailable = flag("-d" :: "--detail" :: Nil, "enable append invocation detail to " + detailFile + ".")
   private val stackable  = flag("-s" :: "--stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
-
-  def complete(buffer: String, cursor: Int, candidates: List[CharSequence]) = {
-//    buffer.split("\\s+") match {
-//      case Array() =>
-//      case Array
-//    }
-  }
-
 
   override protected def hook = new Hook() {
     val enableDetail   = detailable()

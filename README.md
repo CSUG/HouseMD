@@ -35,8 +35,6 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 
     > curl -Lk https://raw.github.com/zhongl/HouseMD/master/bin/install | bash
 
-    > housemd
-
 - Please try normal install on Window.
 
 ## Normal install

@@ -27,6 +27,7 @@ import com.github.zhongl.yascli.Command
 import actors.Actor._
 import actors.TIMEOUT
 import java.lang.reflect.Modifier
+import scala.util.control.Breaks._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -63,9 +64,11 @@ trait Transformer extends Runnable {this: Command =>
     val mfs = methodFilters()
     def packageOf(c: Class[_]): String = if (c.getPackage == null) "" else c.getPackage.getName
 
-    inst.getAllLoadedClasses filter { c =>
+    val cls = inst.getAllLoadedClasses filter { c =>
       pp.matcher(packageOf(c)).matches() && mfs.find(_.filter(c)).isDefined && isNotFinal(c)
     }
+    cls foreach { c => info("===========" + c) }
+    cls
   }
 
   protected lazy val probeTransformer = new ClassFileTransformer {
@@ -98,27 +101,28 @@ trait Transformer extends Runnable {this: Command =>
   }
 
   private def act() {
-    var cond = true
     val start = now
     val timoutMillis = timeout().toMillis
     val h = hook
 
-    while (cond) {
-      receiveWithin(500) {
-        case TIMEOUT            => // ignore
-        case OverLimit          => cond = false; info("Ended by overlimit")
-        case Cancel             => cond = false; info("Ended by cancel.")
-        case EnterWith(context) => h.enterWith(context)
-        case ExitWith(context)  => h.exitWith(context)
-        case x                  => error("Unknown case: " + x)
-      }
+    breakable {
+      while (true) {
+        receiveWithin(500) {
+          case TIMEOUT            => // ignore
+          case OverLimit          => info("Ended by overlimit"); break()
+          case Cancel             => info("Ended by cancel."); break()
+          case EnterWith(context) => h.enterWith(context)
+          case ExitWith(context)  => h.exitWith(context)
+          case x                  => // ignore last unread messages, error("Unknown case: " + x)
+        }
 
-      val t = now
-      h.heartbeat(t)
+        val t = now
+        h.heartbeat(t)
 
-      if (t - start >= timoutMillis) {
-        cond = false
-        info("Ended by timeout")
+        if (t - start >= timoutMillis) {
+          break()
+          info("Ended by timeout")
+        }
       }
     }
 

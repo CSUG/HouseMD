@@ -26,7 +26,6 @@ import Reflections._
 import com.github.zhongl.yascli.Command
 import actors.Actor._
 import actors.TIMEOUT
-import java.lang.reflect.Modifier
 import scala.util.control.Breaks._
 
 /**
@@ -65,7 +64,7 @@ trait Transformer extends Runnable {this: Command =>
     def packageOf(c: Class[_]): String = if (c.getPackage == null) "" else c.getPackage.getName
 
     inst.getAllLoadedClasses filter { c =>
-      pp.matcher(packageOf(c)).matches() && mfs.find(_.filter(c)).isDefined //&& isNotFinal(c)
+      pp.matcher(packageOf(c)).matches() && mfs.find(_.filter(c)).isDefined
     }
   }
 
@@ -149,11 +148,6 @@ trait Transformer extends Runnable {this: Command =>
     }
     count
   }
-
-  private def isNotFinal(c: Class[_]) = if (Modifier.isFinal(c.getModifiers)) {
-    warn("Can't trace " + c + ", because it is final")
-    false
-  } else true
 
   sealed trait Event
 

@@ -84,16 +84,17 @@ public class TraceTarget {
             System.out.println(A.class.getClassLoader());
         }
         public final String s;
+        public final B b = new B();
 
         public A(String s) {
             this.s = s;
-            new B();
         }
 
         public  void m(int i, String s) {
         }
 
         public final void m(String s) {
+            b.m();
         }
     }
 

@@ -90,13 +90,14 @@ public class TraceTarget {
             new B();
         }
 
-        public void m(int i, String s) {
+        public  void m(int i, String s) {
         }
 
-        public void m(String s) {
+        public final void m(String s) {
         }
     }
 
-    public static class B {
+    public final static class B {
+        public void m(){}
     }
 }

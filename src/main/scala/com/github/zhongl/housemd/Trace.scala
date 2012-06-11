@@ -53,7 +53,7 @@ class Trace(val inst: Instrumentation, out: PrintOut)
     }.sortBy(s => s.klass.getName + "." + s.method.getName)
 
     val maxMethodSignLength  = statistics.map {_.methodSign.length}.max
-    val maxClassLoaderLength = statistics.map {_.klass.getClassLoader.toString.length}.max
+    val maxClassLoaderLength = statistics.map {_.maxClassLoaderLength}.max
 
     lazy val detailWriter = new DetailWriter(new BufferedWriter(new FileWriter(detailFile, true)))
     lazy val stackWriter  = new StackWriter(new BufferedWriter(new FileWriter(stackFile, true)))
@@ -95,6 +95,11 @@ class Trace(val inst: Instrumentation, out: PrintOut)
     lazy val methodSign = "%1$s.%2$s(%3$s)"
       .format(klass.getName.split("\\.").last, method.getName,
       method.getParameterTypes.map(simpleNameOf).mkString(", "))
+
+    lazy val maxClassLoaderLength = {
+      val loader = klass.getClassLoader
+      if(loader == null) 4 else loader.toString.length
+    }
 
     def +(context: Context) {
       import scala.math._

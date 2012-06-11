@@ -65,7 +65,7 @@ trait Transformer extends Runnable {this: Command =>
     def packageOf(c: Class[_]): String = if (c.getPackage == null) "" else c.getPackage.getName
 
     inst.getAllLoadedClasses filter { c =>
-      pp.matcher(packageOf(c)).matches() && mfs.find(_.filter(c)).isDefined && isNotFinal(c)
+      pp.matcher(packageOf(c)).matches() && mfs.find(_.filter(c)).isDefined //&& isNotFinal(c)
     }
   }
 
@@ -83,19 +83,22 @@ trait Transformer extends Runnable {this: Command =>
 
   override def run() {
     if (candidates.isEmpty) {println("No matched class"); return}
-    probe()
-    act()
-    reset()
+    val probedCount = probe()
+    if (probedCount > 0) {
+      act()
+      reset()
+    }
   }
 
   def cancel() { advice.host ! Cancel }
 
   protected def hook: Hook
 
-  private def probe() {
+  private def probe() = {
     inst.addTransformer(probeTransformer, true)
-    retransform("probe ")(_.getMethod(Advice.SET_DELEGATE, classOf[Object]).invoke(null, advice))
+    val retransformed = retransform("probe ")(_.getMethod(Advice.SET_DELEGATE, classOf[Object]).invoke(null, advice))
     inst.removeTransformer(probeTransformer)
+    retransformed
   }
 
   private def act() {
@@ -131,16 +134,20 @@ trait Transformer extends Runnable {this: Command =>
     retransform("reset ")(_.getMethod(Advice.SET_DEFAULT_DELEGATE).invoke(null))
   }
 
-  private def retransform(action: String)(handle: Class[_] => Unit) {
+  private def retransform(action: String)(handle: Class[_] => Unit) = {
+    var count = 0
     candidates foreach { c =>
       try {
+        if (c.getClassLoader == null) throw new NullPointerException("classloader is null.")
         handle(loadOrDefine(classOf[Advice], c.getClassLoader))
         inst.retransformClasses(c)
         info(action + c)
+        count = count + 1
       } catch {
         case t: Throwable => warn("Failed to " + action + c + " because of " + t)
       }
     }
+    count
   }
 
   private def isNotFinal(c: Class[_]) = if (Modifier.isFinal(c.getModifiers)) {

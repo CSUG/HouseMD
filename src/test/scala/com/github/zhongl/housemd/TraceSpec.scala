@@ -74,34 +74,9 @@ class TraceSpec extends FunSpec with ShouldMatchers {
         val arguments = """\[\]"""
         val result = "void"
         Source.fromFile(detail).getLines() foreach {
-          _ should fullyMatch regex ((date :: time :: elapse :: thread :: name :: arguments :: result :: Nil).mkString(" "))
+          _ should fullyMatch regex ((date :: time :: elapse :: thread :: name :: arguments :: result :: Nil)
+            .mkString(" "))
         }
-      }
-    }
-
-    it("should end by overlimit") {
-      parseAndRun("-l 1 -t 1000 A") { (out, detail, stack) =>
-        out.split("\n").dropRight(1).last should be("INFO : Ended by overlimit")
-      }
-    }
-
-    it("should end tracing by timeout") {
-      parseAndRun("-l 100000 -t 1 A") { (out, detail, stack) =>
-        out.split("\n").dropRight(1).last should be("INFO : Ended by timeout")
-      }
-    }
-
-    it("should end tracing by cancel")(pending)
-
-    it("should disable trace final class") {
-      parseAndRun("String") { (out, detail, stack) =>
-        out.split("\n").head should be("WARN : Can't trace " + classOf[String] + ", because it is final")
-      }
-    }
-
-    ignore("should only include package com.github") {
-      parseAndRun("-p com\\.github .+ m") { (out, detail, stack) =>
-        out.split("\n").head should not be ("WARN: Can't trace " + classOf[String] + ", because it is final")
       }
     }
 
@@ -109,8 +84,4 @@ class TraceSpec extends FunSpec with ShouldMatchers {
 
   }
 
-}
-
-class A {
-  def m() {}
 }

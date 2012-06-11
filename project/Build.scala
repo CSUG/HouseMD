@@ -41,6 +41,7 @@ object Build extends sbt.Build {
         ("Can-Redefine-Classes","true")
       ),
       test in assembly := {},
+      parallelExecution in Test := false,
       excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
         cp filter {_.data.getName == "tool.jar"}
       }

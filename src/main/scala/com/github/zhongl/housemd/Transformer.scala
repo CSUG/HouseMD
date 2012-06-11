@@ -58,16 +58,6 @@ trait Transformer extends Runnable {this: Command =>
     }
   }
 
-  protected lazy val candidates = {
-    val pp = packagePattern()
-    val mfs = methodFilters()
-    def packageOf(c: Class[_]): String = if (c.getPackage == null) "" else c.getPackage.getName
-
-    inst.getAllLoadedClasses filter { c =>
-      pp.matcher(packageOf(c)).matches() && mfs.find(_.filter(c)).isDefined
-    }
-  }
-
   protected lazy val probeTransformer = new ClassFileTransformer {
 
     def transform(
@@ -76,28 +66,51 @@ trait Transformer extends Runnable {this: Command =>
       classBeingRedefined: Class[_],
       protectionDomain: ProtectionDomain,
       classfileBuffer: Array[Byte]) = {
-      if (candidates.contains(classBeingRedefined)) ClassDecorator.decorate(classfileBuffer, methodFilters()) else null
+      try {
+        if (candidates.contains(classBeingRedefined))
+          ClassDecorator.decorate(classfileBuffer, methodFilters())
+        else null
+      } catch {
+        case x => x.printStackTrace(); error(x); null
+      }
+    }
+  }
+
+  protected lazy val candidates = {
+    val pp = packagePattern()
+    val mfs = methodFilters()
+
+    def packageOf(c: Class[_]): String = if (c.getPackage == null) "" else c.getPackage.getName
+
+    def isNotInterface(c: Class[_]): Boolean = if (c.isInterface) {warn("Skip " + c); false} else true
+
+    def isNotFromBootClassLoader(c: Class[_]) =
+      if (isFromBootClassLoader(c)) {warn("Skip " + c + " loaded from bootclassloader."); false} else true
+
+    inst.getAllLoadedClasses filter { c =>
+      pp.matcher(packageOf(c)).matches() &&
+        mfs.find(_.filter(c)).isDefined &&
+        isNotInterface(c) &&
+        isNotFromBootClassLoader(c)
     }
   }
 
   override def run() {
-    if (candidates.isEmpty) {println("No matched class"); return}
-    val probedCount = probe()
-    if (probedCount > 0) {
+    if (candidates.isEmpty) {
+      println("No matched class")
+    } else {
+      probe()
       act()
       reset()
     }
   }
 
-  def cancel() { advice.host ! Cancel }
-
   protected def hook: Hook
 
-  private def probe() = {
+  private def probe() {
     inst.addTransformer(probeTransformer, true)
-    val retransformed = retransform("probe ")(_.getMethod(Advice.SET_DELEGATE, classOf[Object]).invoke(null, advice))
+    retransform("probe ")(_.getMethod(Advice.SET_DELEGATE, classOf[Object]).invoke(null, advice))
     inst.removeTransformer(probeTransformer)
-    retransformed
   }
 
   private def act() {
@@ -110,7 +123,6 @@ trait Transformer extends Runnable {this: Command =>
         receiveWithin(500) {
           case TIMEOUT            => // ignore
           case OverLimit          => info("Ended by overlimit"); break()
-          case Cancel             => info("Ended by cancel."); break()
           case EnterWith(context) => h.enterWith(context)
           case ExitWith(context)  => h.exitWith(context)
           case x                  => // ignore last unread messages, error("Unknown case: " + x)
@@ -133,27 +145,21 @@ trait Transformer extends Runnable {this: Command =>
     retransform("reset ")(_.getMethod(Advice.SET_DEFAULT_DELEGATE).invoke(null))
   }
 
-  private def retransform(action: String)(handle: Class[_] => Unit) = {
-    var count = 0
+  private def retransform(action: String)(handle: Class[_] => Unit) {
     candidates foreach { c =>
       try {
-        if (c.getClassLoader == null) throw new NullPointerException("classloader is null.")
         handle(loadOrDefine(classOf[Advice], c.getClassLoader))
         inst.retransformClasses(c)
         info(action + c)
-        count = count + 1
       } catch {
         case t: Throwable => warn("Failed to " + action + c + " because of " + t)
       }
     }
-    count
   }
 
   sealed trait Event
 
   private case object OverLimit extends Event
-
-  private case object Cancel extends Event
 
   case class EnterWith(context: Context) extends Event
 

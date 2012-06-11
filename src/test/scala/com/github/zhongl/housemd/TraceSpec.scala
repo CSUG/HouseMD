@@ -30,7 +30,7 @@ import java.io.{File, ByteArrayOutputStream}
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class TraceSpec extends FunSpec with ShouldMatchers {
+class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
 
   def parseAndRun(arguments: String)(verify: (String, File, File) => Unit) {
     val out = new ByteArrayOutputStream
@@ -41,6 +41,9 @@ class TraceSpec extends FunSpec with ShouldMatchers {
 
     trace.parse(arguments.split("\\s+"))
 
+    trace.detailFile.delete()
+    trace.stackFile.delete()
+
     val host = self
     actor {trace.run(); host ! "exit"}
 
@@ -48,8 +51,7 @@ class TraceSpec extends FunSpec with ShouldMatchers {
     while (cond) {
       host.receiveWithin(10) {
         case TIMEOUT =>
-          Advice.onMethodBegin(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef])
-          Advice.onMethodEnd(null)
+          invoke(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef], null)
         case "exit"  => cond = false
       }
     }

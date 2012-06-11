@@ -35,21 +35,13 @@ case class Context(
   stopped: Option[Long],
   resultOrException: Option[AnyRef]) {
 
-  def classEquals(c: Class[_]) =
-    if (thisObject == null) {
-      loader == c.getClassLoader && className == c.getName
-    } else thisObject.getClass == c
+  def classEquals(c: Class[_]) = loader == c.getClassLoader && className == c.getName
 
+  def methodEquals(m: Method) = methodName == m.getName &&
+    ((arguments.isEmpty) || (arguments.size == m.getParameterTypes.size && parameterTypsMatches(m)))
 
-  def methodEquals(m: Method) = {
-    methodName == m.getName &&
-      ((arguments.isEmpty) ||
-        (arguments.size == m.getParameterTypes.size && parameterTypsMatches(m)))
-  }
-
-  private def parameterTypsMatches(m: Method) = {
+  private def parameterTypsMatches(m: Method) =
     arguments.zip(m.getParameterTypes).find { t => !toBoxClass(t._2).isInstance(t._1) }.isEmpty
-  }
 }
 
 object Context {

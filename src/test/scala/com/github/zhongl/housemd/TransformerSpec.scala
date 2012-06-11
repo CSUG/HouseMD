@@ -29,15 +29,18 @@ import com.github.zhongl.yascli.{Command, PrintOut}
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class TransformerSpec extends FunSpec with ShouldMatchers {
-  class TransformerConcrete(val inst:Instrumentation, out: PrintOut) extends Command("concrete", "test mock.", out)with Transformer{
+class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection{
+
+  class TransformerConcrete(val inst: Instrumentation, out: PrintOut)
+    extends Command("concrete", "test mock.", out) with Transformer {
     protected def hook = new Hook() {}
   }
 
   def parseAndRun(arguments: String)(verify: (String) => Unit) {
     val out = new ByteArrayOutputStream
     val inst = mock(classOf[Instrumentation])
-    doReturn(Array(classOf[A],classOf[F], classOf[String])).when(inst).getAllLoadedClasses
+
+    doReturn(Array(classOf[I], classOf[A], classOf[F], classOf[String])).when(inst).getAllLoadedClasses
 
     val concrete = new TransformerConcrete(inst, PrintOut(out))
 
@@ -50,10 +53,8 @@ class TransformerSpec extends FunSpec with ShouldMatchers {
     while (cond) {
       host.receiveWithin(10) {
         case TIMEOUT =>
-          Advice.onMethodBegin(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef])
-          Advice.onMethodEnd(null)
-          Advice.onMethodBegin(classOf[F].getName, "m", "()V", new A, Array.empty[AnyRef])
-          Advice.onMethodEnd(null)
+          invoke(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef],null)
+          invoke(classOf[F].getName, "m", "()V", new A, Array.empty[AnyRef],null)
         case "exit"  => cond = false
       }
     }
@@ -61,8 +62,9 @@ class TransformerSpec extends FunSpec with ShouldMatchers {
     verify(out.toString)
   }
 
+
   describe("Transformer") {
-    it("should probe final class"){
+    it("should probe final class") {
       parseAndRun("-l 1 F.m") { out =>
         out.split("\n").filter(!_.startsWith("INFO")) foreach {
           _ should fullyMatch regex ("com.github.zhongl.housemd.F.+")
@@ -71,7 +73,7 @@ class TransformerSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should reset by overlimit") {
-      parseAndRun("-l 1 -t 1000 A") { out =>
+      parseAndRun("-l 1 -t 3 A") { out =>
         out.split("\n").dropRight(1).last should be("INFO : Ended by overlimit")
       }
     }
@@ -82,18 +84,34 @@ class TransformerSpec extends FunSpec with ShouldMatchers {
       }
     }
 
-    it("should end tracing by cancel")(pending)
-
-    it("should disable probe class loaded by boot classloader") {
+    it("should not probe class loaded by boot classloader") {
       parseAndRun("String") { out =>
-        out.split("\n").head should be("WARN : Failed to probe " + classOf[String] + " because of java.lang.NullPointerException: classloader is null.")
+        out.split("\n").head should be("WARN : Skip " + classOf[String] + " loaded from bootclassloader.")
       }
     }
 
+    it("should not probe interface") {
+      parseAndRun("I") { out =>
+        out.split("\n") should {
+          contain("WARN : Skip " + classOf[I])
+          contain("No matched class")
+        }
+      }
+    }
 
-    ignore("should only include package com.github") {
-      parseAndRun("-p com\\.github .+ m") { out =>
-        out.split("\n").head should not be ("WARN: Can't trace " + classOf[String] + ", because it is final")
+    it("should probe F by I+") {
+      parseAndRun("-l 1 I+") { out =>
+        val withoutInfo = out.split("\n").filter(!_.startsWith("INFO"))
+        withoutInfo.head should be("WARN : Skip " + classOf[I])
+        withoutInfo.tail foreach {
+          _ should fullyMatch regex ("com.github.zhongl.housemd.F.+")
+        }
+      }
+    }
+
+    it("should only include package com.github") {
+      parseAndRun("-p com\\.github String") { out =>
+        out should not be ("No matched class")
       }
     }
 
@@ -105,7 +123,10 @@ class A {
   def m() {}
 }
 
-final class F {
+final class F extends I {
   def m() {}
 }
 
+trait I {
+  def m()
+}

@@ -29,7 +29,7 @@ class MethodFilterCompleterSpec extends FunSpec with ShouldMatchers {
   val c = new MethodFilterCompleter  {
     lazy val inst = {
       val m = mock(classOf[Instrumentation])
-      doReturn(Array(classOf[CCC])).when(m).getAllLoadedClasses
+      doReturn(Array(classOf[CCC], classOf[Runnable])).when(m).getAllLoadedClasses
       m
     }
   }
@@ -48,6 +48,18 @@ class MethodFilterCompleterSpec extends FunSpec with ShouldMatchers {
         contain ("m1".asInstanceOf[CharSequence])
         contain ("m22".asInstanceOf[CharSequence])
       }
+    }
+
+    it("should complete Runnable with +") {
+      val candidates = new java.util.ArrayList[CharSequence]()
+      c.complete("R", 1, candidates) should be(0)
+      candidates should contain ("Runnable+".asInstanceOf[CharSequence])
+    }
+
+    it("should complete Runnable+.r ") {
+      val candidates = new java.util.ArrayList[CharSequence]()
+      c.complete("Runnable+.r", 1, candidates) should be(0)
+      candidates should contain ("run".asInstanceOf[CharSequence])
     }
   }
 

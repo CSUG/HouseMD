@@ -43,13 +43,14 @@ class Trace(val inst: Instrumentation, out: PrintOut)
   private val stackable  = flag("-s" :: "--stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
 
   override protected def hook = new Hook() {
+    var last = System.currentTimeMillis()
+
     val enableDetail   = detailable()
     val enableStack    = stackable()
-    var last           = System.currentTimeMillis()
     val intervalMillis = interval().toMillis
     val statistics     = {
       val mfs = methodFilters()
-      for (c <- candidates; m <- allMethodsOf(c) if mfs.find(_.filter(c, m)).isDefined) yield new Statistic(c, m)
+      for (c <- candidates; m <- c.getDeclaredMethods if mfs.find(_.filter(c, m)).isDefined) yield new Statistic(c, m)
     }.sortBy(s => s.klass.getName + "." + s.method.getName)
 
     val maxMethodSignLength  = statistics.map {_.methodSign.length}.max
@@ -98,7 +99,7 @@ class Trace(val inst: Instrumentation, out: PrintOut)
 
     lazy val maxClassLoaderLength = {
       val loader = klass.getClassLoader
-      if(loader == null) 4 else loader.toString.length
+      if (loader == null) 4 else loader.toString.length
     }
 
     def +(context: Context) {

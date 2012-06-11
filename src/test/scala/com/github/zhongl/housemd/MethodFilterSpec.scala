@@ -22,16 +22,23 @@ import org.scalatest.matchers.ShouldMatchers
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class ReflectionsSpec extends FunSpec with ShouldMatchers {
-  describe("Reflection") {
-    it("should define Advice") {
-      Reflections.loadOrDefine(classOf[Advice], new ClassLoader() {
-        override def loadClass(name: String) = {
-          if (name == classOf[Advice].getName) throw new ClassNotFoundException()
-          else super.loadClass(name)
-        }
-      })
+
+class MethodFilterSpec extends FunSpec with ShouldMatchers {
+  describe("MethodFilter") {
+    it("should include R by Runnable+") {
+      MethodFilter("Runnable+").filter(classOf[R]) should be(true)
+    }
+
+    it("should include R by Runnable+.run") {
+      MethodFilter("Runnable+.run").filter(classOf[R]) should be(true)
+    }
+
+    it("should include R and run by Runnable+.run") {
+      MethodFilter("Runnable+.run").filter(classOf[R], classOf[R].getMethod("run")) should be(true)
     }
   }
+}
 
+class R extends Runnable {
+  def run() {}
 }

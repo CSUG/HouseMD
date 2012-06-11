@@ -37,7 +37,7 @@ class TransformerSpec extends FunSpec with ShouldMatchers {
   def parseAndRun(arguments: String)(verify: (String) => Unit) {
     val out = new ByteArrayOutputStream
     val inst = mock(classOf[Instrumentation])
-    doReturn(Array(classOf[A], classOf[String])).when(inst).getAllLoadedClasses
+    doReturn(Array(classOf[A],classOf[F], classOf[String])).when(inst).getAllLoadedClasses
 
     val concrete = new TransformerConcrete(inst, PrintOut(out))
 
@@ -52,6 +52,8 @@ class TransformerSpec extends FunSpec with ShouldMatchers {
         case TIMEOUT =>
           Advice.onMethodBegin(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef])
           Advice.onMethodEnd(null)
+          Advice.onMethodBegin(classOf[F].getName, "m", "()V", new A, Array.empty[AnyRef])
+          Advice.onMethodEnd(null)
         case "exit"  => cond = false
       }
     }
@@ -60,14 +62,21 @@ class TransformerSpec extends FunSpec with ShouldMatchers {
   }
 
   describe("Transformer") {
+    it("should probe final class"){
+      parseAndRun("-l 1 F.m") { out =>
+        out.split("\n").filter(!_.startsWith("INFO")) foreach {
+          _ should fullyMatch regex ("com.github.zhongl.housemd.F.+")
+        }
+      }
+    }
 
-    it("should end by overlimit") {
+    it("should reset by overlimit") {
       parseAndRun("-l 1 -t 1000 A") { out =>
         out.split("\n").dropRight(1).last should be("INFO : Ended by overlimit")
       }
     }
 
-    it("should end tracing by timeout") {
+    it("should reset by timeout") {
       parseAndRun("-l 100000 -t 1 A") { out =>
         out.split("\n").dropRight(1).last should be("INFO : Ended by timeout")
       }
@@ -75,11 +84,12 @@ class TransformerSpec extends FunSpec with ShouldMatchers {
 
     it("should end tracing by cancel")(pending)
 
-    it("should disable trace class loaded by boot classloader") {
+    it("should disable probe class loaded by boot classloader") {
       parseAndRun("String") { out =>
         out.split("\n").head should be("WARN : Failed to probe " + classOf[String] + " because of java.lang.NullPointerException: classloader is null.")
       }
     }
+
 
     ignore("should only include package com.github") {
       parseAndRun("-p com\\.github .+ m") { out =>
@@ -92,6 +102,10 @@ class TransformerSpec extends FunSpec with ShouldMatchers {
 }
 
 class A {
+  def m() {}
+}
+
+final class F {
   def m() {}
 }
 

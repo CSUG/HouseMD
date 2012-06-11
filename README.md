@@ -1,4 +1,4 @@
-[中文使用指南](https://github.com/zhongl/HouseMD/wiki/UseGuideCN_0_2_0)
+[中文使用指南](https://github.com/zhongl/HouseMD/wiki/UseGuideCN-0-2-0)
 
 HouseMD is a interactive command-line tool for dianosing Java process in runtime.
 It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more easier to use.

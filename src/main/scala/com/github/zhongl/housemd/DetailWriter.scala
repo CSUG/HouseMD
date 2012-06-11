@@ -30,8 +30,9 @@ class DetailWriter(writer: BufferedWriter) {
     val method = context.className + "." + context.methodName
     val arguments = context.arguments.mkString("[", " ", "]")
     val resultOrExcption = context.resultOrException match {
-      case None    => "null"
-      case Some(x) => x.toString
+      case Some(x)                      => x.toString
+      case None if context.isVoidReturn => "void"
+      case None                         => "null"
     }
     val line = (started :: elapse :: thread :: method :: arguments :: resultOrExcption :: Nil).mkString(" ")
     writer.write(line)

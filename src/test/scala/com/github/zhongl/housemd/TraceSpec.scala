@@ -72,7 +72,7 @@ class TraceSpec extends FunSpec with ShouldMatchers {
         val thread = """\[[^\]]+\]"""
         val name = """com\.github\.zhongl\.housemd\.A\.m"""
         val arguments = """\[\]"""
-        val result = "null"
+        val result = "void"
         Source.fromFile(detail).getLines() foreach {
           _ should fullyMatch regex ((date :: time :: elapse :: thread :: name :: arguments :: result :: Nil).mkString(" "))
         }

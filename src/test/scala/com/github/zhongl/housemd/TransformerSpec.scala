@@ -24,6 +24,7 @@ import instrument.Instrumentation
 import actors.Actor._
 import actors.TIMEOUT
 import com.github.zhongl.yascli.{Command, PrintOut}
+import com.github.zhongl.test._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -40,7 +41,7 @@ class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection{
     val out = new ByteArrayOutputStream
     val inst = mock(classOf[Instrumentation])
 
-    doReturn(Array(classOf[I], classOf[A], classOf[F], classOf[String])).when(inst).getAllLoadedClasses
+    doReturn(Array(classOf[I], classOf[A], classOf[F], classOf[String], classOf[Duck])).when(inst).getAllLoadedClasses
 
     val concrete = new TransformerConcrete(inst, PrintOut(out))
 
@@ -67,7 +68,7 @@ class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection{
     it("should probe final class") {
       parseAndRun("-l 1 F.m") { out =>
         out.split("\n").filter(!_.startsWith("INFO")) foreach {
-          _ should fullyMatch regex ("com.github.zhongl.housemd.F.+")
+          _ should fullyMatch regex ("F.+")
         }
       }
     }
@@ -99,12 +100,21 @@ class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection{
       }
     }
 
+    it("should not probe classes belongs to HouseMD") {
+      parseAndRun("Duck") { out =>
+        out.split("\n") should {
+          contain("WARN : Skip " + classOf[Duck] +" belongs to HouseMD.")
+          contain("No matched class")
+        }
+      }
+    }
+
     it("should probe F by I+") {
       parseAndRun("-l 1 I+") { out =>
         val withoutInfo = out.split("\n").filter(!_.startsWith("INFO"))
         withoutInfo.head should be("WARN : Skip " + classOf[I])
         withoutInfo.tail foreach {
-          _ should fullyMatch regex ("com.github.zhongl.housemd.F.+")
+          _ should fullyMatch regex ("F.+")
         }
       }
     }
@@ -117,16 +127,4 @@ class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection{
 
   }
 
-}
-
-class A {
-  def m() {}
-}
-
-final class F extends I {
-  def m() {}
-}
-
-trait I {
-  def m()
 }

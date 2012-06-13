@@ -62,7 +62,13 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
   describe("Trace") {
     it("should display statistics") {
       parseAndRun("-t 3 A.m") { (out, detail, stack) =>
-        out.split("\n") filter (s => !s.startsWith("INFO") && !s.isEmpty) foreach (_ should startWith("A.m"))
+        val methodFullName = """[\.\w\(\),\$ ]+"""
+        val objectToString = """[\.\w,@\$ ]+"""
+        val number = """\d+\s+"""
+        val elapse = """<?\d+ms"""
+        out.split("\n") filter (s => !s.startsWith("INFO") && !s.isEmpty) foreach {
+          _ should fullyMatch regex (methodFullName + objectToString + number + elapse + objectToString)
+        }
       }
     }
 

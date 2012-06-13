@@ -85,10 +85,8 @@ class Trace(val inst: Instrumentation, out: PrintOut)
   class Statistic(
     val klass: Class[_],
     val method: Method,
+    var thisObject: AnyRef = null,
     var totalTimes: Long = 0,
-    var failureTimes: Long = 0,
-    var minElapseMillis: Long = -1,
-    var maxElapseMillis: Long = -1,
     var totalElapseMills: Long = 0) {
 
     val NaN = "-"
@@ -103,13 +101,10 @@ class Trace(val inst: Instrumentation, out: PrintOut)
     }
 
     def +(context: Context) {
-      import scala.math._
       val elapseMillis = context.stopped.get - context.started
 
       totalTimes = totalTimes + 1
-      if (context.resultOrException.isInstanceOf[Throwable]) failureTimes = failureTimes + 1
-      minElapseMillis = min(minElapseMillis, elapseMillis)
-      maxElapseMillis = max(maxElapseMillis, elapseMillis)
+      thisObject = context.thisObject
       totalElapseMills = totalElapseMills + elapseMillis
     }
 
@@ -121,11 +116,12 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes
 
     def reps(maxMethodSignLength: Int, maxClassLoaderLength: Int) =
-      "%1$-" + maxMethodSignLength + "s    %2$-" + maxClassLoaderLength + "s    %3$#9s    %4$#9sms" format(
+      "%1$-" + maxMethodSignLength + "s    %2$-" + maxClassLoaderLength + "s    %3$#9s    %4$#9sms    %5$s" format(
         methodSign,
         klass.getClassLoader,
         totalTimes,
-        avgElapseMillis)
+        avgElapseMillis,
+        thisObject)
 
   }
 

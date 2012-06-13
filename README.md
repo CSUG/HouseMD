@@ -100,8 +100,8 @@ You can also input `help loaded` and get help infomation of `loaded` as blow:
 
 ## Summary statistics
 
-    | method full name         | class loader                              | invoked   |  avg elapse|
-    TraceTarget.addOne(int)    sun.misc.Launcher$AppClassLoader@1cde100            2           34ms
+    | method full name         | class loader                           | this object | invoked |  avg elapse|
+    TraceTarget.addOne(int)    sun.misc.Launcher$AppClassLoader@1cde100   null                2          34ms
 
 
 ## Detail line

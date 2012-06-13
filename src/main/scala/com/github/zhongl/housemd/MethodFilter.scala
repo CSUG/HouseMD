@@ -32,8 +32,11 @@ class MethodFilter(classSimpleName: String, methodName: String = "*") {
   def filter(c: Class[_], m: Method): Boolean = if (isAbstract(m)) false else lazyFilter(c)(m.getName)
 
   def filter(c: Class[_]): Boolean = {
-    val filter = lazyFilter(c)
-    c.getDeclaredMethods.find { m => filter(m.getName) }.isDefined
+    if (!filterOnly(c)) false
+    else {
+      val filter = lazyFilter(true)(_)
+      c.getDeclaredMethods.find { m => filter(m.getName) }.isDefined
+    }
   }
 
   private def lazyFilter(cond: => Boolean)(m: String) = if (cond) {methodName == "*" || methodName == m} else false

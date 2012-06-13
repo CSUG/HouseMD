@@ -33,7 +33,7 @@ class MethodFilter(classSimpleName: String, methodName: String = "*") {
 
   def filter(c: Class[_]): Boolean = {
     val filter = lazyFilter(c)
-    c.getMethods.find { m => filter(m.getName) }.isDefined
+    c.getDeclaredMethods.find { m => filter(m.getName) }.isDefined
   }
 
   private def lazyFilter(cond: => Boolean)(m: String) = if (cond) {methodName == "*" || methodName == m} else false

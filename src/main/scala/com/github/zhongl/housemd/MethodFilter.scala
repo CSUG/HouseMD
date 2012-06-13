@@ -100,12 +100,11 @@ trait MethodFilterCompleter extends ClassSimpleNameCompleter {
       case c@ClassSimpleName(n) if (n == classSimpleName || n + "+" == classSimpleName) => collect(c.getDeclaredMethods)
     }
 
-  private def completeAll(classSimpleName: String, cursor: Int, candidates: List[CharSequence]) = {
+  private def completeAll(classSimpleName: String, cursor: Int, candidates: List[CharSequence]) =
     allDeclaredMethodsOf(classSimpleName) {_ map {_.getName}} match {
       case Array() => -1
       case all     => all.flatten.sorted foreach {candidates.add}; cursor
     }
-  }
 
   private def complete(classSimpleName: String, methodPrefix: String, cursor: Int, candidates: List[CharSequence]) =
     allDeclaredMethodsOf(classSimpleName) {_ collect {case MethodName(m) if m.startsWith(methodPrefix) => m }} match {

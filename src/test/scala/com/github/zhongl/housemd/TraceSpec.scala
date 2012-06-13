@@ -25,6 +25,7 @@ import actors.TIMEOUT
 import org.scalatest.matchers.ShouldMatchers
 import io.Source
 import java.io.{File, ByteArrayOutputStream}
+import com.github.zhongl.test._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -78,8 +79,8 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
         val time = """\d{2}:\d{2}:\d{2}"""
         val elapse = """\d+ms"""
         val thread = """\[[^\]]+\]"""
-        val thisObject = """com\.github\.zhongl\.housemd\.A@[\da-f]+"""
-        val name = """com\.github\.zhongl\.housemd\.A\.m"""
+        val thisObject = """com\.github\.zhongl\.test\.A@[\da-f]+"""
+        val name = """com\.github\.zhongl\.test\.A\.m"""
         val arguments = """\[\]"""
         val result = "void"
         Source.fromFile(detail).getLines() foreach {

@@ -80,6 +80,7 @@ trait Transformer extends Runnable {this: Command =>
     val pp = packagePattern()
     val mfs = methodFilters()
 
+    @inline
     def packageOf(c: Class[_]): String = if (c.getPackage == null) "" else c.getPackage.getName
 
     def isNotInterface(c: Class[_]): Boolean = if (c.isInterface) {warn("Skip " + c); false} else true
@@ -87,11 +88,17 @@ trait Transformer extends Runnable {this: Command =>
     def isNotFromBootClassLoader(c: Class[_]) =
       if (isFromBootClassLoader(c)) {warn("Skip " + c + " loaded from bootclassloader."); false} else true
 
+    def isNotHouseMD(c: Class[_]) = if (c.getName.startsWith("com.github.zhongl.housemd")) {
+      warn("Skip " + c + " belongs to HouseMD.")
+      false
+    } else true
+
     inst.getAllLoadedClasses filter { c =>
       pp.matcher(packageOf(c)).matches() &&
         mfs.find(_.filter(c)).isDefined &&
         isNotInterface(c) &&
-        isNotFromBootClassLoader(c)
+        isNotFromBootClassLoader(c) &&
+        isNotHouseMD(c)
     }
   }
 

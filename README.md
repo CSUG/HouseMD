@@ -18,12 +18,16 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
     - timestamp
     - elapse millis
     - call thread
+    - this object
     - class name
     - method name
     - arguments
     - result or exception
 - Output invocation stack trace
+- Auto-completion
 - Awesome features you can provide by forking me
+
+[Test cases]() would show more specification details.
 
 # Getting started
 
@@ -102,8 +106,8 @@ You can also input `help loaded` and get help infomation of `loaded` as blow:
 
 ## Detail line
 
-    | date     | time   | elapse | thread name | method full name  | arguemnt(s) |result or exception
-    2012-06-07 14:30:57  67ms      [main]       TraceTarget.addOne  [0]           1
+    | date     | time   | elapse | thread name |     this object      | method full name  | arguemnt(s) |result or exception
+    2012-06-13 07:59:33 1ms      [main]        TraceTarget$B@1137d4a4 TraceTarget$B.mC    [123]         void
 
 - The delimiter is one `white space`,
 - method full name contains: package, class name and method name

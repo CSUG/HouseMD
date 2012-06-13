@@ -27,6 +27,7 @@ class DetailWriter(writer: BufferedWriter) {
     val started = "%1$tF %1$tT" format (new Date(context.started))
     val elapse = "%,dms" format (context.stopped.get - context.started)
     val thread = "[" + context.thread.getName + "]"
+    val thisObject = if (context.thisObject == null) "null" else context.thisObject.toString
     val method = context.className + "." + context.methodName
     val arguments = context.arguments.mkString("[", " ", "]")
     val resultOrExcption = context.resultOrException match {
@@ -34,7 +35,7 @@ class DetailWriter(writer: BufferedWriter) {
       case None if context.isVoidReturn => "void"
       case None                         => "null"
     }
-    val line = (started :: elapse :: thread :: method :: arguments :: resultOrExcption :: Nil).mkString(" ")
+    val line = (started :: elapse :: thread :: thisObject :: method :: arguments :: resultOrExcption :: Nil).mkString(" ")
     writer.write(line)
     writer.newLine()
   }

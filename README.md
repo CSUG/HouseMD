@@ -1,4 +1,4 @@
-[中文使用指南](https://github.com/zhongl/HouseMD/wiki/UseGuideCN_0_2_0)
+[中文使用指南](https://github.com/zhongl/HouseMD/wiki/UseGuideCN-0-2-0)
 
 HouseMD is a interactive command-line tool for dianosing Java process in runtime.
 It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more easier to use.
@@ -18,12 +18,16 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
     - timestamp
     - elapse millis
     - call thread
+    - this object
     - class name
     - method name
     - arguments
     - result or exception
 - Output invocation stack trace
+- Auto-completion
 - Awesome features you can provide by forking me
+
+[Test cases]() would show more specification details.
 
 # Getting started
 
@@ -34,8 +38,6 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 ## One-command install (On Linux or MacOSX)
 
     > curl -Lk https://raw.github.com/zhongl/HouseMD/master/bin/install | bash
-
-    > housemd
 
 - Please try normal install on Window.
 
@@ -104,12 +106,11 @@ You can also input `help loaded` and get help infomation of `loaded` as blow:
 
 ## Detail line
 
-    | date     | time   | elapse | thread name | method full name  | arguemnt(s) |result or exception
-    2012-06-07 14:30:57  67ms      [main]       TraceTarget.addOne  [0]           1
+    | date     | time   | elapse | thread name |     this object      | method full name  | arguemnt(s) |result or exception
+    2012-06-13 07:59:33 1ms      [main]        TraceTarget$B@1137d4a4 TraceTarget$B.mC    [123]         void
 
 - The delimiter is one `white space`,
 - method full name contains: package, class name and method name
 
 
-
-Have fun!
+Having fun!

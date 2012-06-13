@@ -95,9 +95,9 @@ public class TraceTarget {
         }
 
         public final void m(String s) {
-            b.m(1);
-            b.m(s);
-            b.m(1, 2);
+            b.mD1(1);
+            b.mC(s);
+            b.mD2(1, 2);
         }
     }
 
@@ -105,7 +105,7 @@ public class TraceTarget {
         public void mC(String s) {
         }
 
-        public void mD(int i, int j) {
+        public void mD2(int i, int j) {
         }
     }
 
@@ -114,9 +114,9 @@ public class TraceTarget {
     }
 
     public static abstract class D {
-        public void m(int i) {
+        public void mD1(int i) {
         }
 
-        public abstract void mD(int i, int j);
+        public abstract void mD2(int i, int j);
     }
 }

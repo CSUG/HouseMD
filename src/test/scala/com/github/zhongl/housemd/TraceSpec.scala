@@ -72,11 +72,12 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
         val time = """\d{2}:\d{2}:\d{2}"""
         val elapse = """\d+ms"""
         val thread = """\[[^\]]+\]"""
+        val thisObject = """com\.github\.zhongl\.housemd\.A@[\da-f]+"""
         val name = """com\.github\.zhongl\.housemd\.A\.m"""
         val arguments = """\[\]"""
         val result = "void"
         Source.fromFile(detail).getLines() foreach {
-          _ should fullyMatch regex ((date :: time :: elapse :: thread :: name :: arguments :: result :: Nil)
+          _ should fullyMatch regex ((date :: time :: elapse :: thread :: thisObject :: name :: arguments :: result :: Nil)
             .mkString(" "))
         }
       }

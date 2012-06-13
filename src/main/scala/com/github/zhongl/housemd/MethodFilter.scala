@@ -94,9 +94,9 @@ trait MethodFilterCompleter extends ClassSimpleNameCompleter {
   private def complete(classSimpleName: String, methodPrefix: String, cursor: Int, candidates: List[CharSequence]) =
     inst.getAllLoadedClasses collect {
       case c@ClassSimpleName(n) if (n == classSimpleName || n + "+" == classSimpleName) =>
-        (c.getMethods ++ c.getDeclaredMethods).collect { case MethodName(m) if m.startsWith(methodPrefix) => m }
+        c.getDeclaredMethods.collect { case MethodName(m) if m.startsWith(methodPrefix) => m }
     } match {
       case Array() => -1
-      case all     => all.flatten.distinct.sorted foreach {candidates.add}; cursor - methodPrefix.length
+      case all     => all.flatten.sorted foreach {candidates.add}; cursor - methodPrefix.length
     }
 }

@@ -36,9 +36,15 @@ class MethodFilterSpec extends FunSpec with ShouldMatchers {
     it("should include R and run by Runnable+.run") {
       MethodFilter("Runnable+.run").filter(classOf[R], classOf[R].getMethod("run")) should be(true)
     }
+
+    it("should include R by R.m") {
+      MethodFilter("R.m").filter(classOf[R]) should be(true)
+    }
   }
 }
 
 class R extends Runnable {
   def run() {}
+
+  private def m(){}
 }

@@ -81,9 +81,10 @@ trait MethodFilterCompleter extends ClassSimpleNameCompleter {
 
   override protected def completeClassSimpleName(buffer: String, cursor: Int, candidates: List[CharSequence]) =
     buffer.split("\\.") match {
-      case Array(prefix)                        => super.completeClassSimpleName(buffer, cursor, candidates)
-      case Array(classSimpleName, methodPrefix) => complete(classSimpleName, methodPrefix, cursor, candidates)
-      case _                                    => -1
+      case Array(classSimpleName) if buffer.endsWith(".") => completeAll(classSimpleName, cursor, candidates)
+      case Array(prefix)                                  => super.completeClassSimpleName(buffer, cursor, candidates)
+      case Array(classSimpleName, methodPrefix)           => complete(classSimpleName, methodPrefix, cursor, candidates)
+      case _                                              => -1
     }
 
   override protected def collectLoadedClassNames(prefix: String) = inst.getAllLoadedClasses collect {
@@ -91,11 +92,20 @@ trait MethodFilterCompleter extends ClassSimpleNameCompleter {
     case ClassSimpleName(n) if n.startsWith(prefix)                       => n
   }
 
-  private def complete(classSimpleName: String, methodPrefix: String, cursor: Int, candidates: List[CharSequence]) =
+  private def allDeclaredMethodsOf(classSimpleName: String)(collect: Array[Method] => Array[String]) =
     inst.getAllLoadedClasses collect {
-      case c@ClassSimpleName(n) if (n == classSimpleName || n + "+" == classSimpleName) =>
-        c.getDeclaredMethods.collect { case MethodName(m) if m.startsWith(methodPrefix) => m }
-    } match {
+      case c@ClassSimpleName(n) if (n == classSimpleName || n + "+" == classSimpleName) => collect(c.getDeclaredMethods)
+    }
+
+  private def completeAll(classSimpleName: String, cursor: Int, candidates: List[CharSequence]) = {
+    allDeclaredMethodsOf(classSimpleName) {_ map {_.getName}} match {
+      case Array() => -1
+      case all     => all.flatten.sorted foreach {candidates.add}; cursor
+    }
+  }
+
+  private def complete(classSimpleName: String, methodPrefix: String, cursor: Int, candidates: List[CharSequence]) =
+    allDeclaredMethodsOf(classSimpleName) {_ collect {case MethodName(m) if m.startsWith(methodPrefix) => m }} match {
       case Array() => -1
       case all     => all.flatten.sorted foreach {candidates.add}; cursor - methodPrefix.length
     }

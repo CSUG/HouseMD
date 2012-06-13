@@ -56,6 +56,12 @@ class MethodFilterCompleterSpec extends FunSpec with ShouldMatchers {
       candidates should contain ("Runnable+".asInstanceOf[CharSequence])
     }
 
+    it("should complete Runnable+. ") {
+      val candidates = new java.util.ArrayList[CharSequence]()
+      c.complete("Runnable+.", 10, candidates) should be(10)
+      candidates should contain ("run".asInstanceOf[CharSequence])
+    }
+
     it("should complete Runnable+.r ") {
       val candidates = new java.util.ArrayList[CharSequence]()
       c.complete("Runnable+.r", 11, candidates) should be(10)

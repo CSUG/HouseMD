@@ -42,7 +42,7 @@ trait ClassSimpleNameCompleter extends Completer {
       case all     => all.distinct.sorted foreach {candidates.add}; cursor - prefix.length
     }
 
-  protected def collectLoadedClassNames(prefix:String) = inst.getAllLoadedClasses collect {
+  protected def collectLoadedClassNames(prefix: String) = inst.getAllLoadedClasses collect {
     case ClassSimpleName(n) if n.startsWith(prefix) => n
   }
 }

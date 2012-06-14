@@ -1,7 +1,7 @@
-[中文使用指南](https://github.com/zhongl/HouseMD/wiki/UseGuideCN-0-2-0)
+[中文使用指南](https://github.com/zhongl/HouseMD/wiki/UserGuideCN)
 
 HouseMD is a interactive command-line tool for dianosing Java process in runtime.
-It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more easier to use.
+It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more easier to use and more safer.
 
 # Features
 
@@ -14,6 +14,7 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
     - class loader of method declaring class
     - total invoked times
     - avg elapse millis
+    - self instance
 - Output invocation detail
     - timestamp
     - elapse millis
@@ -43,7 +44,7 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 
 ## Normal install
 
-- Click [here](https://github.com/downloads/zhongl/HouseMD/housemd-assembly-0.2.0.jar) download executable jar
+- Click [here](https://github.com/zhongl/HouseMD/downloads) download lastest version executable jar
 - Run it as:
 
     > java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd-assembly-x.x.x.jar

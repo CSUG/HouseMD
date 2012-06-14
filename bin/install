@@ -1,5 +1,5 @@
 #! /bin/bash
 
-curl -Lk https://github.com/downloads/zhongl/HouseMD/housemd-assembly-0.2.0.jar > housemd.jar
+curl -Lk https://github.com/downloads/zhongl/HouseMD/housemd-assembly-0.2.1.jar > housemd.jar
 curl -Lk https://raw.github.com/zhongl/HouseMD/master/bin/housemd > housemd
 chmod u+x housemd

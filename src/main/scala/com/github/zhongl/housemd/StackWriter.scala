@@ -17,6 +17,7 @@
 package com.github.zhongl.housemd
 
 import java.io.BufferedWriter
+import Reflections.simpleNameOf
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -24,7 +25,12 @@ import java.io.BufferedWriter
 class StackWriter(writer: BufferedWriter) {
   def write(context: Context) {
     // TODO Avoid duplicated stack
-    writer.write(context.thread.toString)
+
+    val arguments = context.arguments.map(o => simpleNameOf(o.getClass)).mkString("(", " ", ")")
+    val head = "%1$s.%2$s%3$s call by thread [%4$s]"
+      .format(context.className, context.methodName, arguments, context.thread.getName)
+
+    writer.write(head)
     writer.newLine()
     context.stack foreach { s => writer.write("\t" + s); writer.newLine() }
     writer.newLine()

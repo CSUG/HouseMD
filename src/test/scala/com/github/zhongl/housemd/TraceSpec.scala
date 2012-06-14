@@ -90,8 +90,15 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
       }
     }
 
-    it("should output invocation stack")(pending)
-
+    it("should output invocation stack"){
+      parseAndRun("-s -l 1 A") { (out, detail, stack) =>
+        val lines = Source.fromFile(stack).getLines().toList.dropRight(1)
+        lines.head should fullyMatch regex("""com\.github\.zhongl\.test\.A\.m\(\) call by thread \[[\w-]+\]""")
+        lines.tail foreach {
+          _ should fullyMatch regex("""\t\S+\(\S+:\d+\)""")
+        }
+      }
+    }
   }
 
 }

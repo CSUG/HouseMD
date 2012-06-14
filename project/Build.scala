@@ -29,7 +29,7 @@ object Build extends sbt.Build {
     settings = Defaults.defaultSettings ++ classpathSettings ++ assemblySettings ++ Seq(
       name                := "housemd",
       organization        := "com.github.zhongl",
-      version             := "0.2.0",
+      version             := "0.2.1",
       scalaVersion        := "2.9.2",
       scalacOptions       ++= Seq("-unchecked", "-deprecation"),
       resolvers           += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository",
@@ -41,6 +41,7 @@ object Build extends sbt.Build {
         ("Can-Redefine-Classes","true")
       ),
       test in assembly := {},
+      parallelExecution in Test := false,
       excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
         cp filter {_.data.getName == "tool.jar"}
       }
@@ -67,8 +68,7 @@ object Build extends sbt.Build {
     lazy val classpathSettings =
       if (sys.props("os.name").contains("Linux")) Seq(
         unmanagedClasspath in Compile +=  Attributed.blank(toolsFile),
-        unmanagedClasspath in Test    <<= unmanagedClasspath in Compile//,
-        //unmanagedClasspath in Runtime <<= unmanagedClasspath in Compile
+        unmanagedClasspath in Test    <<= unmanagedClasspath in Compile
       )
       else Seq()
   }

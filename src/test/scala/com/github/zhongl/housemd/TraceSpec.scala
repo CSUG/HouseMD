@@ -25,12 +25,13 @@ import actors.TIMEOUT
 import org.scalatest.matchers.ShouldMatchers
 import io.Source
 import java.io.{File, ByteArrayOutputStream}
+import com.github.zhongl.test._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class TraceSpec extends FunSpec with ShouldMatchers {
+class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
 
   def parseAndRun(arguments: String)(verify: (String, File, File) => Unit) {
     val out = new ByteArrayOutputStream
@@ -41,6 +42,9 @@ class TraceSpec extends FunSpec with ShouldMatchers {
 
     trace.parse(arguments.split("\\s+"))
 
+    trace.detailFile.delete()
+    trace.stackFile.delete()
+
     val host = self
     actor {trace.run(); host ! "exit"}
 
@@ -48,8 +52,7 @@ class TraceSpec extends FunSpec with ShouldMatchers {
     while (cond) {
       host.receiveWithin(10) {
         case TIMEOUT =>
-          Advice.onMethodBegin(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef])
-          Advice.onMethodEnd(null)
+          invoke(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef], null)
         case "exit"  => cond = false
       }
     }
@@ -60,7 +63,13 @@ class TraceSpec extends FunSpec with ShouldMatchers {
   describe("Trace") {
     it("should display statistics") {
       parseAndRun("-t 3 A.m") { (out, detail, stack) =>
-        out.split("\n") filter (s => !s.startsWith("INFO") && !s.isEmpty) foreach (_ should startWith("A.m"))
+        val methodFullName = """[\.\w\(\),\$ ]+"""
+        val objectToString = """[\.\w,@\$ ]+"""
+        val number = """\d+\s+"""
+        val elapse = """<?\d+ms"""
+        out.split("\n") filter (s => !s.startsWith("INFO") && !s.isEmpty) foreach {
+          _ should fullyMatch regex (methodFullName + objectToString + number + elapse + objectToString)
+        }
       }
     }
 
@@ -70,47 +79,26 @@ class TraceSpec extends FunSpec with ShouldMatchers {
         val time = """\d{2}:\d{2}:\d{2}"""
         val elapse = """\d+ms"""
         val thread = """\[[^\]]+\]"""
-        val name = """com\.github\.zhongl\.housemd\.A\.m"""
+        val thisObject = """com\.github\.zhongl\.test\.A@[\da-f]+"""
+        val name = """com\.github\.zhongl\.test\.A\.m"""
         val arguments = """\[\]"""
-        val result = "null"
+        val result = "void"
         Source.fromFile(detail).getLines() foreach {
-          _ should fullyMatch regex ((date :: time :: elapse :: thread :: name :: arguments :: result :: Nil).mkString(" "))
+          _ should fullyMatch regex ((date :: time :: elapse :: thread :: thisObject :: name :: arguments :: result :: Nil)
+            .mkString(" "))
         }
       }
     }
 
-    it("should end by overlimit") {
-      parseAndRun("-l 1 -t 1000 A") { (out, detail, stack) =>
-        out.split("\n").dropRight(1).last should be("INFO : Ended by overlimit")
+    it("should output invocation stack"){
+      parseAndRun("-s -l 1 A") { (out, detail, stack) =>
+        val lines = Source.fromFile(stack).getLines().toList.dropRight(1)
+        lines.head should fullyMatch regex("""com\.github\.zhongl\.test\.A\.m\(\) call by thread \[[\w-]+\]""")
+        lines.tail foreach {
+          _ should fullyMatch regex("""\t\S+\(\S+:\d+\)""")
+        }
       }
     }
-
-    it("should end tracing by timeout") {
-      parseAndRun("-l 100000 -t 1 A") { (out, detail, stack) =>
-        out.split("\n").dropRight(1).last should be("INFO : Ended by timeout")
-      }
-    }
-
-    it("should end tracing by cancel")(pending)
-
-    it("should disable trace final class") {
-      parseAndRun("String") { (out, detail, stack) =>
-        out.split("\n").head should be("WARN : Can't trace " + classOf[String] + ", because it is final")
-      }
-    }
-
-    ignore("should only include package com.github") {
-      parseAndRun("-p com\\.github .+ m") { (out, detail, stack) =>
-        out.split("\n").head should not be ("WARN: Can't trace " + classOf[String] + ", because it is final")
-      }
-    }
-
-    it("should output invocation stack")(pending)
-
   }
 
-}
-
-class A {
-  def m() {}
 }

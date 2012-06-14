@@ -18,6 +18,7 @@ package com.github.zhongl.housemd
 
 import System.identityHashCode
 import java.lang._
+import java.lang.reflect.{Method, Modifier}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -48,14 +49,11 @@ object Reflections {
   private val B = classOf[Byte]
   private val b = Byte.TYPE
 
-  // FIXME this is ugly, because i don't know how to get class of byte[]
   private lazy val defineClassMethod = {
-    val m = classOf[ClassLoader].getDeclaredMethods.find { m =>
-      m.getName == "defineClass" && (m.getParameterTypes match {
-        case Array(S, _, `i`, `i`) => true
-        case _                     => false
-      })
-    }.get
+    val int = Integer.TYPE
+    val objects = classOf[Array[scala.Byte]]
+    val string = classOf[String]
+    val m = classOf[ClassLoader].getDeclaredMethod("defineClass", string, objects, int, int)
     m.setAccessible(true)
     m
   }
@@ -80,7 +78,7 @@ object Reflections {
     try {
       inClassLoader.loadClass(name)
     } catch {
-      case _: ClassNotFoundException =>
+      case e: ClassNotFoundException =>
         import Utils._
 
         val bytes = toBytes(clazz.getResourceAsStream("/" + name.replace('.', '/') + ".class"))
@@ -95,5 +93,10 @@ object Reflections {
 
   def simpleNameOf(className: String) = className.split("\\.").last
 
-  def allMethodsOf(c: Class[_]) = (c.getMethods ++ c.getDeclaredMethods).toSet
+  def isNotConcrete(c: Class[_]) = c.isInterface || Modifier.isAbstract(c.getModifiers)
+
+  def isAbstract(m: Method) = Modifier.isAbstract(m.getModifiers)
+
+  def isFromBootClassLoader(c: Class[_]) = c.getClassLoader == null
+
 }

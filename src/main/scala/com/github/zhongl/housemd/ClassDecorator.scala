@@ -41,7 +41,10 @@ object ClassDecorator {
         signature: String,
         superName: String,
         interfaces: Array[String]) {
-        className = name.replace("/", ".")
+        className = name.replace('/', '.')
+        val superClassName = if (superName == null) null else superName.replace('/', '.')
+        val interfaceNames = interfaces map {_.replace('/', '.')}
+        lazyFilters = methodFilters map {_.lazyFilter(className, superClassName, interfaceNames)}
         super.visit(version, access, name, signature, superName, interfaces)
       }
 
@@ -55,8 +58,7 @@ object ClassDecorator {
         if ((mv != null && containsMethod(name))) methodAdapter(mv, access, name, desc) else mv
       }
 
-      private[this] def containsMethod(methodName: String) =
-        methodFilters.find(_.filter(className, methodName)).isDefined
+      private[this] def containsMethod(methodName: String) = lazyFilters.find(f => f(methodName)).isDefined
 
       private[this] def methodAdapter(mv: MethodVisitor, access: Int, methodName: String, desc: String): MethodAdapter =
         new AdviceAdapter(mv, access, methodName, desc) {
@@ -109,7 +111,8 @@ object ClassDecorator {
           private[this] val end   = new Label
         }
 
-      private[this] var className: String = _
+      private[this] var className  : String                     = _
+      private[this] var lazyFilters: Array[(String => Boolean)] = _
 
     }
 }

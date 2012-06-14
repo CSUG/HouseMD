@@ -20,17 +20,12 @@ import jline.console.completer.Completer
 import java.util.List
 import com.github.zhongl.housemd.Reflections._
 import instrument.Instrumentation
-import java.lang.reflect.Method
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 object ClassSimpleName {
   def unapply(c: Class[_]) = Some(simpleNameOf(c))
-}
-
-object MethodName {
-  def unapply(m: Method) = Some(m.getName)
 }
 
 trait ClassSimpleNameCompleter extends Completer {
@@ -42,29 +37,14 @@ trait ClassSimpleNameCompleter extends Completer {
   }
 
   protected def completeClassSimpleName(prefix: String, cursor: Int, candidates: List[CharSequence]): Int =
-    inst.getAllLoadedClasses collect {case ClassSimpleName(c) if c.startsWith(prefix) => c } match {
+    collectLoadedClassNames(prefix) match {
       case Array() => -1
       case all     => all.distinct.sorted foreach {candidates.add}; cursor - prefix.length
     }
+
+  protected def collectLoadedClassNames(prefix: String) = inst.getAllLoadedClasses collect {
+    case ClassSimpleName(n) if n.startsWith(prefix) => n
+  }
 }
 
-trait MethodFilterCompleter extends ClassSimpleNameCompleter {
-
-  override protected def completeClassSimpleName(buffer: String, cursor: Int, candidates: List[CharSequence]) =
-    buffer.split("\\.") match {
-      case Array(prefix)                        => super.completeClassSimpleName(buffer, cursor, candidates)
-      case Array(classSimpleName, methodPrefix) => complete(classSimpleName, methodPrefix, cursor, candidates)
-      case _                                    => -1
-    }
-
-  private def complete(classSimpleName: String, methodPrefix: String, cursor: Int, candidates: List[CharSequence]) =
-    inst.getAllLoadedClasses collect {
-      case c@ClassSimpleName(n) if n == classSimpleName =>
-        (c.getMethods ++ c.getDeclaredMethods)
-          .collect { case MethodName(m) if m.startsWith(methodPrefix) => m }
-    } match {
-      case Array() => -1
-      case all     => all.flatten.distinct.sorted foreach {candidates.add}; cursor - methodPrefix.length
-    }
-}
 

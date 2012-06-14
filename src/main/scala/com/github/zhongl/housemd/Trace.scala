@@ -43,17 +43,18 @@ class Trace(val inst: Instrumentation, out: PrintOut)
   private val stackable  = flag("-s" :: "--stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
 
   override protected def hook = new Hook() {
+    var last = System.currentTimeMillis()
+
     val enableDetail   = detailable()
     val enableStack    = stackable()
-    var last           = System.currentTimeMillis()
     val intervalMillis = interval().toMillis
     val statistics     = {
       val mfs = methodFilters()
-      for (c <- candidates; m <- allMethodsOf(c) if mfs.find(_.filter(c, m)).isDefined) yield new Statistic(c, m)
+      for (c <- candidates; m <- c.getDeclaredMethods if mfs.find(_.filter(c, m)).isDefined) yield new Statistic(c, m)
     }.sortBy(s => s.klass.getName + "." + s.method.getName)
 
     val maxMethodSignLength  = statistics.map {_.methodSign.length}.max
-    val maxClassLoaderLength = statistics.map {_.klass.getClassLoader.toString.length}.max
+    val maxClassLoaderLength = statistics.map {_.maxClassLoaderLength}.max
 
     lazy val detailWriter = new DetailWriter(new BufferedWriter(new FileWriter(detailFile, true)))
     lazy val stackWriter  = new StackWriter(new BufferedWriter(new FileWriter(stackFile, true)))
@@ -84,10 +85,8 @@ class Trace(val inst: Instrumentation, out: PrintOut)
   class Statistic(
     val klass: Class[_],
     val method: Method,
+    var thisObject: AnyRef = null,
     var totalTimes: Long = 0,
-    var failureTimes: Long = 0,
-    var minElapseMillis: Long = -1,
-    var maxElapseMillis: Long = -1,
     var totalElapseMills: Long = 0) {
 
     val NaN = "-"
@@ -96,14 +95,16 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       .format(klass.getName.split("\\.").last, method.getName,
       method.getParameterTypes.map(simpleNameOf).mkString(", "))
 
+    lazy val maxClassLoaderLength = {
+      val loader = klass.getClassLoader
+      if (loader == null) 4 else loader.toString.length
+    }
+
     def +(context: Context) {
-      import scala.math._
       val elapseMillis = context.stopped.get - context.started
 
       totalTimes = totalTimes + 1
-      if (context.resultOrException.isInstanceOf[Throwable]) failureTimes = failureTimes + 1
-      minElapseMillis = min(minElapseMillis, elapseMillis)
-      maxElapseMillis = max(maxElapseMillis, elapseMillis)
+      thisObject = context.thisObject
       totalElapseMills = totalElapseMills + elapseMillis
     }
 
@@ -115,11 +116,12 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes
 
     def reps(maxMethodSignLength: Int, maxClassLoaderLength: Int) =
-      "%1$-" + maxMethodSignLength + "s    %2$-" + maxClassLoaderLength + "s    %3$#9s    %4$#9sms" format(
+      "%1$-" + maxMethodSignLength + "s    %2$-" + maxClassLoaderLength + "s    %3$#9s    %4$#9sms    %5$s" format(
         methodSign,
         klass.getClassLoader,
         totalTimes,
-        avgElapseMillis)
+        avgElapseMillis,
+        thisObject)
 
   }
 

@@ -26,7 +26,6 @@ import Reflections._
 import com.github.zhongl.yascli.Command
 import actors.Actor._
 import actors.TIMEOUT
-import java.lang.reflect.Modifier
 import scala.util.control.Breaks._
 
 /**
@@ -59,16 +58,6 @@ trait Transformer extends Runnable {this: Command =>
     }
   }
 
-  protected lazy val candidates = {
-    val pp = packagePattern()
-    val mfs = methodFilters()
-    def packageOf(c: Class[_]): String = if (c.getPackage == null) "" else c.getPackage.getName
-
-    inst.getAllLoadedClasses filter { c =>
-      pp.matcher(packageOf(c)).matches() && mfs.find(_.filter(c)).isDefined && isNotFinal(c)
-    }
-  }
-
   protected lazy val probeTransformer = new ClassFileTransformer {
 
     def transform(
@@ -77,18 +66,51 @@ trait Transformer extends Runnable {this: Command =>
       classBeingRedefined: Class[_],
       protectionDomain: ProtectionDomain,
       classfileBuffer: Array[Byte]) = {
-      if (candidates.contains(classBeingRedefined)) ClassDecorator.decorate(classfileBuffer, methodFilters()) else null
+      try {
+        if (candidates.contains(classBeingRedefined))
+          ClassDecorator.decorate(classfileBuffer, methodFilters())
+        else null
+      } catch {
+        case x => x.printStackTrace(); error(x); null
+      }
+    }
+  }
+
+  protected lazy val candidates = {
+    val pp = packagePattern()
+    val mfs = methodFilters()
+
+    @inline
+    def packageOf(c: Class[_]): String = if (c.getPackage == null) "" else c.getPackage.getName
+
+    def isNotInterface(c: Class[_]): Boolean = if (c.isInterface) {warn("Skip " + c); false} else true
+
+    def isNotFromBootClassLoader(c: Class[_]) =
+      if (isFromBootClassLoader(c)) {warn("Skip " + c + " loaded from bootclassloader."); false} else true
+
+    def isNotHouseMD(c: Class[_]) = if (c.getName.startsWith("com.github.zhongl.housemd")) {
+      warn("Skip " + c + " belongs to HouseMD.")
+      false
+    } else true
+
+    inst.getAllLoadedClasses filter { c =>
+      pp.matcher(packageOf(c)).matches() &&
+        mfs.find(_.filter(c)).isDefined &&
+        isNotInterface(c) &&
+        isNotFromBootClassLoader(c) &&
+        isNotHouseMD(c)
     }
   }
 
   override def run() {
-    if (candidates.isEmpty) {println("No matched class"); return}
-    probe()
-    act()
-    reset()
+    if (candidates.isEmpty) {
+      println("No matched class")
+    } else {
+      probe()
+      act()
+      reset()
+    }
   }
-
-  def cancel() { advice.host ! Cancel }
 
   protected def hook: Hook
 
@@ -108,7 +130,6 @@ trait Transformer extends Runnable {this: Command =>
         receiveWithin(500) {
           case TIMEOUT            => // ignore
           case OverLimit          => info("Ended by overlimit"); break()
-          case Cancel             => info("Ended by cancel."); break()
           case EnterWith(context) => h.enterWith(context)
           case ExitWith(context)  => h.exitWith(context)
           case x                  => // ignore last unread messages, error("Unknown case: " + x)
@@ -143,16 +164,9 @@ trait Transformer extends Runnable {this: Command =>
     }
   }
 
-  private def isNotFinal(c: Class[_]) = if (Modifier.isFinal(c.getModifiers)) {
-    warn("Can't trace " + c + ", because it is final")
-    false
-  } else true
-
   sealed trait Event
 
   private case object OverLimit extends Event
-
-  private case object Cancel extends Event
 
   case class EnterWith(context: Context) extends Event
 

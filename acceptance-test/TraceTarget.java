@@ -40,7 +40,7 @@ public class TraceTarget {
 
         while (true) {
             addOne(0);
-            o.getClass().getMethod("m", String.class).invoke(o, "");
+            o.getClass().getMethod("m", String.class).invoke(o, "123");
             try {
                 Thread.sleep(500L);
             } catch (Exception e) {
@@ -62,7 +62,9 @@ public class TraceTarget {
         public Class<?> loadClass(String name) throws ClassNotFoundException {
             Class<?> aClass = findLoadedClass(name);
             if (aClass != null) return aClass;
-            if (name.startsWith("Trace")) {
+            if (name.startsWith("java") || name.startsWith("com.sun") || name.startsWith("sun")) {
+                return getParent().loadClass(name);
+            } else {
                 try {
                     InputStream inputStream = getResourceAsStream(name + ".class");
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -73,8 +75,6 @@ public class TraceTarget {
                 } catch (Exception e) {
                     throw new ClassNotFoundException(name, e);
                 }
-            } else {
-                return getParent().loadClass(name);
             }
         }
     }
@@ -83,20 +83,40 @@ public class TraceTarget {
         static {
             System.out.println(A.class.getClassLoader());
         }
+
         public final String s;
+        public final B b = new B();
 
         public A(String s) {
             this.s = s;
-            new B();
         }
 
         public void m(int i, String s) {
         }
 
-        public void m(String s) {
+        public final void m(String s) {
+            b.mD1(1);
+            b.mC(s);
+            b.mD2(1, 2);
         }
     }
 
-    public static class B {
+    public final static class B extends D implements C {
+        public void mC(String s) {
+        }
+
+        public void mD2(int i, int j) {
+        }
+    }
+
+    public interface C {
+        void mC(String s);
+    }
+
+    public static abstract class D {
+        public void mD1(int i) {
+        }
+
+        public abstract void mD2(int i, int j);
     }
 }

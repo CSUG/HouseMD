@@ -1,7 +1,7 @@
-[中文使用指南](https://github.com/zhongl/HouseMD/wiki/UseGuideCN-0-2-0)
+[中文使用指南](https://github.com/zhongl/HouseMD/wiki/UserGuideCN)
 
 HouseMD is a interactive command-line tool for dianosing Java process in runtime.
-It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more easier to use.
+It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more easier to use and more safer.
 
 # Features
 
@@ -14,16 +14,21 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
     - class loader of method declaring class
     - total invoked times
     - avg elapse millis
+    - self instance
 - Output invocation detail
     - timestamp
     - elapse millis
     - call thread
+    - this object
     - class name
     - method name
     - arguments
     - result or exception
 - Output invocation stack trace
+- Auto-completion
 - Awesome features you can provide by forking me
+
+[Test cases](src/test/scala/com/github/zhongl/housemd) would show more specification details.
 
 # Getting started
 
@@ -39,7 +44,7 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 
 ## Normal install
 
-- Click [here](https://github.com/downloads/zhongl/HouseMD/housemd-assembly-0.2.0.jar) download executable jar
+- Click [here](https://github.com/zhongl/HouseMD/downloads) download lastest version executable jar
 - Run it as:
 
     > java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd-assembly-x.x.x.jar
@@ -96,18 +101,17 @@ You can also input `help loaded` and get help infomation of `loaded` as blow:
 
 ## Summary statistics
 
-    | method full name         | class loader                              | invoked   |  avg elapse|
-    TraceTarget.addOne(int)    sun.misc.Launcher$AppClassLoader@1cde100            2           34ms
+    | method full name         | class loader                           | this object | invoked |  avg elapse|
+    TraceTarget.addOne(int)    sun.misc.Launcher$AppClassLoader@1cde100   null                2          34ms
 
 
 ## Detail line
 
-    | date     | time   | elapse | thread name | method full name  | arguemnt(s) |result or exception
-    2012-06-07 14:30:57  67ms      [main]       TraceTarget.addOne  [0]           1
+    | date     | time   | elapse | thread name |     this object      | method full name  | arguemnt(s) |result or exception
+    2012-06-13 07:59:33 1ms      [main]        TraceTarget$B@1137d4a4 TraceTarget$B.mC    [123]         void
 
 - The delimiter is one `white space`,
 - method full name contains: package, class name and method name
-
 
 
 Having fun!

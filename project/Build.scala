@@ -35,8 +35,8 @@ object Build extends sbt.Build {
       resolvers           += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository",
       libraryDependencies :=  compileLibs ++ testLibs,
       packageOptions      +=  Package.ManifestAttributes(
-        ("Main-Class","com.github.zhongl.housemd.HouseMD"),
-        ("Agent-Class","com.github.zhongl.housemd.Duck"),
+        ("Main-Class","com.github.zhongl.housemd.house.House"),
+        ("Agent-Class","com.github.zhongl.housemd.duck.Duck"),
         ("Can-Retransform-Classes","true"),
         ("Can-Redefine-Classes","true")
       ),
@@ -57,7 +57,7 @@ object Build extends sbt.Build {
     lazy val compileLibs = Seq(
       "asm"               %  "asm"          % "3.3.1",
       "asm"               %  "asm-commons"  % "3.3.1",
-      "com.github.zhongl" %% "yascli"       % "0.0.2",
+      "com.github.zhongl" %% "yascli"       % "0.1.0",
       "org.scala-lang"    % "scala-library" % "2.9.2"
     )
   }

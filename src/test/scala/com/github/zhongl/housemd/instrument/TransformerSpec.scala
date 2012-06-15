@@ -14,23 +14,25 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.instrument
 
+import instrument.Instrumentation
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 import java.io.ByteArrayOutputStream
 import org.mockito.Mockito._
-import instrument.Instrumentation
 import actors.Actor._
 import actors.TIMEOUT
 import com.github.zhongl.yascli.{Command, PrintOut}
 import com.github.zhongl.test._
+import com.github.zhongl.housemd.command.AdviceReflection
+import com.github.zhongl.housemd.duck.Duck
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection{
+class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection {
 
   class TransformerConcrete(val inst: Instrumentation, out: PrintOut)
     extends Command("concrete", "test mock.", out) with Transformer {
@@ -54,8 +56,8 @@ class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection{
     while (cond) {
       host.receiveWithin(10) {
         case TIMEOUT =>
-          invoke(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef],null)
-          invoke(classOf[F].getName, "m", "()V", new A, Array.empty[AnyRef],null)
+          invoke(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef], null)
+          invoke(classOf[F].getName, "m", "()V", new A, Array.empty[AnyRef], null)
         case "exit"  => cond = false
       }
     }
@@ -103,7 +105,7 @@ class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection{
     it("should not probe classes belongs to HouseMD") {
       parseAndRun("Duck") { out =>
         out.split("\n") should {
-          contain("WARN : Skip " + classOf[Duck] +" belongs to HouseMD.")
+          contain("WARN : Skip " + classOf[Duck] + " belongs to HouseMD.")
           contain("No matched class")
         }
       }

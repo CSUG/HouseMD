@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.command
 
 import org.scalatest.FunSpec
 import org.mockito.Mockito._
@@ -90,12 +90,12 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
       }
     }
 
-    it("should output invocation stack"){
+    it("should output invocation stack") {
       parseAndRun("-s -l 1 A") { (out, detail, stack) =>
         val lines = Source.fromFile(stack).getLines().toList.dropRight(1)
-        lines.head should fullyMatch regex("""com\.github\.zhongl\.test\.A\.m\(\) call by thread \[[\w-]+\]""")
+        lines.head should fullyMatch regex ("""com\.github\.zhongl\.test\.A\.m\(\) call by thread \[[\w-]+\]""")
         lines.tail foreach {
-          _ should fullyMatch regex("""\t\S+\(\S+:\d+\)""")
+          _ should fullyMatch regex ("""\t\S+\(\S+:\d+\)""")
         }
       }
     }

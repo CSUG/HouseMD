@@ -1,4 +1,4 @@
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.house
 
 import java.io.{InputStream, OutputStream}
 
@@ -15,5 +15,4 @@ case class BreakOff(reason: Throwable) extends Signal
 case object HangUp extends Signal
 
 case object PowerOff
-
 

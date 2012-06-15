@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.command
 
 import org.scalatest.FunSpec
 import com.github.zhongl.yascli.PrintOut
@@ -36,7 +36,7 @@ class LoadedSpec extends FunSpec with ShouldMatchers {
     it("should display the classloader hierarchies") {
       parseAndRun("-h Loaded") { out =>
         val lines = out.split("\n")
-        lines.head should startWith("com.github.zhongl.housemd.Loaded -> ")
+        lines.head should startWith("com.github.zhongl.housemd.command.Loaded -> ")
 
         @tailrec
         def eq(list: List[String], classLoader: ClassLoader) {

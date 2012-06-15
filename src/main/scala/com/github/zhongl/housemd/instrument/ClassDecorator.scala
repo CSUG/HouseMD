@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.instrument
 
 import org.objectweb.asm._
 import commons.{Method, AdviceAdapter}
@@ -24,27 +24,25 @@ import scala.Predef._
 
 object ClassDecorator {
 
-  def decorate(classfileBuffer: Array[Byte], methodFilters: Array[MethodFilter]) = {
+  type Filter = (String, String, Array[String], String) => Boolean
+
+  def decorate(classfileBuffer: Array[Byte], methodFilters: Filter) = {
     val cr: ClassReader = new ClassReader(classfileBuffer)
     val cw: ClassWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS)
     cr.accept(classAdapter(cw, methodFilters), ClassReader.EXPAND_FRAMES)
     cw.toByteArray
   }
 
-  def classAdapter(cw: ClassWriter, methodFilters: Array[MethodFilter]) =
+  def classAdapter(cw: ClassWriter, methodFilter: Filter) =
     new ClassAdapter(cw) {
 
-      override def visit(
-        version: Int,
-        access: Int,
-        name: String,
-        signature: String,
-        superName: String,
-        interfaces: Array[String]) {
+      override def visit(version: Int, access: Int, name: String, signature: String, superName: String, interfaces: Array[String]) {
+
         className = name.replace('/', '.')
-        val superClassName = if (superName == null) null else superName.replace('/', '.')
+        val superClassName = if (superName == null) "null" else superName.replace('/', '.')
         val interfaceNames = interfaces map {_.replace('/', '.')}
-        lazyFilters = methodFilters map {_.lazyFilter(className, superClassName, interfaceNames)}
+        containsMethod = methodFilter.curried.apply(className).apply(superClassName).apply(interfaceNames)
+
         super.visit(version, access, name, signature, superName, interfaces)
       }
 
@@ -57,8 +55,6 @@ object ClassDecorator {
         val mv = super.visitMethod(access, name, desc, signature, exceptions)
         if ((mv != null && containsMethod(name))) methodAdapter(mv, access, name, desc) else mv
       }
-
-      private[this] def containsMethod(methodName: String) = lazyFilters.find(f => f(methodName)).isDefined
 
       private[this] def methodAdapter(mv: MethodVisitor, access: Int, methodName: String, desc: String): MethodAdapter =
         new AdviceAdapter(mv, access, methodName, desc) {
@@ -111,8 +107,8 @@ object ClassDecorator {
           private[this] val end   = new Label
         }
 
-      private[this] var className  : String                     = _
-      private[this] var lazyFilters: Array[(String => Boolean)] = _
+      private[this] var className     : String              = _
+      private[this] var containsMethod: (String => Boolean) = _
 
     }
 }

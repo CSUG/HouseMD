@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.misc
 
 import java.io.{ByteArrayOutputStream, InputStream}
 import java.util.concurrent.TimeUnit._

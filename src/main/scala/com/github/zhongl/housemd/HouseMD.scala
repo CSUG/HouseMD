@@ -42,10 +42,10 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
   private val pid  = parameter[String]("pid", "id of process to be diagnosing.")
 
 
-  private lazy val agentJarFile = sourceOf(getClass)
+  private lazy val agentJarFile = new File(sourceOf(getClass)).getCanonicalPath()
   private lazy val agentOptions = agentJarFile :: classNameOf[Telephone] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: Nil
 
-  private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()
+  private lazy val errorDetailFile   = "logs/housemd.err." + pid()
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))
 
   def run() {

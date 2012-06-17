@@ -14,22 +14,18 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.command
 
-import java.util.concurrent.TimeUnit
+import com.github.zhongl.housemd.instrument.Advice
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class Second(val value: Int) {
-  def toMillis = TimeUnit.SECONDS.toMillis(value)
+trait AdviceReflection {
 
-  override def toString = value.toString
-}
-
-object Second {
-  implicit def apply(value: Int) = new Second(value)
-
-  implicit def apply(value: String) = new Second(value.toInt)
+  def invoke(c: String, m: String, d: String, i: AnyRef, a: Array[AnyRef], r: AnyRef) {
+    Advice.onMethodBegin(c, m, d, i, a)
+    Advice.onMethodEnd(r)
+  }
 }

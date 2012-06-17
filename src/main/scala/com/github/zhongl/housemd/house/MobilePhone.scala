@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.house
 
 import java.net.InetSocketAddress
 import java.io.{IOException, OutputStream, InputStream}
@@ -22,13 +22,13 @@ import java.nio.channels._
 import annotation.tailrec
 import collection.JavaConversions._
 import actors.Actor._
-import com.github.zhongl.housemd.Utils._
+import com.github.zhongl.housemd.misc.Utils._
 import java.nio.ByteBuffer
 import actors.{Actor, OutputChannel, TIMEOUT}
 
 
 /**
- * Mobilephone is used by HouseMD to communicate with Duck
+ * Mobilephone is used by House$ to communicate with Duck
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
@@ -69,7 +69,7 @@ class Mobilephone(port: Int, handle: PartialFunction[Signal, Any]) extends Actor
         case PowerOff => killer = Some(sender)
         case EndCall  =>
           handle(HangUp)
-          killer foreach { o => o !() } // reply to killer
+          killer foreach { o => o !() } // reply to killer for termination
           exit()
         case TIMEOUT  =>
           try {select()} catch {
@@ -82,11 +82,6 @@ class Mobilephone(port: Int, handle: PartialFunction[Signal, Any]) extends Actor
 
   private def sendExit(key: SelectionKey) {
     write(key.channel(), "quit\n".getBytes)
-    //      val ctrl:Char = 0x0004
-    //      val cb = CharBuffer.allocate(1)
-    //      cb.append(ctrl)
-    //      val array = Charset.defaultCharset().encode(cb).array()
-    //      write(c, array)
   }
 
   private def accept(key: SelectionKey, selector: Selector) {

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd;
+package com.github.zhongl.housemd.instrument;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;

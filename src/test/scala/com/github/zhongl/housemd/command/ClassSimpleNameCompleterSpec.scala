@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.command
 
 import org.scalatest.FunSpec
 import org.mockito.Mockito._

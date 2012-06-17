@@ -1,24 +1,7 @@
-/*
- * Copyright 2012 zhongl
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+package com.github.zhongl.housemd.command
 
-package com.github.zhongl.housemd
-
-import Reflections._
-import java.lang.reflect.{Type, Method}
-import java.util.List
+import java.lang.reflect.{Method, Type}
+import com.github.zhongl.housemd.misc.Reflections._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -76,11 +59,13 @@ object MethodFilter {
   implicit val string2MethodFilters = (_: String).split("\\s+") map {apply}
 }
 
-object MethodName {
-  def unapply(m: Method) = Some(m.getName)
-}
-
 trait MethodFilterCompleter extends ClassSimpleNameCompleter {
+
+  import java.util.List
+
+  object MethodName {
+    def unapply(m: Method) = Some(m.getName)
+  }
 
   override protected def completeClassSimpleName(buffer: String, cursor: Int, candidates: List[CharSequence]) =
     buffer.split("\\.") match {

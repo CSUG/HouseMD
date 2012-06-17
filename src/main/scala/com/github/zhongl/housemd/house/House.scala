@@ -14,19 +14,22 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.house
 
 import com.sun.tools.attach.VirtualMachine
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
-import Utils._
 import jline.TerminalFactory
 import java.io.{FileWriter, BufferedWriter, File}
+import com.github.zhongl.housemd._
+import misc.Utils._
+import command.{Env, Loaded, Trace}
+import duck.Telephone
 
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", PrintOut(System.out)) with Application {
+object House extends Command("housemd", "a runtime diagnosis tool of JVM.", PrintOut(System.out)) with Application {
 
   implicit private val string2Port = { value: String =>
     val p = value.toInt

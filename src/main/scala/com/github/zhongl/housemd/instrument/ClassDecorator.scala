@@ -14,13 +14,14 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.instrument
 
 import org.objectweb.asm._
 import commons.{Method, AdviceAdapter}
 import org.objectweb.asm.Opcodes._
 import org.objectweb.asm.Type._
 import scala.Predef._
+import com.github.zhongl.housemd.command.MethodFilter
 
 object ClassDecorator {
 

@@ -14,14 +14,15 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.command
 
+import com.github.zhongl.housemd.instrument.{Transformer, Context}
 import instrument.Instrumentation
 import management.ManagementFactory
 import com.github.zhongl.yascli.{PrintOut, Command}
 import java.io.{BufferedWriter, FileWriter, File}
 import java.lang.reflect.Method
-import com.github.zhongl.housemd.Reflections._
+import com.github.zhongl.housemd.misc.Reflections._
 import java.util.Date
 
 /**

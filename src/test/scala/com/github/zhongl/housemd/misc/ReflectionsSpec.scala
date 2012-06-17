@@ -14,37 +14,25 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.misc
 
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
+import com.github.zhongl.housemd.instrument.Advice
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-
-class MethodFilterSpec extends FunSpec with ShouldMatchers {
-  describe("MethodFilter") {
-    it("should include R by Runnable+") {
-      MethodFilter("Runnable+").filter(classOf[R]) should be(true)
-    }
-
-    it("should include R by Runnable+.run") {
-      MethodFilter("Runnable+.run").filter(classOf[R]) should be(true)
-    }
-
-    it("should include R and run by Runnable+.run") {
-      MethodFilter("Runnable+.run").filter(classOf[R], classOf[R].getMethod("run")) should be(true)
-    }
-
-    it("should include R by R.m") {
-      MethodFilter("R.m").filter(classOf[R]) should be(true)
+class ReflectionsSpec extends FunSpec with ShouldMatchers {
+  describe("Reflection") {
+    it("should define Advice") {
+      Reflections.loadOrDefine(classOf[Advice], new ClassLoader() {
+        override def loadClass(name: String) = {
+          if (name == classOf[Advice].getName) throw new ClassNotFoundException()
+          else super.loadClass(name)
+        }
+      })
     }
   }
-}
 
-class R extends Runnable {
-  def run() {}
-
-  private def m(){}
 }

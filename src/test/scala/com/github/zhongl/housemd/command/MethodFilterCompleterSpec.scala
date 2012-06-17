@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.command
 
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
@@ -26,7 +26,7 @@ import instrument.Instrumentation
  */
 
 class MethodFilterCompleterSpec extends FunSpec with ShouldMatchers {
-  val c = new MethodFilterCompleter  {
+  val c = new MethodFilterCompleter {
     lazy val inst = {
       val m = mock(classOf[Instrumentation])
       doReturn(Array(classOf[CCC], classOf[Runnable])).when(m).getAllLoadedClasses
@@ -38,34 +38,34 @@ class MethodFilterCompleterSpec extends FunSpec with ShouldMatchers {
     it("should complete CCC") {
       val candidates = new java.util.ArrayList[CharSequence]()
       c.complete("C", 1, candidates) should be(0)
-      candidates should contain ("CCC".asInstanceOf[CharSequence])
+      candidates should contain("CCC".asInstanceOf[CharSequence])
     }
 
     it("should complete CCC.m*") {
       val candidates = new java.util.ArrayList[CharSequence]()
       c.complete("CCC.m", 5, candidates) should be(4)
       candidates should {
-        contain ("m1".asInstanceOf[CharSequence])
-        contain ("m22".asInstanceOf[CharSequence])
+        contain("m1".asInstanceOf[CharSequence])
+        contain("m22".asInstanceOf[CharSequence])
       }
     }
 
     it("should complete Runnable with +") {
       val candidates = new java.util.ArrayList[CharSequence]()
       c.complete("R", 1, candidates) should be(0)
-      candidates should contain ("Runnable+".asInstanceOf[CharSequence])
+      candidates should contain("Runnable+".asInstanceOf[CharSequence])
     }
 
     it("should complete Runnable+. ") {
       val candidates = new java.util.ArrayList[CharSequence]()
       c.complete("Runnable+.", 10, candidates) should be(10)
-      candidates should contain ("run".asInstanceOf[CharSequence])
+      candidates should contain("run".asInstanceOf[CharSequence])
     }
 
     it("should complete Runnable+.r ") {
       val candidates = new java.util.ArrayList[CharSequence]()
       c.complete("Runnable+.r", 11, candidates) should be(10)
-      candidates should contain ("run".asInstanceOf[CharSequence])
+      candidates should contain("run".asInstanceOf[CharSequence])
     }
   }
 

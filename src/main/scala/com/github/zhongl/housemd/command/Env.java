@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd;
+package com.github.zhongl.housemd.command;
 
 import com.github.zhongl.yascli.Command;
 import com.github.zhongl.yascli.PrintOut;
@@ -23,7 +23,7 @@ import scala.Function0;
 
 import java.util.*;
 
-import static com.github.zhongl.housemd.JavaConvertions.*;
+import static com.github.zhongl.yascli.JavaConvertions.*;
 
 
 /**

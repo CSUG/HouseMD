@@ -1,4 +1,4 @@
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.command
 
 import org.scalatest.FunSpec
 import com.github.zhongl.yascli.PrintOut

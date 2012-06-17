@@ -28,7 +28,7 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 - Auto-completion
 - Awesome features you can provide by forking me
 
-[Test cases](src/test/scala/com/github/zhongl/housemd) would show more specification details.
+[Test cases](https://github.com/zhongl/HouseMD/blob/master/src/test/scala/com/github/zhongl/housemd) would show more specification details.
 
 # Getting started
 

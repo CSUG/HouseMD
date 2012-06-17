@@ -31,12 +31,12 @@ import static com.github.zhongl.yascli.JavaConvertions.*;
  */
 public class Env extends Command implements Completer {
 
-    private final Function0 regexable = flag(list("-e", "--regex"), "enable name as regex pattern");
+    private final Function0 regexable = flag(list("-e", "--regex"), "enable name as regex pattern.");
 
     private final Function0<String> keyName = parameter("name", "system env key name.", none(String.class), manifest(String.class), defaultConverter());
 
     public Env(PrintOut out) {
-        super("env", "display a system env key's value.", out);
+        super("env", "display system env.", out);
     }
 
     @Override

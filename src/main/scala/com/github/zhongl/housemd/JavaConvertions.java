@@ -16,20 +16,19 @@
 
 package com.github.zhongl.housemd;
 
-import scala.Function1;
-import scala.Option;
-import scala.Option$;
-import scala.Some$;
+import scala.*;
 import scala.collection.immutable.List;
 import scala.reflect.Manifest;
 import scala.reflect.Manifest$;
 import scala.runtime.AbstractFunction1;
 
+import java.lang.Boolean;
+
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 public class JavaConvertions {
-    private static final AbstractFunction1<String,String> TO_STRING = new AbstractFunction1<String, String>() {
+    private static final AbstractFunction1<String, String> TO_STRING = new AbstractFunction1<String, String>() {
         @Override
         public String apply(String value) {
             return value;
@@ -48,14 +47,21 @@ public class JavaConvertions {
         return Some$.MODULE$.apply(value);
     }
 
-    public static Function1<String, String> defaultConverter(){
+    public static Function1<String, String> defaultConverter() {
         return TO_STRING;
     }
 
-    public static <T> List<T> list(T... values){
+    public static <T> List<T> list(T... values) {
         return List.fromArray(values);
     }
 
+    public static <T> T get(Function0<T> fun) {
+        return fun.apply();
+    }
 
-    private JavaConvertions(){}
+    public static boolean is(Function0 fun) {
+        return (Boolean) get(fun);
+    }
+
+    private JavaConvertions() {}
 }

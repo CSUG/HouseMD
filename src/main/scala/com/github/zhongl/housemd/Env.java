@@ -21,8 +21,7 @@ import com.github.zhongl.yascli.PrintOut;
 import jline.console.completer.Completer;
 import scala.Function0;
 
-import java.lang.instrument.Instrumentation;
-import java.util.List;
+import java.util.*;
 
 import static com.github.zhongl.housemd.JavaConvertions.*;
 
@@ -32,23 +31,55 @@ import static com.github.zhongl.housemd.JavaConvertions.*;
  */
 public class Env extends Command implements Completer {
 
-    private final Function0<scala.Boolean> regexable = (Function0<scala.Boolean>) flag(list("-e", "--regex"), "enable name as regex pattern");
+    private final Function0 regexable = flag(list("-e", "--regex"), "enable name as regex pattern");
 
-    private final Function0<String> getKeyName = parameter("name", "system env key name.", none(String.class), manifest(String.class), defaultConverter());
+    private final Function0<String> keyName = parameter("name", "system env key name.", none(String.class), manifest(String.class), defaultConverter());
 
-    public Env(Instrumentation instrumentation, PrintOut out) {
+    public Env(PrintOut out) {
         super("env", "display a system env key's value.", out);
     }
 
     @Override
     public void run() {
-        String name = getKeyName.apply();
-        String value = System.getenv(name);
-        if (value == null) println("Invalid key " + name); else println(value);
+        if (is(regexable))
+            listEnvMatchs(get(keyName));
+        else
+            printEnvEquals(get(keyName));
+    }
+
+    private void printEnvEquals(String key) {
+        String value = System.getenv(key);
+        if (value == null) println("Invalid key " + key);
+        else println(key + " = " + value);
+    }
+
+    private void listEnvMatchs(String regex) {
+        SortedMap<String, String> sortedMap = new TreeMap<String, String>();
+        int maxKeyLength = 0;
+        for (String key : System.getenv().keySet()) {
+            if (!key.matches(regex)) continue;
+            maxKeyLength = Math.max(maxKeyLength, key.length());
+            sortedMap.put(key, System.getenv(key));
+        }
+
+        if (sortedMap.isEmpty()) return;
+
+        String format = "%1$-" + maxKeyLength + "s = %2$s";
+        for (String key : sortedMap.keySet())
+            println(String.format(format, key, sortedMap.get(key)));
     }
 
     @Override
     public int complete(String buffer, int cursor, List<CharSequence> candidates) {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        Map<String, String> env = System.getenv();
+        Set<String> keys = env.keySet();
+
+        TreeSet<String> sortedKeySet = new TreeSet<String>(keys);
+        SortedSet<String> tail = sortedKeySet.tailSet(buffer);
+        for (String k : tail) {
+            if (k.startsWith(buffer)) candidates.add(k);
+        }
+        if (candidates.isEmpty()) return -1;
+        return cursor - buffer.length();
     }
 }

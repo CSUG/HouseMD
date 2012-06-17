@@ -22,6 +22,7 @@ import com.github.zhongl.yascli.{PrintOut, Command}
 import java.io.{BufferedWriter, FileWriter, File}
 import java.lang.reflect.Method
 import com.github.zhongl.housemd.Reflections._
+import java.util.Date
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -127,4 +128,44 @@ class Trace(val inst: Instrumentation, out: PrintOut)
 
 }
 
+class DetailWriter(writer: BufferedWriter) {
+  def write(context: Context) {
+    val started = "%1$tF %1$tT" format (new Date(context.started))
+    val elapse = "%,dms" format (context.stopped.get - context.started)
+    val thread = "[" + context.thread.getName + "]"
+    val thisObject = if (context.thisObject == null) "null" else context.thisObject.toString
+    val method = context.className + "." + context.methodName
+    val arguments = context.arguments.mkString("[", " ", "]")
+    val resultOrExcption = context.resultOrException match {
+      case Some(x)                      => x.toString
+      case None if context.isVoidReturn => "void"
+      case None                         => "null"
+    }
+    val line = (started :: elapse :: thread :: thisObject :: method :: arguments :: resultOrExcption :: Nil).mkString(" ")
+    writer.write(line)
+    writer.newLine()
+  }
 
+  def close() {
+    try {writer.close()} catch {case _ => }
+  }
+}
+
+class StackWriter(writer: BufferedWriter) {
+  def write(context: Context) {
+    // TODO Avoid duplicated stack
+
+    val arguments = context.arguments.map(o => simpleNameOf(o.getClass)).mkString("(", " ", ")")
+    val head = "%1$s.%2$s%3$s call by thread [%4$s]"
+      .format(context.className, context.methodName, arguments, context.thread.getName)
+
+    writer.write(head)
+    writer.newLine()
+    context.stack foreach { s => writer.write("\t" + s); writer.newLine() }
+    writer.newLine()
+  }
+
+  def close() {
+    try {writer.close()} catch {case _ => }
+  }
+}

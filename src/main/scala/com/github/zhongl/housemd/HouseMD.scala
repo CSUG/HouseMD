@@ -43,7 +43,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
 
 
   private lazy val agentJarFile = sourceOf(getClass)
-  private lazy val agentOptions = agentJarFile :: classNameOf[Telephone] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: Nil
+  private lazy val agentOptions = agentJarFile :: classNameOf[Telephone] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: classNameOf[Env] :: Nil
 
   private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))
@@ -82,7 +82,7 @@ object HouseMD extends Command("housemd", "a runtime diagnosis tool of JVM.", Pr
     super.error(a)
     if (a.isInstanceOf[Throwable]) {
       super.error("You can get more details in " + errorDetailFile)
-      a.asInstanceOf[Throwable].getStackTrace foreach { s => errorDetailWriter.write(s + "\n")  }
+      a.asInstanceOf[Throwable].getStackTrace foreach { s => errorDetailWriter.write(s + "\n") }
     }
   }
 

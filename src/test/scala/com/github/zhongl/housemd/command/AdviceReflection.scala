@@ -14,29 +14,18 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.command
 
-import java.io.BufferedWriter
-import Reflections.simpleNameOf
+import com.github.zhongl.housemd.instrument.Advice
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class StackWriter(writer: BufferedWriter) {
-  def write(context: Context) {
-    // TODO Avoid duplicated stack
 
-    val arguments = context.arguments.map(o => simpleNameOf(o.getClass)).mkString("(", " ", ")")
-    val head = "%1$s.%2$s%3$s call by thread [%4$s]"
-      .format(context.className, context.methodName, arguments, context.thread.getName)
+trait AdviceReflection {
 
-    writer.write(head)
-    writer.newLine()
-    context.stack foreach { s => writer.write("\t" + s); writer.newLine() }
-    writer.newLine()
-  }
-
-  def close() {
-    try {writer.close()} catch {case _ => }
+  def invoke(c: String, m: String, d: String, i: AnyRef, a: Array[AnyRef], r: AnyRef) {
+    Advice.onMethodBegin(c, m, d, i, a)
+    Advice.onMethodEnd(r)
   }
 }

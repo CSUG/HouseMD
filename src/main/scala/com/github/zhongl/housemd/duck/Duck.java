@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd;
+package com.github.zhongl.housemd.duck;
 
 import java.io.File;
 import java.lang.instrument.Instrumentation;

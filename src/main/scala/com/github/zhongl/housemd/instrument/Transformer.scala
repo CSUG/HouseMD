@@ -14,19 +14,20 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.instrument
 
+import instrument._
 import java.lang.System.{currentTimeMillis => now}
 import java.util.regex.Pattern
-import instrument.{ClassFileTransformer, Instrumentation}
 import java.security.ProtectionDomain
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.Map
-import Reflections._
 import com.github.zhongl.yascli.Command
 import actors.Actor._
 import actors.TIMEOUT
 import scala.util.control.Breaks._
+import com.github.zhongl.housemd.misc.Reflections._
+import com.github.zhongl.housemd.command.{MethodFilter, Second}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -95,10 +96,10 @@ trait Transformer extends Runnable {this: Command =>
 
     inst.getAllLoadedClasses filter { c =>
       pp.matcher(packageOf(c)).matches() &&
-        mfs.find(_.filter(c)).isDefined &&
-        isNotInterface(c) &&
-        isNotFromBootClassLoader(c) &&
-        isNotHouseMD(c)
+      mfs.find(_.filter(c)).isDefined &&
+      isNotInterface(c) &&
+      isNotFromBootClassLoader(c) &&
+      isNotHouseMD(c)
     }
   }
 

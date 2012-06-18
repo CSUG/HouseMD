@@ -14,13 +14,13 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
-
+package com.github.zhongl.housemd.command
 
 import instrument.Instrumentation
 import scala.annotation.tailrec
 import com.github.zhongl.yascli.{Command, PrintOut}
-import Reflections._
+import com.github.zhongl.housemd.misc.Reflections._
+import com.github.zhongl.housemd.misc.Utils._
 
 
 class Loaded(val inst: Instrumentation, out: PrintOut)
@@ -50,9 +50,10 @@ class Loaded(val inst: Instrumentation, out: PrintOut)
     }
   }
 
-  private def originOf(c: Class[_]): String = " -> " + Utils.sourceOf(c)
+  private def originOf(c: Class[_]): String = " -> " + sourceOf(c)
 
 }
+
 
 
 

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.command
 
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
@@ -46,5 +46,5 @@ class MethodFilterSpec extends FunSpec with ShouldMatchers {
 class R extends Runnable {
   def run() {}
 
-  private def m(){}
+  private def m() {}
 }

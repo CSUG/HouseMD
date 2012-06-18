@@ -14,22 +14,25 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.misc
 
-import java.util.concurrent.TimeUnit
+import org.scalatest.FunSpec
+import org.scalatest.matchers.ShouldMatchers
+import com.github.zhongl.housemd.instrument.Advice
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
+class ReflectionsSpec extends FunSpec with ShouldMatchers {
+  describe("Reflection") {
+    it("should define Advice") {
+      Reflections.loadOrDefine(classOf[Advice], new ClassLoader() {
+        override def loadClass(name: String) = {
+          if (name == classOf[Advice].getName) throw new ClassNotFoundException()
+          else super.loadClass(name)
+        }
+      })
+    }
+  }
 
-class Second(val value: Int) {
-  def toMillis = TimeUnit.SECONDS.toMillis(value)
-
-  override def toString = value.toString
-}
-
-object Second {
-  implicit def apply(value: Int) = new Second(value)
-
-  implicit def apply(value: String) = new Second(value.toInt)
 }

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd
+package com.github.zhongl.housemd.duck
 
 import instrument.Instrumentation
 import java.net.Socket
@@ -23,7 +23,7 @@ import com.github.zhongl.yascli.{Shell, PrintOut, Command}
 import jline.TerminalFactory
 
 /**
- * Telephone is used by Duck to communicate with HouseMD.
+ * Telephone is used by Duck to communicate with House$.
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */

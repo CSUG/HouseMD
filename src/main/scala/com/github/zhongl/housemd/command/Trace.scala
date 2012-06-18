@@ -16,6 +16,7 @@
 
 package com.github.zhongl.housemd.command
 
+import com.github.zhongl.housemd.command.Transformer
 import com.github.zhongl.housemd.instrument.{Transformer, Context}
 import instrument.Instrumentation
 import management.ManagementFactory

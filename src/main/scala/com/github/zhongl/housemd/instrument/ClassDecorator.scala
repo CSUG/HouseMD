@@ -20,43 +20,25 @@ import org.objectweb.asm._
 import commons.{Method, AdviceAdapter}
 import org.objectweb.asm.Opcodes._
 import org.objectweb.asm.Type._
-import scala.Predef._
 
 object ClassDecorator {
 
-  type Filter = (String, String, Array[String], String) => Boolean
-
-  def decorate(classfileBuffer: Array[Byte], methodFilters: Filter) = {
+  def decorate(classfileBuffer: Array[Byte], className: String, methodFilter: (String => Boolean)) = {
     val cr: ClassReader = new ClassReader(classfileBuffer)
     val cw: ClassWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS)
-    cr.accept(classAdapter(cw, methodFilters), ClassReader.EXPAND_FRAMES)
+    cr.accept(classAdapter(cw, className, methodFilter), ClassReader.EXPAND_FRAMES)
     cw.toByteArray
   }
 
-  def classAdapter(cw: ClassWriter, methodFilter: Filter) =
+  def classAdapter(cw: ClassWriter, className: String, filter: (String => Boolean)) =
     new ClassAdapter(cw) {
 
-      override def visit(version: Int, access: Int, name: String, signature: String, superName: String, interfaces: Array[String]) {
-
-        className = name.replace('/', '.')
-        val superClassName = if (superName == null) "null" else superName.replace('/', '.')
-        val interfaceNames = interfaces map {_.replace('/', '.')}
-        containsMethod = methodFilter.curried.apply(className).apply(superClassName).apply(interfaceNames)
-
-        super.visit(version, access, name, signature, superName, interfaces)
+      override def visitMethod(acc: Int, name: String, desc: String, sign: String, exces: Array[String]) = {
+        val mv = super.visitMethod(acc, name, desc, sign, exces)
+        if ((mv != null && filter(name))) methodAdapter(mv, acc, name, desc) else mv
       }
 
-      override def visitMethod(
-        access: Int,
-        name: String,
-        desc: String,
-        signature: String,
-        exceptions: Array[String]) = {
-        val mv = super.visitMethod(access, name, desc, signature, exceptions)
-        if ((mv != null && containsMethod(name))) methodAdapter(mv, access, name, desc) else mv
-      }
-
-      private[this] def methodAdapter(mv: MethodVisitor, access: Int, methodName: String, desc: String): MethodAdapter =
+      private[this] def methodAdapter(mv: MethodVisitor, access: Int, methodName: String, desc: String) =
         new AdviceAdapter(mv, access, methodName, desc) {
           val advice = Type.getType(classOf[Advice])
           val enter  = Method.getMethod(Advice.ON_METHOD_BEGIN)
@@ -106,9 +88,6 @@ object ClassDecorator {
           private[this] val start = new Label
           private[this] val end   = new Label
         }
-
-      private[this] var className     : String              = _
-      private[this] var containsMethod: (String => Boolean) = _
 
     }
 }

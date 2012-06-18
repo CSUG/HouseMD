@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd.command
+package com.github.zhongl.housemd.instrument
 
 import java.util.concurrent.TimeUnit
 
@@ -22,14 +22,14 @@ import java.util.concurrent.TimeUnit
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class Second(val value: Int) {
+class Seconds(val value: Int) {
   def toMillis = TimeUnit.SECONDS.toMillis(value)
 
   override def toString = value.toString
 }
 
-object Second {
-  implicit def apply(value: Int) = new Second(value)
+object Seconds {
+  implicit def apply(value: Int) = new Seconds(value)
 
-  implicit def apply(value: String) = new Second(value.toInt)
+  implicit def apply(value: String) = new Seconds(value.toInt)
 }

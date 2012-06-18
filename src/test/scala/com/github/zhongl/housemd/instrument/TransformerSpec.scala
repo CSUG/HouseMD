@@ -25,7 +25,7 @@ import actors.Actor._
 import actors.TIMEOUT
 import com.github.zhongl.yascli.{Command, PrintOut}
 import com.github.zhongl.test._
-import com.github.zhongl.housemd.command.AdviceReflection
+import com.github.zhongl.housemd.command.{Transformer, AdviceReflection}
 import com.github.zhongl.housemd.duck.Duck
 
 /**

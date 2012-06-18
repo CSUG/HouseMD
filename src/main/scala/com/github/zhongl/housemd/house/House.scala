@@ -81,7 +81,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
     }
   }
 
-  override protected def error(a: Any) {
+  override  def error(a: Any) {
     super.error(a)
     if (a.isInstanceOf[Throwable]) {
       super.error("You can get more details in " + errorDetailFile)

@@ -37,7 +37,7 @@ class Telephone(inst: Instrumentation, port: Int, classes: Array[Class[Command]]
       new Shell(name = "housemd", description = "a runtime diagnosis tool of jvm.", reader = reader) {
         override protected def commands = Quit :: helpCommand :: classes.map {toCommand(_, PrintOut(reader))}.toList
 
-        override protected def error(a: Any) {
+        override def error(a: Any) {
           super.error(a)
           if (a.isInstanceOf[Throwable]) {
             a.asInstanceOf[Throwable].getStackTrace foreach { s => println("\t" + s) }

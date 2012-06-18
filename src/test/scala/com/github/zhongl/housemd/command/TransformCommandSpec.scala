@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd.instrument
+package com.github.zhongl.housemd.command
 
 import instrument.Instrumentation
 import org.scalatest.FunSpec
@@ -23,20 +23,45 @@ import java.io.ByteArrayOutputStream
 import org.mockito.Mockito._
 import actors.Actor._
 import actors.TIMEOUT
-import com.github.zhongl.yascli.{Command, PrintOut}
+import com.github.zhongl.yascli.PrintOut
 import com.github.zhongl.test._
-import com.github.zhongl.housemd.command.{Transformer, AdviceReflection}
 import com.github.zhongl.housemd.duck.Duck
+import com.github.zhongl.housemd.instrument.{Filter, Seconds, Context, Hook}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection {
+class TransformCommandSpec extends FunSpec with ShouldMatchers with AdviceReflection {
 
-  class TransformerConcrete(val inst: Instrumentation, out: PrintOut)
-    extends Command("concrete", "test mock.", out) with Transformer {
-    protected def hook = new Hook() {}
+  class Concrete(val inst: Instrumentation, out: PrintOut)
+    extends TransformCommand("concrete", "test mock.", inst, out) {
+    import com.github.zhongl.yascli.Converters._
+
+    private val _timeout      = option[Seconds]("-t" :: "--timeout" :: Nil, "limited trace seconds.", 10)
+    private val _overLimit    = option[Int]("-l" :: "--limit" :: Nil, "limited limited times.", 1000)
+    private val _methodFilter = parameter[MethodFilter]("method-filter", "")
+
+
+    protected def hook = new Hook() {
+      def enterWith(context: Context) {}
+
+      def exitWith(context: Context) {}
+
+      def heartbeat(now: Long) {}
+
+      def end(throwable: Option[Throwable]) {}
+    }
+
+    protected def timeout = _timeout()
+
+    protected def overLimit = _overLimit()
+
+    protected def filter = new Filter() {
+      def apply(c: Class[_]) = _methodFilter().filter(c)
+
+      def apply(c: Class[_], m: String) = _methodFilter().filter(c, m)
+    }
   }
 
   def parseAndRun(arguments: String)(verify: (String) => Unit) {
@@ -45,7 +70,7 @@ class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection 
 
     doReturn(Array(classOf[I], classOf[A], classOf[F], classOf[String], classOf[Duck])).when(inst).getAllLoadedClasses
 
-    val concrete = new TransformerConcrete(inst, PrintOut(out))
+    val concrete = new Concrete(inst, PrintOut(out))
 
     concrete.parse(arguments.split("\\s+"))
 
@@ -66,7 +91,7 @@ class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection 
   }
 
 
-  describe("Transformer") {
+  describe("TransformCommand") {
     it("should probe final class") {
       parseAndRun("-l 1 F.m") { out =>
         out.split("\n").filter(!_.startsWith("INFO")) foreach {
@@ -87,7 +112,7 @@ class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection 
       }
     }
 
-    it("should not probe class loaded by boot classloader") {
+    ignore("should not probe class loaded by boot classloader") {
       parseAndRun("String") { out =>
         out.split("\n").head should be("WARN : Skip " + classOf[String] + " loaded from bootclassloader.")
       }
@@ -118,12 +143,6 @@ class TransformerSpec extends FunSpec with ShouldMatchers with AdviceReflection 
         withoutInfo.tail foreach {
           _ should fullyMatch regex ("F.+")
         }
-      }
-    }
-
-    it("should only include package com.github") {
-      parseAndRun("-p com\\.github String") { out =>
-        out should not be ("No matched class")
       }
     }
 

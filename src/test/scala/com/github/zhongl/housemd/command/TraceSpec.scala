@@ -93,12 +93,25 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
     it("should output invocation stack") {
       parseAndRun("-s -l 1 A") { (out, detail, stack) =>
         val lines = Source.fromFile(stack).getLines().toList.dropRight(1)
-        lines.head should fullyMatch regex ("""com\.github\.zhongl\.test\.A\.m\(\) call by thread \[[\w-]+\]""")
+        val head = """com\.github\.zhongl\.test\.A\.m\(\) call by thread \[[\w-]+\]""".r
+        val st = """\t\S+\(\S+:\d+\)""".r
         lines.tail foreach {
-          _ should fullyMatch regex ("""\t\S+\(\S+:\d+\)""")
+          _ match {
+            case head() =>
+            case st()   =>
+            case ""     =>
+            case _      => fail()
+          }
         }
       }
     }
+
+    it("should only include package com.github") {
+      parseAndRun("-p com\\.github String") { (out, detail, stack) =>
+        out should not be ("No matched class")
+      }
+    }
+
   }
 
 }

@@ -35,8 +35,10 @@ object ClassDecorator {
 
       override def visitMethod(acc: Int, name: String, desc: String, sign: String, exces: Array[String]) = {
         val mv = super.visitMethod(acc, name, desc, sign, exces)
-        if ((mv != null && filter(name))) methodAdapter(mv, acc, name, desc) else mv
+        if ((mv != null && isNotAbstract(acc) && filter(name))) methodAdapter(mv, acc, name, desc) else mv
       }
+
+      private def isNotAbstract(acc: Int) = (Opcodes.ACC_ABSTRACT & acc) == 0
 
       private[this] def methodAdapter(mv: MethodVisitor, access: Int, methodName: String, desc: String) =
         new AdviceAdapter(mv, access, methodName, desc) {

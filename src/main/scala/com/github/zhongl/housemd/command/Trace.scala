@@ -16,22 +16,24 @@
 
 package com.github.zhongl.housemd.command
 
-import com.github.zhongl.housemd.command.Transformer
-import com.github.zhongl.housemd.instrument.{Transformer, Context}
 import instrument.Instrumentation
 import management.ManagementFactory
-import com.github.zhongl.yascli.{PrintOut, Command}
+import com.github.zhongl.yascli.PrintOut
 import java.io.{BufferedWriter, FileWriter, File}
-import java.lang.reflect.Method
 import com.github.zhongl.housemd.misc.Reflections._
 import java.util.Date
+import collection.immutable.SortedSet
+import java.util.regex.Pattern
+import com.github.zhongl.housemd.instrument.{Filter, Seconds, Hook, Context}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 class Trace(val inst: Instrumentation, out: PrintOut)
-  extends Command("trace", "display or output infomation of method invocaton.", out)
-          with Transformer with MethodFilterCompleter {
+  extends TransformCommand("trace", "display or output infomation of method invocaton.", inst, out)
+          with MethodFilterCompleter {
+
+  import com.github.zhongl.yascli.Converters._
 
   val outputRoot = {
     val dir = new File("/tmp/" + name + "/" + ManagementFactory.getRuntimeMXBean.getName)
@@ -41,33 +43,70 @@ class Trace(val inst: Instrumentation, out: PrintOut)
   val detailFile = new File(outputRoot, "detail")
   val stackFile  = new File(outputRoot, "stack")
 
-  private val interval   = option[Second]("-i" :: "--interval" :: Nil, "display trace statistics interval.", 1)
-  private val detailable = flag("-d" :: "--detail" :: Nil, "enable append invocation detail to " + detailFile + ".")
-  private val stackable  = flag("-s" :: "--stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
+  private val _detailable = flag("-d" :: "--detail" :: Nil, "enable append invocation detail to " + detailFile + ".")
+  private val _stackable  = flag("-s" :: "--stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
+
+  private val _packagePattern = option[Pattern]("-p" :: "--package" :: Nil, "package regex pattern for filtering.", ".*")
+  private val _interval       = option[Seconds]("-i" :: "--interval" :: Nil, "display trace statistics interval.", 1)
+  private val _timeout        = option[Seconds]("-t" :: "--timeout" :: Nil, "limited trace seconds.", 10)
+  private val _overLimit      = option[Int]("-l" :: "--limit" :: Nil, "limited limited times.", 1000)
+
+  private val methodFilters = parameter[Array[MethodFilter]]("method-filter", "method filter pattern like \"ClassSimpleName.methodName\" or \"ClassSimpleName\".")
+
+  override protected def filter = new Filter() {
+    val mfs = methodFilters()
+
+    def apply(klass: Class[_]) = {
+
+      @inline
+      def matchesPackagePattern = {
+        val p = _packagePattern()
+        p.pattern() == ".*" || (klass.getPackage != null && p.matcher(klass.getPackage.getName).matches())
+      }
+
+      @inline
+      def includeByMethodFilters = mfs.find(_.filter(klass)).isDefined
+
+      matchesPackagePattern && includeByMethodFilters
+    }
+
+    def apply(klass: Class[_], methodName: String) = mfs.find(_.filter(klass, methodName)).isDefined
+  }
+
+  override protected def timeout = _timeout()
+
+  override protected def overLimit = _overLimit()
 
   override protected def hook = new Hook() {
     var last = System.currentTimeMillis()
 
-    val enableDetail   = detailable()
-    val enableStack    = stackable()
-    val intervalMillis = interval().toMillis
-    val statistics     = {
-      val mfs = methodFilters()
-      for (c <- candidates; m <- c.getDeclaredMethods if mfs.find(_.filter(c, m)).isDefined) yield new Statistic(c, m)
-    }.sortBy(s => s.klass.getName + "." + s.method.getName)
+    val enableDetail   = _detailable()
+    val enableStack    = _stackable()
+    val intervalMillis = _interval().toMillis
 
-    val maxMethodSignLength  = statistics.map {_.methodSign.length}.max
-    val maxClassLoaderLength = statistics.map {_.maxClassLoaderLength}.max
+    implicit val statisticOrdering = Ordering.by((_: Statistic).methodSign)
+
+    var statistics           = SortedSet.empty[Statistic]
+    var maxMethodSignLength  = 0
+    var maxClassLoaderLength = 0
 
     lazy val detailWriter = new DetailWriter(new BufferedWriter(new FileWriter(detailFile, true)))
     lazy val stackWriter  = new StackWriter(new BufferedWriter(new FileWriter(stackFile, true)))
 
+    override def enterWith(context: Context) {}
+
     override def exitWith(context: Context) {
       if (enableDetail) detailWriter.write(context)
       if (enableStack) stackWriter.write(context)
-      statistics find {_.filter(context)} match {
-        case Some(s) => s + context
-        case None    => // ignore
+
+      val statistic = new Statistic(context, 1L, context.stopped.get - context.started)
+
+      maxClassLoaderLength = math.max(maxClassLoaderLength, statistic.loader.length)
+      maxMethodSignLength = math.max(maxMethodSignLength, statistic.methodSign.length)
+
+      statistics = statistics find {!_.filter(context)} match {
+        case Some(s) => statistics - s + (s + statistic)
+        case None    => statistics + statistic
       }
     }
 
@@ -79,52 +118,45 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       }
     }
 
-    override def end() {
+    override def end(throwable: Option[Throwable]) {
       if (enableDetail) detailWriter.close()
       if (enableStack) stackWriter.close()
     }
   }
 
-  class Statistic(
-    val klass: Class[_],
-    val method: Method,
-    var thisObject: AnyRef = null,
-    var totalTimes: Long = 0,
-    var totalElapseMills: Long = 0) {
+  class Statistic(val context: Context, val totalTimes: Long, val totalElapseMills: Long) {
 
-    val NaN = "-"
+    lazy val methodSign = "%1$s.%2$s(%3$s)".format(
+      simpleNameOf(context.className),
+      context.methodName,
+      context.arguments.map(o => simpleNameOf(o.getClass)).mkString(", ")
+    )
 
-    lazy val methodSign = "%1$s.%2$s(%3$s)"
-      .format(klass.getName.split("\\.").last, method.getName,
-      method.getParameterTypes.map(simpleNameOf).mkString(", "))
+    lazy val loader = if (context.loader == null) "BootClassLoader" else context.loader.toString
 
-    lazy val maxClassLoaderLength = {
-      val loader = klass.getClassLoader
-      if (loader == null) 4 else loader.toString.length
-    }
+    private val NaN = "-"
 
-    def +(context: Context) {
-      val elapseMillis = context.stopped.get - context.started
+    private lazy val thisObjectString = if (context.thisObject == null) "[Static Method]" else context.thisObject.toString
 
-      totalTimes = totalTimes + 1
-      thisObject = context.thisObject
-      totalElapseMills = totalElapseMills + elapseMillis
-    }
-
-    def filter(context: Context) = {
-      context.classEquals(klass) && context.methodEquals(method)
-    }
-
-    def avgElapseMillis =
+    private lazy val avgElapseMillis =
       if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes
+
+    def +(s: Statistic) = new Statistic(context, totalTimes + s.totalTimes, totalElapseMills + s.totalElapseMills)
+
+    def filter(context: Context) = this.context.loader == context.loader &&
+                                   this.context.className == context.className &&
+                                   this.context.methodName == context.methodName &&
+                                   this.context.arguments.size == context.arguments.size &&
+                                   this.context.arguments.map(_.getClass) == context.arguments.map(_.getClass) &&
+                                   this.context.thisObject == context.thisObject
 
     def reps(maxMethodSignLength: Int, maxClassLoaderLength: Int) =
       "%1$-" + maxMethodSignLength + "s    %2$-" + maxClassLoaderLength + "s    %3$#9s    %4$#9sms    %5$s" format(
         methodSign,
-        klass.getClassLoader,
+        loader,
         totalTimes,
         avgElapseMillis,
-        thisObject)
+        thisObjectString)
 
   }
 

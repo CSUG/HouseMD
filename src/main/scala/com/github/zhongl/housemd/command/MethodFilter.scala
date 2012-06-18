@@ -16,8 +16,63 @@
 
 package com.github.zhongl.housemd.command
 
+import java.lang.reflect.Type
 import java.lang.reflect.Method
 import com.github.zhongl.housemd.misc.Reflections._
+
+
+/**
+ * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
+ */
+class MethodFilter(classSimpleName: String, methodName: String = "*") {
+  implicit val type2Class = (_: Type).asInstanceOf[Class[_]]
+
+  def filter(c: Class[_], methodName: String): Boolean = lazyFilter(c)(methodName)
+
+  def filter(c: Class[_]): Boolean = {
+    if (!filterOnly(c)) false
+    else {
+      val filter = lazyFilter(true)(_)
+      c.getDeclaredMethods.find { m => filter(m.getName) }.isDefined
+    }
+  }
+
+  private def lazyFilter(cond: => Boolean)(m: String) = if (cond) {methodName == "*" || methodName == m} else false
+
+  private def lazyFilter(c: Class[_]): (String => Boolean) = lazyFilter(filterOnly(c))
+
+  private def filterOnly(className: String, superClassName: String, interfaceNames: Array[String]): Boolean = {
+    if (classSimpleName.endsWith("+")) {
+      val realname = classSimpleName.dropRight(1)
+      (simpleNameOf(className) == realname ||
+       superClassName != null && simpleNameOf(superClassName) == realname) ||
+      interfaceNames.find(simpleNameOf(_) == realname).isDefined
+    } else {
+      simpleNameOf(className) == classSimpleName
+    }
+  }
+
+  private def filterOnly(c: Class[_]): Boolean = {
+    val superClassName = if (c.getSuperclass == null) null else c.getSuperclass.getName
+    val interfaceNames = c.getInterfaces.map(_.getName)
+    filterOnly(c.getName, superClassName, interfaceNames)
+  }
+
+}
+
+object MethodFilter {
+
+  implicit def apply(s: String) = {
+    s.split("\\.") match {
+      case Array(classSimpleName, methodName) => new MethodFilter(classSimpleName, methodName)
+      case Array(classSimpleName)             => new MethodFilter(classSimpleName)
+      case _                                  =>
+        throw new IllegalArgumentException(", it should be \"ClassSimpleName.methodName\" or \"ClassSimpleName\"")
+    }
+  }
+
+  implicit val string2MethodFilters = (_: String).split("\\s+") map {apply}
+}
 
 trait MethodFilterCompleter extends ClassSimpleNameCompleter {
 

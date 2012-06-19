@@ -22,7 +22,7 @@ import jline.TerminalFactory
 import java.io.{FileWriter, BufferedWriter, File}
 import com.github.zhongl.housemd._
 import misc.Utils._
-import command.{Env, Loaded, Trace}
+import command.{Inspect, Env, Loaded, Trace}
 import duck.Telephone
 
 
@@ -46,7 +46,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
 
 
   private lazy val agentJarFile = sourceOf(getClass)
-  private lazy val agentOptions = agentJarFile :: classNameOf[Telephone] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: classNameOf[Env] :: Nil
+  private lazy val agentOptions = agentJarFile :: classNameOf[Telephone] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: classNameOf[Env] :: classNameOf[Inspect] :: Nil
 
   private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))
@@ -81,7 +81,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
     }
   }
 
-  override  def error(a: Any) {
+  override def error(a: Any) {
     super.error(a)
     if (a.isInstanceOf[Throwable]) {
       super.error("You can get more details in " + errorDetailFile)

@@ -102,10 +102,15 @@ public class TraceTarget {
     }
 
     public final static class B extends D implements C {
+        private String s;
+        private int i;
+
         public void mC(String s) {
+            this.s = s;
         }
 
         public void mD2(int i, int j) {
+            this.i = i;
         }
     }
 

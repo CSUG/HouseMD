@@ -39,7 +39,7 @@ public class Inspect extends TransformCommand implements FieldFilterCompleter {
 
     private final Function0<FieldFilter> fieldFilter = parameter(
             "field-filter",
-            "field filter pattern like \"ClassSimpleName.fieldName\" or \"ClassSimpleName\".",
+            "field filter pattern like \"ClassSimpleName.fieldName\".",
             none(FieldFilter.class),
             manifest(FieldFilter.class),
             new AbstractFunction1<String, FieldFilter>() {
@@ -127,7 +127,7 @@ public class Inspect extends TransformCommand implements FieldFilterCompleter {
 
     public int com$github$zhongl$housemd$command$ClassMemberCompleter$$super$completeClassSimpleName(
             String buffer, int cursor, List<CharSequence> candidates) {
-        return ClassMemberCompleter$class.completeClassSimpleName(this, buffer, cursor, candidates);
+        return ClassSimpleNameCompleter$class.completeClassSimpleName(this, buffer, cursor, candidates);
     }
 
     static class FieldFilter {

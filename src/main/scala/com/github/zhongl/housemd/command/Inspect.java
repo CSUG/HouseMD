@@ -87,6 +87,7 @@ public class Inspect extends TransformCommand implements FieldFilterCompleter {
                 for (Object target : targets) {
                     try {
                         println(accessor + " " + accessor.getField(target) + " " + target + " " + target.getClass().getClassLoader());
+                        println();
                     } catch (Exception e) {
                         error(e);
                     }
@@ -179,7 +180,7 @@ public class Inspect extends TransformCommand implements FieldFilterCompleter {
 
         @Override
         public String toString() {
-            return simpleNameOf(classSimpleName) + "." + fieldName;
+            return classSimpleName + "." + fieldName;
         }
     }
 }

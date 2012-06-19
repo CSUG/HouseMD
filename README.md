@@ -25,7 +25,10 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
     - arguments
     - result or exception
 - Output invocation stack trace
+- Display object field value
+- Display enviroment variable
 - Auto-completion
+- command history
 - Awesome features you can provide by forking me
 
 [Test cases](https://github.com/zhongl/HouseMD/blob/master/src/test/scala/com/github/zhongl/housemd) would show more specification details.

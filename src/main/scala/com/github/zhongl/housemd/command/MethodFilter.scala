@@ -17,7 +17,6 @@
 package com.github.zhongl.housemd.command
 
 import java.lang.reflect.Type
-import java.lang.reflect.Method
 import com.github.zhongl.housemd.misc.Reflections._
 
 
@@ -74,41 +73,4 @@ object MethodFilter {
   implicit val string2MethodFilters = (_: String).split("\\s+") map {apply}
 }
 
-trait MethodFilterCompleter extends ClassSimpleNameCompleter {
 
-  import java.util.List
-
-  object MethodName {
-    def unapply(m: Method) = Some(m.getName)
-  }
-
-  override protected def completeClassSimpleName(buffer: String, cursor: Int, candidates: List[CharSequence]) =
-    buffer.split("\\.") match {
-      case Array(classSimpleName) if buffer.endsWith(".") => completeAll(classSimpleName, cursor, candidates)
-      case Array(prefix)                                  => super.completeClassSimpleName(buffer, cursor, candidates)
-      case Array(classSimpleName, methodPrefix)           => complete(classSimpleName, methodPrefix, cursor, candidates)
-      case _                                              => -1
-    }
-
-  override protected def collectLoadedClassNames(prefix: String) = inst.getAllLoadedClasses collect {
-    case c@ClassSimpleName(n) if n.startsWith(prefix) && isNotConcrete(c) => n + "+"
-    case ClassSimpleName(n) if n.startsWith(prefix)                       => n
-  }
-
-  private def allDeclaredMethodsOf(classSimpleName: String)(collect: Array[Method] => Array[String]) =
-    inst.getAllLoadedClasses collect {
-      case c@ClassSimpleName(n) if (n == classSimpleName || n + "+" == classSimpleName) => collect(c.getDeclaredMethods)
-    }
-
-  private def completeAll(classSimpleName: String, cursor: Int, candidates: List[CharSequence]) =
-    allDeclaredMethodsOf(classSimpleName) {_ map {_.getName}} match {
-      case Array() => -1
-      case all     => all.flatten.sorted foreach {candidates.add}; cursor
-    }
-
-  private def complete(classSimpleName: String, methodPrefix: String, cursor: Int, candidates: List[CharSequence]) =
-    allDeclaredMethodsOf(classSimpleName) {_ collect {case MethodName(m) if m.startsWith(methodPrefix) => m }} match {
-      case Array() => -1
-      case all     => all.flatten.sorted foreach {candidates.add}; cursor - methodPrefix.length
-    }
-}

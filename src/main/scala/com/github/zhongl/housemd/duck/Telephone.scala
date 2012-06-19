@@ -21,6 +21,9 @@ import java.net.Socket
 import jline.console.ConsoleReader
 import com.github.zhongl.yascli.{Shell, PrintOut, Command}
 import jline.TerminalFactory
+import jline.console.history.FileHistory
+import management.ManagementFactory
+import java.io.File
 
 /**
  * Telephone is used by Duck to communicate with House$.
@@ -32,6 +35,9 @@ class Telephone(inst: Instrumentation, port: Int, classes: Array[Class[Command]]
   def run() {
     val socket = new Socket("localhost", port)
     val reader = new ConsoleReader(socket.getInputStream, socket.getOutputStream)
+    val name = ManagementFactory.getRuntimeMXBean.getName
+    val history = new FileHistory(new File("/tmp/housemd/" + name + "/.history"))
+    reader.setHistory(history)
 
     try {
       new Shell(name = "housemd", description = "a runtime diagnosis tool of jvm.", reader = reader) {
@@ -47,6 +53,7 @@ class Telephone(inst: Instrumentation, port: Int, classes: Array[Class[Command]]
       } main (Array.empty[String])
     } finally {
       TerminalFactory.reset()
+      history.flush()
       socket.shutdownOutput()
       socket.shutdownInput()
       socket.close()

@@ -67,7 +67,7 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
         val objectToString = """[\.\w,@\$ ]+"""
         val number = """\d+\s+"""
         val elapse = """<?\d+ms"""
-        out.split("\n") filter (s => !s.startsWith("INFO") && !s.isEmpty) foreach {
+        out.split("\n").filter(s => !s.startsWith("INFO") && !s.isEmpty).tail foreach {
           _ should fullyMatch regex (methodFullName + objectToString + number + elapse + objectToString)
         }
       }

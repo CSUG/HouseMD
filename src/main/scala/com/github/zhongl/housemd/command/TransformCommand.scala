@@ -43,8 +43,10 @@ abstract class TransformCommand(name: String, description: String, inst: Instrum
       var last           = 0L
 
       def heartbeat(now: Long) {
-        if (last == 0) last = now
-        else if (last - now > intervalMillis) delegate.heartbeat(now)
+        if (now - last > intervalMillis) {
+          delegate.heartbeat(now)
+          last = now
+        }
       }
 
       def finalize(throwable: Option[Throwable]) {

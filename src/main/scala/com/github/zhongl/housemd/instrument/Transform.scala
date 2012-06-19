@@ -19,13 +19,13 @@ package com.github.zhongl.housemd.instrument
 import java.lang.instrument.{ClassFileTransformer, Instrumentation}
 import java.security.ProtectionDomain
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.Map
 import actors.Actor._
 
 import com.github.zhongl.housemd.misc.Reflections._
 import com.github.zhongl.yascli.Loggable
 import java.lang.System.{currentTimeMillis => now}
 import actors.TIMEOUT
+import java.util
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -81,8 +81,7 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
 
         receiveWithin(500) {
           case TIMEOUT            => // ignore
-          case OverLimit          => log.info("Ended by overlimit"); self ! Break
-          case Break              => break()
+          case OverLimit          => throw OverLimitBreak
           case EnterWith(context) => h.enterWith(context)
           case ExitWith(context)  => h.exitWith(context)
           case x                  => // ignore last unread messages, error("Unknown case: " + x)
@@ -90,19 +89,16 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
 
         val t = now
         h.heartbeat(t)
-
-        if (t - start >= timoutMillis) {
-          log.info("Ended by timeout")
-          self ! Break
-        }
+        if (t - start >= timoutMillis) throw TimeoutBreak
       }
     } catch {
-      case BreakException => h.finalize(None)
+      case OverLimitBreak => h.finalize(None); log.info("Ended by overlimit")
+      case TimeoutBreak   => h.finalize(None); log.info("Ended by timeout")
       case throwable      => h.finalize(Some(throwable))
     }
   }
 
-  private def break() { throw BreakException }
+  private def break() { throw OverLimitBreak }
 
   private def classFileTransformer(filter: Filter, classes: Array[Class[_]])(implicit log: Loggable) =
     new ClassFileTransformer {
@@ -118,7 +114,9 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
   private def probe(classes: Array[Class[_]], advice: Advice)(implicit inst: Instrumentation, log: Loggable) {
     classes foreach { c =>
       try {
-        loadOrDefineAdviceClassFrom(c.getClassLoader).getMethod(Advice.SET_DELEGATE, classOf[Object]).invoke(null, advice)
+        loadOrDefineAdviceClassFrom(c.getClassLoader)
+          .getMethod(Advice.SET_DELEGATE, classOf[Object])
+          .invoke(null, advice)
         inst.retransformClasses(c)
         log.info("Probe " + c)
       } catch {
@@ -148,28 +146,27 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
     val count = new AtomicInteger()
     val host  = self
 
-    def enterWith(context: Map[String, AnyRef]) {
+    def enterWith(context: util.Map[String, AnyRef]) {
       host ! EnterWith(context)
     }
 
-    def exitWith(context: Map[String, AnyRef]) {
+    def exitWith(context: util.Map[String, AnyRef]) {
       host ! ExitWith(context)
       if (count.incrementAndGet() >= limit) host ! OverLimit
     }
   }
 
-
   private sealed trait Event
 
   private case object OverLimit extends Event
-
-  private case object Break extends Event
 
   private case class EnterWith(context: Context) extends Event
 
   private case class ExitWith(context: Context) extends Event
 
-  private object BreakException extends Exception
+  private object OverLimitBreak extends Exception
+
+  private object TimeoutBreak extends Exception
 
 }
 

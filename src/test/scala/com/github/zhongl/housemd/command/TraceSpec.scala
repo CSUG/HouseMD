@@ -75,6 +75,8 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
 
     it("should output invocation details") {
       parseAndRun("-d -t 1 A") { (out, detail, stack) =>
+        out.split("\n") should contain("INFO : You can get invocation detail from " + detail)
+
         val date = """\d{4}-\d{2}-\d{2}"""
         val time = """\d{2}:\d{2}:\d{2}"""
         val elapse = """\d+ms"""
@@ -92,6 +94,8 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
 
     it("should output invocation stack") {
       parseAndRun("-s -l 1 A") { (out, detail, stack) =>
+        out.split("\n") should contain("INFO : You can get invocation stack from " + stack)
+
         val lines = Source.fromFile(stack).getLines().toList.dropRight(1)
         val head = """com\.github\.zhongl\.test\.A\.m\(\) call by thread \[[\w-]+\]""".r
         val st = """\t\S+\(\S+:\d+\)""".r

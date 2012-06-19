@@ -88,8 +88,15 @@ class Trace(val inst: Instrumentation, out: PrintOut)
     }
 
     override def finalize(throwable: Option[Throwable]) {
-      if (enableDetail) detailWriter.close()
-      if (enableStack) stackWriter.close()
+      heartbeat(0L) // last print
+      if (enableDetail) {
+        detailWriter.close()
+        info("You can get invocation detail from " + detailFile)
+      }
+      if (enableStack) {
+        stackWriter.close()
+        info("You can get invocation stack from " + stackFile)
+      }
     }
   }
 

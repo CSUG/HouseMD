@@ -23,8 +23,7 @@ import java.io.{BufferedWriter, FileWriter, File}
 import com.github.zhongl.housemd.misc.Reflections._
 import java.util.Date
 import collection.immutable.SortedSet
-import java.util.regex.Pattern
-import com.github.zhongl.housemd.instrument.{Filter, Seconds, Hook, Context}
+import com.github.zhongl.housemd.instrument.{Hook, Context}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -32,8 +31,6 @@ import com.github.zhongl.housemd.instrument.{Filter, Seconds, Hook, Context}
 class Trace(val inst: Instrumentation, out: PrintOut)
   extends TransformCommand("trace", "display or output infomation of method invocaton.", inst, out)
           with MethodFilterCompleter {
-
-  import com.github.zhongl.yascli.Converters._
 
   val outputRoot = {
     val dir = new File("/tmp/" + name + "/" + ManagementFactory.getRuntimeMXBean.getName)
@@ -43,46 +40,20 @@ class Trace(val inst: Instrumentation, out: PrintOut)
   val detailFile = new File(outputRoot, "detail")
   val stackFile  = new File(outputRoot, "stack")
 
-  private val _detailable = flag("-d" :: "--detail" :: Nil, "enable append invocation detail to " + detailFile + ".")
-  private val _stackable  = flag("-s" :: "--stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
-
-  private val _packagePattern = option[Pattern]("-p" :: "--package" :: Nil, "package regex pattern for filtering.", ".*")
-  private val _interval       = option[Seconds]("-i" :: "--interval" :: Nil, "display trace statistics interval.", 1)
-  private val _timeout        = option[Seconds]("-t" :: "--timeout" :: Nil, "limited trace seconds.", 10)
-  private val _overLimit      = option[Int]("-l" :: "--limit" :: Nil, "limited limited times.", 1000)
+  private val detailable = flag("-d" :: "--detail" :: Nil, "enable append invocation detail to " + detailFile + ".")
+  private val stackable  = flag("-s" :: "--stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
 
   private val methodFilters = parameter[Array[MethodFilter]]("method-filter", "method filter pattern like \"ClassSimpleName.methodName\" or \"ClassSimpleName\".")
 
-  override protected def filter = new Filter() {
-    val mfs = methodFilters()
+  protected def isCandidate(klass: Class[_]) = methodFilters().find(_.filter(klass)).isDefined
 
-    def apply(klass: Class[_]) = {
-
-      @inline
-      def matchesPackagePattern = {
-        val p = _packagePattern()
-        p.pattern() == ".*" || (klass.getPackage != null && p.matcher(klass.getPackage.getName).matches())
-      }
-
-      @inline
-      def includeByMethodFilters = mfs.find(_.filter(klass)).isDefined
-
-      matchesPackagePattern && includeByMethodFilters
-    }
-
-    def apply(klass: Class[_], methodName: String) = mfs.find(_.filter(klass, methodName)).isDefined
-  }
-
-  override protected def timeout = _timeout()
-
-  override protected def overLimit = _overLimit()
+  protected def isDecorating(klass: Class[_], methodName: String) =
+    methodFilters().find(_.filter(klass, methodName)).isDefined
 
   override protected def hook = new Hook() {
-    var last = System.currentTimeMillis()
 
-    val enableDetail   = _detailable()
-    val enableStack    = _stackable()
-    val intervalMillis = _interval().toMillis
+    val enableDetail = detailable()
+    val enableStack  = stackable()
 
     implicit val statisticOrdering = Ordering.by((_: Statistic).methodSign)
 
@@ -111,15 +82,12 @@ class Trace(val inst: Instrumentation, out: PrintOut)
     }
 
     override def heartbeat(now: Long) {
-      if (now - last >= intervalMillis) {
-        last = now
-        if (statistics.isEmpty) println("No traced method invoked")
-        else statistics foreach { s => println(s.reps(maxMethodSignLength, maxClassLoaderLength)) }
-        println()
-      }
+      if (statistics.isEmpty) println("No traced method invoked")
+      else statistics foreach { s => println(s.reps(maxMethodSignLength, maxClassLoaderLength)) }
+      println()
     }
 
-    override def end(throwable: Option[Throwable]) {
+    override def finalize(throwable: Option[Throwable]) {
       if (enableDetail) detailWriter.close()
       if (enableStack) stackWriter.close()
     }
@@ -137,7 +105,10 @@ class Trace(val inst: Instrumentation, out: PrintOut)
 
     private val NaN = "-"
 
-    private lazy val thisObjectString = if (context.thisObject == null) "[Static Method]" else context.thisObject.toString
+    private lazy val thisObjectString = if (context.thisObject == null) "[Static Method]"
+    else context
+      .thisObject
+      .toString
 
     private lazy val avgElapseMillis =
       if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes
@@ -145,11 +116,11 @@ class Trace(val inst: Instrumentation, out: PrintOut)
     def +(s: Statistic) = new Statistic(context, totalTimes + s.totalTimes, totalElapseMills + s.totalElapseMills)
 
     def filter(context: Context) = this.context.loader == context.loader &&
-                                   this.context.className == context.className &&
-                                   this.context.methodName == context.methodName &&
-                                   this.context.arguments.size == context.arguments.size &&
-                                   this.context.arguments.map(_.getClass) == context.arguments.map(_.getClass) &&
-                                   this.context.thisObject == context.thisObject
+      this.context.className == context.className &&
+      this.context.methodName == context.methodName &&
+      this.context.arguments.size == context.arguments.size &&
+      this.context.arguments.map(_.getClass) == context.arguments.map(_.getClass) &&
+      this.context.thisObject == context.thisObject
 
     def reps(maxMethodSignLength: Int, maxClassLoaderLength: Int) =
       "%1$-" + maxMethodSignLength + "s    %2$-" + maxClassLoaderLength + "s    %3$#9s    %4$#9sms    %5$s" format(
@@ -176,7 +147,8 @@ class DetailWriter(writer: BufferedWriter) {
       case None if context.isVoidReturn => "void"
       case None                         => "null"
     }
-    val line = (started :: elapse :: thread :: thisObject :: method :: arguments :: resultOrExcption :: Nil).mkString(" ")
+    val line = (started :: elapse :: thread :: thisObject :: method :: arguments :: resultOrExcption :: Nil)
+      .mkString(" ")
     writer.write(line)
     writer.newLine()
   }

@@ -97,8 +97,8 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
         }
       }
     } catch {
-      case BreakException => h.end(None)
-      case throwable      => h.end(Some(throwable))
+      case BreakException => h.finalize(None)
+      case throwable      => h.finalize(Some(throwable))
     }
   }
 

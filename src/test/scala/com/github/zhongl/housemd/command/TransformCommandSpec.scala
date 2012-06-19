@@ -26,7 +26,7 @@ import actors.TIMEOUT
 import com.github.zhongl.yascli.PrintOut
 import com.github.zhongl.test._
 import com.github.zhongl.housemd.duck.Duck
-import com.github.zhongl.housemd.instrument.{Filter, Seconds, Context, Hook}
+import com.github.zhongl.housemd.instrument.{Context, Hook}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -36,12 +36,8 @@ class TransformCommandSpec extends FunSpec with ShouldMatchers with AdviceReflec
 
   class Concrete(val inst: Instrumentation, out: PrintOut)
     extends TransformCommand("concrete", "test mock.", inst, out) {
-    import com.github.zhongl.yascli.Converters._
 
-    private val _timeout      = option[Seconds]("-t" :: "--timeout" :: Nil, "limited trace seconds.", 10)
-    private val _overLimit    = option[Int]("-l" :: "--limit" :: Nil, "limited limited times.", 1000)
-    private val _methodFilter = parameter[MethodFilter]("method-filter", "")
-
+    private val methodFilter = parameter[MethodFilter]("method-filter", "")
 
     protected def hook = new Hook() {
       def enterWith(context: Context) {}
@@ -50,18 +46,12 @@ class TransformCommandSpec extends FunSpec with ShouldMatchers with AdviceReflec
 
       def heartbeat(now: Long) {}
 
-      def end(throwable: Option[Throwable]) {}
+      def finalize(throwable: Option[Throwable]) {}
     }
 
-    protected def timeout = _timeout()
+    protected def isCandidate(klass: Class[_]) = methodFilter().filter(klass)
 
-    protected def overLimit = _overLimit()
-
-    protected def filter = new Filter() {
-      def apply(c: Class[_]) = _methodFilter().filter(c)
-
-      def apply(c: Class[_], m: String) = _methodFilter().filter(c, m)
-    }
+    protected def isDecorating(klass: Class[_], methodName: String) = methodFilter().filter(klass, methodName)
   }
 
   def parseAndRun(arguments: String)(verify: (String) => Unit) {

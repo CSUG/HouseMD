@@ -18,7 +18,8 @@ package com.github.zhongl.housemd.command
 
 import instrument._
 import com.github.zhongl.yascli.{PrintOut, Command}
-import com.github.zhongl.housemd.instrument.{Filter, Seconds, Hook, Transform}
+import com.github.zhongl.housemd.instrument._
+import java.util.regex.Pattern
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -26,18 +27,63 @@ import com.github.zhongl.housemd.instrument.{Filter, Seconds, Hook, Transform}
 abstract class TransformCommand(name: String, description: String, inst: Instrumentation, out: PrintOut)
   extends Command(name, description, out) {
 
+  import com.github.zhongl.yascli.Converters._
+
+  private val packagePattern = option[Pattern]("-p" :: "--package" :: Nil, "package regex pattern for filtering.", ".*")
+  private val interval       = option[Seconds]("-i" :: "--interval" :: Nil, "display trace statistics interval.", 1)
+  private val timeout        = option[Seconds]("-t" :: "--timeout" :: Nil, "limited trace seconds.", 10)
+  private val overLimit      = option[Int]("-l" :: "--limit" :: Nil, "limited limited times.", 1000)
+
   private val transform = new Transform
 
   override def run() {
-    transform(inst, filter, timeout, overLimit, this, hook)
+    val delegate = hook
+    val h = new Hook {
+      val intervalMillis = interval().toMillis
+      var last           = 0L
+
+      def heartbeat(now: Long) {
+        if (last == 0) last = now
+        else if (last - now > intervalMillis) delegate.heartbeat(now)
+      }
+
+      def finalize(throwable: Option[Throwable]) {
+        delegate.finalize(throwable)
+      }
+
+      def enterWith(context: Context) {
+        delegate.enterWith(context)
+      }
+
+      def exitWith(context: Context) {
+        delegate.exitWith(context)
+      }
+    }
+
+    transform(inst, filter, timeout(), overLimit(), this, h)
   }
+
+  protected def isCandidate(klass: Class[_]): Boolean
+
+  protected def isDecorating(klass: Class[_], methodName: String): Boolean
 
   protected def hook: Hook
 
-  protected def timeout: Seconds
+  private def filter = new Filter {
+    // Used for getting candidates of probing
+    def apply(klass: Class[_]) = {
+      @inline
+      def matchesPackagePattern = {
+        val p = packagePattern()
+        p.pattern() == ".*" || (klass.getPackage != null && p.matcher(klass.getPackage.getName).matches())
+      }
 
-  protected def overLimit: Int
+      matchesPackagePattern && isCandidate(klass)
+    }
 
-  protected def filter: Filter
+    // Used for class decorating
+    def apply(klass: Class[_], methodName: String) = isDecorating(klass, methodName)
+  }
+
 }
 

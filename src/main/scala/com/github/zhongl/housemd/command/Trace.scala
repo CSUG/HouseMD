@@ -113,7 +113,8 @@ class Trace(val inst: Instrumentation, out: PrintOut)
     override def heartbeat(now: Long) {
       if (now - last >= intervalMillis) {
         last = now
-        statistics foreach { s => println(s.reps(maxMethodSignLength, maxClassLoaderLength)) }
+        if (statistics.isEmpty) println("No traced method invoked")
+        else statistics foreach { s => println(s.reps(maxMethodSignLength, maxClassLoaderLength)) }
         println()
       }
     }

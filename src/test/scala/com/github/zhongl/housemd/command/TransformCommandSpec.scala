@@ -112,9 +112,9 @@ class TransformCommandSpec extends FunSpec with ShouldMatchers with AdviceReflec
       }
     }
 
-    ignore("should not probe class loaded by boot classloader") {
+    it("should not probe class loaded by boot classloader") {
       parseAndRun("String") { out =>
-        out.split("\n").head should be("WARN : Skip " + classOf[String] + " loaded from bootclassloader.")
+        out.split("\n").head should be("WARN : Skip " + classOf[String] + " loaded from bootclassloader")
       }
     }
 

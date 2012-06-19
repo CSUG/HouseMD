@@ -42,14 +42,18 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
 
       @inline
       def isNotFromHouseMD = if (c.getName.startsWith("com.github.zhongl.housemd")) {
-        log.warn("Skip " + c + " from HouseMD")
+        log.warn("Skip " + c + " belongs to HouseMD")
         false
       } else true
 
       @inline
       def isNotInterface = if (c.isInterface) {log.warn("Skip " + c); false} else true
 
-      filter(c) && isNotFromHouseMD && isNotInterface
+      @inline
+      def isNotFromBootClassLoader =
+        if (isFromBootClassLoader(c)) {log.warn("Skip " + c + " loaded from bootclassloader"); false} else true
+
+      filter(c) && isNotFromHouseMD && isNotInterface && isNotFromBootClassLoader
     }
 
     if (candidates.isEmpty) {

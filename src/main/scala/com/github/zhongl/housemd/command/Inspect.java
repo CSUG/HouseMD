@@ -11,8 +11,10 @@ import java.lang.instrument.Instrumentation;
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 public class Inspect extends TransformCommand {
+
+
     public Inspect(Instrumentation inst, PrintOut out) {
-        super("", "", inst, out);
+        super("inspect", "display fields of a class.", inst, out);
     }
 
     @Override

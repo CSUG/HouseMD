@@ -18,12 +18,13 @@ package com.github.zhongl.housemd.house
 
 import com.sun.tools.attach.VirtualMachine
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
-import jline.TerminalFactory
+import jline.NoInterruptUnixTerminal
 import java.io.{FileWriter, BufferedWriter, File}
 import com.github.zhongl.housemd._
 import misc.Utils._
 import command.{Inspect, Env, Loaded, Trace}
 import duck.Telephone
+import management.ManagementFactory
 
 
 /**
@@ -52,9 +53,12 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))
 
   def run() {
-
+    if (ManagementFactory.getOperatingSystemMXBean.getName.toLowerCase.contains("window")) {
+      throw new IllegalStateException("Sorry, Windows is not supported now.")
+    }
     try {
-      val terminal = TerminalFactory.get()
+      val terminal = new NoInterruptUnixTerminal()
+      terminal.init()
       val sout = terminal.wrapOutIfNeeded(System.out)
       val sin = terminal.wrapInIfNeeded(System.in)
       val vm = VirtualMachine.attach(pid())
@@ -64,7 +68,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
         case ListenTo(earphone)  => earphone(sout)
         case SpeakTo(microphone) => microphone(sin)
         case BreakOff(reason)    => error("connection breaked causeby"); error(reason)
-        case HangUp              => silentClose(errorDetailWriter); info("bye")
+        case HangUp              => terminal.restore(); silentClose(errorDetailWriter); info("bye")
 
       })
 

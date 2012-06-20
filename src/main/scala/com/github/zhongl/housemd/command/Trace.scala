@@ -24,6 +24,7 @@ import com.github.zhongl.housemd.misc.Reflections._
 import java.util.Date
 import collection.immutable.SortedSet
 import com.github.zhongl.housemd.instrument.{Hook, Context}
+import org.objectweb.asm.Type
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -105,7 +106,7 @@ class Trace(val inst: Instrumentation, out: PrintOut)
     lazy val methodSign = "%1$s.%2$s(%3$s)".format(
       simpleNameOf(context.className),
       context.methodName,
-      context.arguments.map(o => simpleNameOf(o.getClass)).mkString(", ")
+      Type.getArgumentTypes(context.descriptor).map(t => simpleNameOf(t.getClassName)).mkString(", ")
     )
 
     lazy val loader = if (context.loader == null) "BootClassLoader" else context.loader.toString
@@ -124,7 +125,7 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       this.context.className == context.className &&
       this.context.methodName == context.methodName &&
       this.context.arguments.size == context.arguments.size &&
-      this.context.arguments.map(_.getClass) == context.arguments.map(_.getClass) &&
+      this.context.descriptor == context.descriptor &&
       this.context.thisObject == context.thisObject
 
     def reps(maxMethodSignLength: Int, maxClassLoaderLength: Int) =

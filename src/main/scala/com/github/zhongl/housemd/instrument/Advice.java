@@ -36,6 +36,7 @@ public abstract class Advice {
     public static final String VOID_RETURN = "voidReturn";
     public static final String THIS = "this";
     public static final String ARGUMENTS = "arguments";
+    public static final String DESCRIPTOR = "descriptor";
     public static final String STACK = "stack";
     public static final String STARTED = "started";
     public static final String STOPPED = "stopped";
@@ -84,6 +85,7 @@ public abstract class Advice {
         context.put(VOID_RETURN, isVoidReturn(descriptor));
         context.put(THIS, thisObject);
         context.put(ARGUMENTS, arguments);
+        context.put(DESCRIPTOR, descriptor);
         context.put(STACK, currentStackTrace());
         context.put(STARTED, System.currentTimeMillis());
         context.put(THREAD, Thread.currentThread());

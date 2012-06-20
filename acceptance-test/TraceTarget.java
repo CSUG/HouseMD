@@ -40,7 +40,7 @@ public class TraceTarget {
 
         while (true) {
             addOne(0);
-            o.getClass().getMethod("m", String.class).invoke(o, "123");
+            o.getClass().getMethod("m", String.class).invoke(o, (String)null);
             try {
                 Thread.sleep(500L);
             } catch (Exception e) {

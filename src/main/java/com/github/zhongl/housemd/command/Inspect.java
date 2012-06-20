@@ -84,13 +84,18 @@ public class Inspect extends TransformCommand implements FieldFilterCompleter {
             }
 
             public void heartbeat(long now) {
-                for (Object target : targets) {
-                    try {
-                        println(accessor + " " + accessor.getField(target) + " " + target + " " + target.getClass().getClassLoader());
-                        println();
-                    } catch (Exception e) {
-                        error(e);
-                    }
+                if (targets.isEmpty())
+                    println("Can't inspect " + accessor + " because there's no invocation on " + accessor.classSimpleName);
+                else
+                    for (Object target : targets) printStat(target);
+            }
+
+            private void printStat(Object target) {
+                try {
+                    println(accessor + " " + accessor.getField(target) + " " + target + " " + target.getClass().getClassLoader());
+                    println();
+                } catch (Exception e) {
+                    error(e);
                 }
             }
 

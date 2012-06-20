@@ -16,8 +16,6 @@
 
 package com.github.zhongl.housemd.instrument
 
-import java.lang.reflect.Method
-import com.github.zhongl.housemd.misc.Reflections._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -33,17 +31,7 @@ case class Context(
   stack: Array[StackTraceElement],
   thread: Thread,
   stopped: Option[Long],
-  resultOrException: Option[AnyRef]) {
-
-  def classEquals(c: Class[_]) =
-    if (thisObject == null) loader == c.getClassLoader && className == c.getName else thisObject.getClass == c
-
-  def methodEquals(m: Method) = methodName == m.getName &&
-                                ((arguments.isEmpty) || (arguments.size == m.getParameterTypes.size && parameterTypsMatches(m)))
-
-  private def parameterTypsMatches(m: Method) =
-    arguments.zip(m.getParameterTypes).find { t => !toBoxClass(t._2).isInstance(t._1) }.isEmpty
-}
+  resultOrException: Option[AnyRef])
 
 object Context {
 

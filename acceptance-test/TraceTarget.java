@@ -102,12 +102,6 @@ public class TraceTarget {
     }
 
     public final static class B extends D implements C {
-<<<<<<< HEAD
-        public void mC(String s) {
-        }
-
-        public void mD2(int i, int j) {
-=======
         private String s;
         private int i;
 
@@ -117,7 +111,6 @@ public class TraceTarget {
 
         public void mD2(int i, int j) {
             this.i = i;
->>>>>>> 0.2.0
         }
     }
 

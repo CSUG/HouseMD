@@ -64,10 +64,11 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
       inst.addTransformer(probeDecorator, true)
       probe(candidates, advice(overLimit))
 
-      handleAdviceEvent
+      try {handleAdviceEvent} finally {
+        inst.removeTransformer(probeDecorator)
+        reset(candidates)
+      }
 
-      inst.removeTransformer(probeDecorator)
-      reset(candidates)
     }
 
   }
@@ -94,11 +95,9 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
     } catch {
       case OverLimitBreak => h.finalize(None); log.info("Ended by overlimit")
       case TimeoutBreak   => h.finalize(None); log.info("Ended by timeout")
-      case throwable      => h.finalize(Some(throwable))
+      case t              => h.finalize(Some(t)); throw t
     }
   }
-
-  private def break() { throw OverLimitBreak }
 
   private def classFileTransformer(filter: Filter, classes: Array[Class[_]])(implicit log: Loggable) =
     new ClassFileTransformer {

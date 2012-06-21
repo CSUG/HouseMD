@@ -100,20 +100,8 @@ You can also input `help loaded` and get help infomation of `loaded` as blow:
         name
             class name without package name.
 
-# Trace schemas
+# Use cases
 
-## Summary statistics
-
-    | method full name         | class loader                            | invoked |  avg elapse|  this object|
-    TraceTarget.addOne(int)    sun.misc.Launcher$AppClassLoader@1cde100          2          34ms   null
-
-
-## Detail line
-
-    | date     | time   | elapse | thread name |     this object      | method full name  | arguemnt(s) |result or exception
-    2012-06-13 07:59:33 1ms      [main]        TraceTarget$B@1137d4a4 TraceTarget$B.mC    [123]         void
-
-- The delimiter is one `white space`,
-- method full name contains: package, class name and method name
+[Click here](https://github.com/zhongl/housemd/wiki/usecases)
 
 Having fun!

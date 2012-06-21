@@ -27,8 +27,8 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 - Output invocation stack trace
 - Display object field value
 - Display enviroment variable
-- Auto-completion
-- command history
+- Auto-completion by typing `Tab`
+- navigate command history by up and down, and support `Ctrl + R` for searching
 - Awesome features you can provide by forking me
 
 [Test cases](https://github.com/zhongl/HouseMD/blob/master/src/test/scala/com/github/zhongl/housemd) would show more specification details.
@@ -87,6 +87,8 @@ After seen prompt `housemd>`, input `help` then you get help infomation like thi
     help      display this infomation.
     trace     display or output infomation of method invocaton.
     loaded    display loaded classes information.
+    env        display system env.
+    inspect    display fields of a class.
 
 You can also input `help loaded` and get help infomation of `loaded` as blow:
 
@@ -100,8 +102,8 @@ You can also input `help loaded` and get help infomation of `loaded` as blow:
         name
             class name without package name.
 
-# Use cases
+# More about commands
 
-[Click here](https://github.com/zhongl/housemd/wiki/usecases)
+[Click here](https://github.com/zhongl/housemd/wiki/usecases) to see the use cases.
 
 Having fun!

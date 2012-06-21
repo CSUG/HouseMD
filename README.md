@@ -58,7 +58,7 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 
 First all, type:
 
-    > housemd -h
+    > ./housemd -h
 
 A help infomation shows up like:
 
@@ -77,7 +77,7 @@ A help infomation shows up like:
 
 Suppost your target pid is `1234` (you can use `jps` or `ps` get it), and then input:
 
-    > housemd 1234
+    > ./housemd 1234
 
 After seen prompt `housemd>`, input `help` then you get help infomation like this:
 

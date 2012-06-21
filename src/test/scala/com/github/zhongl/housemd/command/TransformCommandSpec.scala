@@ -129,7 +129,7 @@ class TransformCommandSpec extends FunSpec with ShouldMatchers with AdviceReflec
     it("should probe F by I+") {
       parseAndRun("-l 1 I+") { out =>
         val withoutInfo = out.split("\n").filter(!_.startsWith("INFO"))
-        withoutInfo.head should be("WARN : Skip " + classOf[I])
+        withoutInfo.head should be("WARN : Skip " + classOf[I] + " ")
         withoutInfo.tail foreach {
           _ should fullyMatch regex ("F.+")
         }

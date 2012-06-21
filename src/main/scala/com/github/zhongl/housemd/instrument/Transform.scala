@@ -41,8 +41,8 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
     val candidates = inst.getAllLoadedClasses filter { c =>
 
       @inline
-      def skipClass(cause: String)(cond: Class[_] => Boolean) =
-        if (cond(c)) {log.warn("Skip %1$s %2$s".format(c, cause)); false} else true
+      def skipClass(description: String)(cause: Class[_] => Boolean) =
+        if (cause(c)) {log.warn("Skip %1$s %2$s" format(c, description)); false} else true
 
       @inline
       def isNotBelongsHouseMD = skipClass("belongs to HouseMD") {_.getName.startsWith("com.github.zhongl.housemd")}

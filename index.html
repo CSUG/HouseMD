@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <title>housemd by zhongl</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>housemd</h1>
+        <h2>HouseMD is an awesome diagnosing tool better than BTrace.</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/zhongl/HouseMD/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/zhongl/HouseMD/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/zhongl/HouseMD" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <p><a href="https://github.com/zhongl/HouseMD/wiki/UserGuideCN">中文使用指南</a></p>
+
+<p>HouseMD is a interactive command-line tool for dianosing Java process in runtime.
+It's inspiration came from <a href="http://kenai.com/projects/btrace">BTrace</a>, but more easier to use and more safer.</p>
+
+<h1>Features</h1>
+
+<ul>
+<li>Display loaded classes information
+
+<ul>
+<li>name</li>
+<li>source file(.class or .jar)</li>
+<li>classloaders</li>
+</ul>
+</li>
+<li>Display invocation trace summary
+
+<ul>
+<li>method full name and sign</li>
+<li>class loader of method declaring class</li>
+<li>total invoked times</li>
+<li>avg elapse millis</li>
+<li>self instance</li>
+</ul>
+</li>
+<li>Output invocation detail
+
+<ul>
+<li>timestamp</li>
+<li>elapse millis</li>
+<li>call thread</li>
+<li>this object</li>
+<li>class name</li>
+<li>method name</li>
+<li>arguments</li>
+<li>result or exception</li>
+</ul>
+</li>
+<li>Output invocation stack trace</li>
+<li>Display object field value</li>
+<li>Display enviroment variable</li>
+<li>Auto-completion by typing <code>Tab</code>
+</li>
+<li>navigate command history by up and down, and support <code>Ctrl + R</code> for searching</li>
+<li>Awesome features you can provide by forking me</li>
+</ul><p><a href="https://github.com/zhongl/HouseMD/blob/master/src/test/scala/com/github/zhongl/housemd">Test cases</a> would show more specification details.</p>
+
+<h1>Getting started</h1>
+
+<h2>Pre-requirement</h2>
+
+<ul>
+<li>JDK 6 +</li>
+</ul><h2>One-command install (On Linux or MacOSX)</h2>
+
+<pre><code>&gt; curl -Lk https://raw.github.com/zhongl/HouseMD/master/bin/install | bash
+</code></pre>
+
+<ul>
+<li>Windows are not supported yet.</li>
+</ul><h2>Normal install</h2>
+
+<ul>
+<li>Click <a href="https://github.com/zhongl/HouseMD/downloads">here</a> download lastest version executable jar</li>
+<li>
+<p>Run it as:</p>
+
+<blockquote>
+<p>java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd-assembly-x.x.x.jar</p>
+</blockquote>
+</li>
+</ul><blockquote>
+<p>Caution: In Mac OSX, the <code>-Xbootclasspath</code> is no needed.</p>
+</blockquote>
+
+<h1>How to use</h1>
+
+<p>First all, type:</p>
+
+<pre><code>&gt; ./housemd -h
+</code></pre>
+
+<p>A help infomation shows up like:</p>
+
+<pre><code>Usage: housemd [OPTIONS] pid
+    a runtime diagnosis tool of JVM.
+Options:
+    -h, --help
+        show help infomation of this command.
+    -p, --port=[INT]
+        set console local socket server port number.
+        default: 54321
+Parameters:
+    pid
+        id of process to be diagnosing.
+</code></pre>
+
+<p>Suppost your target pid is <code>1234</code> (you can use <code>jps</code> or <code>ps</code> get it), and then input:</p>
+
+<pre><code>&gt; ./housemd 1234
+</code></pre>
+
+<p>After seen prompt <code>housemd&gt;</code>, input <code>help</code> then you get help infomation like this:</p>
+
+<pre><code>housemd&gt; help
+
+quit      terminate the process.
+help      display this infomation.
+trace     display or output infomation of method invocaton.
+loaded    display loaded classes information.
+env        display system env.
+inspect    display fields of a class.
+</code></pre>
+
+<p>You can also input <code>help loaded</code> and get help infomation of <code>loaded</code> as blow:</p>
+
+<pre><code>housemd&gt; help loaded
+Usage: loaded [OPTIONS] name
+    display loaded classes information.
+Options:
+    -h, --classloader-hierarchies
+        display classloader hierarchies of loaded class.
+Parameters:
+    name
+        class name without package name.
+</code></pre>
+
+<h1>More about commands</h1>
+
+<p><a href="https://github.com/zhongl/housemd/wiki/usecases">Click here</a> to see the use cases.</p>
+
+<p>Having fun!</p>
+      </section>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-6664231-3");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>

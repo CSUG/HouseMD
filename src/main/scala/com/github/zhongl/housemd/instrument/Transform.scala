@@ -41,19 +41,19 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
     val candidates = inst.getAllLoadedClasses filter { c =>
 
       @inline
-      def isNotFromHouseMD = if (c.getName.startsWith("com.github.zhongl.housemd")) {
-        log.warn("Skip " + c + " belongs to HouseMD")
-        false
-      } else true
+      def skipClass(cause: String)(cond: Class[_] => Boolean) =
+        if (cond(c)) {log.warn("Skip %1$s %2$s".format(c, cause)); false} else true
 
       @inline
-      def isNotInterface = if (c.isInterface) {log.warn("Skip " + c); false} else true
+      def isNotBelongsHouseMD = skipClass("belongs to HouseMD") {_.getName.startsWith("com.github.zhongl.housemd")}
 
       @inline
-      def isNotFromBootClassLoader =
-        if (isFromBootClassLoader(c)) {log.warn("Skip " + c + " loaded from bootclassloader"); false} else true
+      def isNotInterface = skipClass("") {_.isInterface}
 
-      filter(c) && isNotFromHouseMD && isNotInterface && isNotFromBootClassLoader
+      @inline
+      def isNotFromBootClassLoader = skipClass("loaded from bootclassloader") {isFromBootClassLoader}
+
+      filter(c) && isNotBelongsHouseMD && isNotInterface && isNotFromBootClassLoader
     }
 
     if (candidates.isEmpty) {

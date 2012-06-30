@@ -33,6 +33,21 @@ class ReflectionsSpec extends FunSpec with ShouldMatchers {
         }
       })
     }
+
+    it("shoulde get object native string"){
+      val o = new Object()
+      Reflections.toNativeString(o) should be (o.toString)
+    }
+
+    it("shoulde get or force to native string") {
+      val o = new Object()
+      Reflections.getOrForceToNativeString(o) should be (o.toString)
+    }
+
+    it("should force to native string") {
+      val s = "hello"
+      Reflections.getOrForceToNativeString(s) should be (Reflections.toNativeString(s))
+    }
   }
 
 }

@@ -45,7 +45,7 @@ class Loaded(val inst: Instrumentation, out: PrintOut)
       case null => Unit
       case _    =>
         val indents = tab + lastIndents
-        println(indents + nativeToStringOf(cl))
+        println(indents + getOrForceToNativeString(cl))
         layout(cl.getParent, indents)
     }
   }

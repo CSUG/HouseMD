@@ -66,11 +66,14 @@ object Reflections {
     case `t` => T
     case `b` => B
     case `c` => C
-    case _   => k
+    case _ => k
   }
 
-  def nativeToStringOf(instance: AnyRef) = instance.getClass.getName + "@" + Integer
-    .toHexString(identityHashCode(instance))
+  def toNativeString(instance: AnyRef) =
+    instance.getClass.getName + "@" + Integer.toHexString(identityHashCode(instance))
+
+  def getOrForceToNativeString(instance: AnyRef) =
+    if (instance.toString.startsWith(instance.getClass + "@")) instance.toString else toNativeString(instance)
 
   /**see https://github.com/zhongl/HouseMD/issues/17 */
   def loadOrDefine(clazz: Class[_], inClassLoader: ClassLoader) = {

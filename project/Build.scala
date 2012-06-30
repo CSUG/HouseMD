@@ -29,7 +29,7 @@ object Build extends sbt.Build {
     settings = Defaults.defaultSettings ++ classpathSettings ++ assemblySettings ++ Seq(
       name                := "housemd",
       organization        := "com.github.zhongl",
-      version             := "0.2.2",
+      version             := "0.2.3",
       scalaVersion        := "2.9.2",
       scalacOptions       ++= Seq("-unchecked", "-deprecation"),
       resolvers           += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository",

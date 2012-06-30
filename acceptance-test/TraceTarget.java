@@ -77,6 +77,11 @@ public class TraceTarget {
                 }
             }
         }
+
+        @Override
+        public String toString(){
+            return "CL";
+        }
     }
 
     public static class A {

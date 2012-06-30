@@ -109,12 +109,12 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       Type.getArgumentTypes(context.descriptor).map(t => simpleNameOf(t.getClassName)).mkString(", ")
     )
 
-    lazy val loader = if (context.loader == null) "BootClassLoader" else context.loader.toString
+    lazy val loader = if (context.loader == null) "BootClassLoader" else getOrForceToNativeString(context.loader)
 
     private val NaN = "-"
 
     private lazy val thisObjectString =
-      if (context.thisObject == null) "[Static Method]" else context.thisObject.toString
+      if (context.thisObject == null) "[Static Method]" else getOrForceToNativeString(context.thisObject)
 
     private lazy val avgElapseMillis =
       if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes

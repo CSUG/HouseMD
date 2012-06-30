@@ -34,6 +34,7 @@ object Build extends sbt.Build {
       scalacOptions       ++= Seq("-unchecked", "-deprecation"),
       resolvers           += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository",
       libraryDependencies :=  compileLibs ++ testLibs,
+      commands            += upload,
       packageOptions      +=  Package.ManifestAttributes(
         ("Main-Class","com.github.zhongl.housemd.house.House"),
         ("Agent-Class","com.github.zhongl.housemd.duck.Duck"),
@@ -47,6 +48,27 @@ object Build extends sbt.Build {
       }
     )
   )
+
+  def upload = Command.command("upload") { state =>
+    import dispatch.json.JsHttp._
+    val username = readInput("Please input credentials username: ")
+    val password = readHidden("Please input credentials password: ")
+    val http = new dispatch.Http
+    val url = dispatch.url("https://api.github.com/repos/zhongl/housemd/downloads") as_!(username, password)
+
+//    http(url ># {
+//      println
+//    } )
+
+    http.shutdown
+//    println(target.evaluate(target.sc))
+    state
+  }
+
+  private def readInput(msg:String) = SimpleReader.readLine(msg) getOrElse sys.error("Failed to grab input")
+
+  private def readHidden(msg:String) = SimpleReader.readLine(msg, Some('*')) getOrElse sys.error("Failed to grab input")
+
 
   object Dependencies {
     lazy val testLibs    = Seq(

@@ -75,7 +75,7 @@ object Build extends sbt.Build {
   private def sha1sum(file: File) = {
     val sha1 = MessageDigest.getInstance("SHA-1")
     val digest = sha1.digest(IO.readBytes(file))
-    ("" /: digest)(_ + "%02x".format(_))
+    ("" /: digest)(_ + "%02x".format(_)) + "  " + file.getName
   }
 
   private def aDownloadOf(file: File) =  {

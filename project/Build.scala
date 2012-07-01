@@ -28,6 +28,8 @@ object Build extends sbt.Build {
   import Dependencies._
   import Unmanaged._
 
+  val VERSION = "0.2.3"
+
   lazy val upload = TaskKey[Unit]("upload","upload assembly jar to github downloads")
 
   lazy val root = Project(
@@ -36,7 +38,7 @@ object Build extends sbt.Build {
     settings = Defaults.defaultSettings ++ classpathSettings ++ assemblySettings ++ Seq(
       name                := "housemd",
       organization        := "com.github.zhongl",
-      version             := "0.2.3",
+      version             := VERSION,
       scalaVersion        := "2.9.2",
       scalacOptions       ++= Seq("-unchecked", "-deprecation"),
       resolvers           += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository",
@@ -46,16 +48,14 @@ object Build extends sbt.Build {
         ("Main-Class","com.github.zhongl.housemd.house.House"),
         ("Agent-Class","com.github.zhongl.housemd.duck.Duck"),
         ("Can-Retransform-Classes","true"),
-        ("Can-Redefine-Classes","true")
+        ("Can-Redefine-Classes","true"),
+        ("Signature-Version",VERSION)
       ),
       test in assembly := {},
       parallelExecution in Test := false,
-      excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
-        cp filter {_.data.getName == "tool.jar"}
-      }
+      excludedJars in assembly <<= (fullClasspath in assembly) map { _ filter {_.data.getName == "tool.jar"} }
     )
   )
-
 
   private def uploadToGithubWith(file: File) {
     import collection.JavaConversions._

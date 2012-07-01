@@ -19,12 +19,13 @@ package com.github.zhongl.housemd.house
 import com.sun.tools.attach.VirtualMachine
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
 import jline.NoInterruptUnixTerminal
-import java.io.{FileWriter, BufferedWriter, File}
 import com.github.zhongl.housemd._
 import misc.Utils._
 import command.{Inspect, Env, Loaded, Trace}
 import duck.Telephone
 import management.ManagementFactory
+import java.io.{FileInputStream, FileWriter, BufferedWriter, File}
+import java.util.jar.{Attributes, JarInputStream}
 
 
 /**
@@ -72,9 +73,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
 
       })
 
-      info("load agent " + agentJarFile)
-      info("options:")
-      agentOptions foreach { o => info("\t" + o) }
+      info("Welcome to HouseMD " + version)
 
       vm.loadAgent(agentJarFile, agentOptions mkString (" "))
       vm.detach()
@@ -82,6 +81,16 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
       mobilephone.start()
     } catch {
       case e => error(e); silentClose(errorDetailWriter)
+    }
+  }
+
+  private def version = {
+    val stream = new JarInputStream(new FileInputStream(agentJarFile))
+    try {
+      val attributes = stream.getManifest.getMainAttributes
+      attributes.getValue(Attributes.Name.SIGNATURE_VERSION)
+    } finally {
+      silentClose(stream)
     }
   }
 

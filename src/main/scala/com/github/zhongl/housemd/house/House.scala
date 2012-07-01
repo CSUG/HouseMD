@@ -20,8 +20,8 @@ import com.sun.tools.attach.VirtualMachine
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
 import jline.NoInterruptUnixTerminal
 import com.github.zhongl.housemd._
+import command._
 import misc.Utils._
-import command.{Inspect, Env, Loaded, Trace}
 import duck.Telephone
 import management.ManagementFactory
 import java.io.{FileInputStream, FileWriter, BufferedWriter, File}
@@ -48,7 +48,15 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
 
 
   private lazy val agentJarFile = sourceOf(getClass)
-  private lazy val agentOptions = agentJarFile :: classNameOf[Telephone] :: port() :: classNameOf[Trace] :: classNameOf[Loaded] :: classNameOf[Env] :: classNameOf[Inspect] :: Nil
+  private lazy val agentOptions = agentJarFile ::
+    classNameOf[Telephone] ::
+    port() ::
+    classNameOf[Trace] ::
+    classNameOf[Loaded] ::
+    classNameOf[Env] ::
+    classNameOf[Inspect] ::
+    classNameOf[Prop] ::
+    Nil
 
   private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))

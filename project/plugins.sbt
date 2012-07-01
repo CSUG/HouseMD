@@ -7,7 +7,8 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.8.3")
 resolvers += Resolver.url("sbt-plugin-releases",
   new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns)
 
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
 libraryDependencies ++= Seq(
-  "net.databinder" %% "dispatch-http" % "0.8.8",
-  "net.databinder" %% "dispatch-http-json" % "0.8.8"
+  "org.eclipse.mylyn.github" % "org.eclipse.egit.github.core" % "1.2.1-SNAPSHOT"
 )

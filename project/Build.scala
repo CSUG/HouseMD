@@ -14,14 +14,21 @@
  *  limitations under the License.
  */
 
+import java.security.MessageDigest
+import org.eclipse.egit.github.core.{Download, RepositoryId}
 import sbt._
 import sbt.Keys._
+import java.io.File
 import sbtassembly.Plugin._
 import AssemblyKeys._
+import org.eclipse.egit.github.core.client._
+import org.eclipse.egit.github.core.service._
 
 object Build extends sbt.Build {
   import Dependencies._
   import Unmanaged._
+
+  lazy val upload = TaskKey[Unit]("upload","upload assembly jar to github downloads")
 
   lazy val root = Project(
     id       = "housemd",
@@ -34,7 +41,7 @@ object Build extends sbt.Build {
       scalacOptions       ++= Seq("-unchecked", "-deprecation"),
       resolvers           += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository",
       libraryDependencies :=  compileLibs ++ testLibs,
-      commands            += upload,
+      upload              <<= outputPath in assembly map { file => uploadToGithubWith(file)},
       packageOptions      +=  Package.ManifestAttributes(
         ("Main-Class","com.github.zhongl.housemd.house.House"),
         ("Agent-Class","com.github.zhongl.housemd.duck.Duck"),
@@ -49,20 +56,35 @@ object Build extends sbt.Build {
     )
   )
 
-  def upload = Command.command("upload") { state =>
-    import dispatch.json.JsHttp._
+
+  private def uploadToGithubWith(file: File) {
+    import collection.JavaConversions._
+
     val username = readInput("Please input credentials username: ")
     val password = readHidden("Please input credentials password: ")
-    val http = new dispatch.Http
-    val url = dispatch.url("https://api.github.com/repos/zhongl/housemd/downloads") as_!(username, password)
 
-//    http(url ># {
-//      println
-//    } )
+    val client = new GitHubClient()
+    client.setCredentials(username, password)
 
-    http.shutdown
-//    println(target.evaluate(target.sc))
-    state
+    val service = new DownloadService(client)
+    val id = new RepositoryId("zhongl", "HouseMD")
+    service.getDownloads(id) find {_.getName == file.getName} foreach {d => service.deleteDownload(id,d.getId)} // delete if existed
+    service.createDownload(id, aDownloadOf(file), file)
+  }
+
+  private def sha1sum(file: File) = {
+    val sha1 = MessageDigest.getInstance("SHA-1")
+    val digest = sha1.digest(IO.readBytes(file))
+    ("" /: digest)(_ + "%02x".format(_))
+  }
+
+  private def aDownloadOf(file: File) =  {
+    val download = new Download()
+    download.setName(file.getName)
+    download.setContentType("application/java-archive")
+    download.setSize(file.length())
+    download.setDescription(sha1sum(file))
+    download
   }
 
   private def readInput(msg:String) = SimpleReader.readLine(msg) getOrElse sys.error("Failed to grab input")

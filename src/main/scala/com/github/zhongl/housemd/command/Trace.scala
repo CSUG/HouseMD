@@ -19,12 +19,12 @@ package com.github.zhongl.housemd.command
 import instrument.Instrumentation
 import management.ManagementFactory
 import com.github.zhongl.yascli.PrintOut
-import java.io.{BufferedWriter, FileWriter, File}
 import com.github.zhongl.housemd.misc.Reflections._
 import java.util.Date
 import collection.immutable.SortedSet
 import com.github.zhongl.housemd.instrument.{Hook, Context}
 import org.objectweb.asm.Type
+import java.io.{BufferedWriter, FileWriter, File}
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -157,6 +157,14 @@ class DetailWriter(writer: BufferedWriter) {
       .mkString(" ")
     writer.write(line)
     writer.newLine()
+
+    context.resultOrException match {
+      case Some(x) if x.isInstanceOf[Throwable] => x.asInstanceOf[Throwable].getStackTrace.foreach {s =>
+        writer.write("\tat " + s)
+        writer.newLine()
+      }
+      case _                                    =>
+    }
   }
 
   def close() {

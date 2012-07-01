@@ -33,7 +33,7 @@ import com.github.zhongl.test._
 
 class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
 
-  def parseAndRun(arguments: String)(verify: (String, File, File) => Unit) {
+  def parseAndRun(arguments: String, resultOrException: AnyRef = null)(verify: (String, File, File) => Unit) {
     val out = new ByteArrayOutputStream
     val inst = mock(classOf[Instrumentation])
     doReturn(Array(classOf[A], classOf[String])).when(inst).getAllLoadedClasses
@@ -52,7 +52,7 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
     while (cond) {
       host.receiveWithin(10) {
         case TIMEOUT =>
-          invoke(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef], null)
+          invoke(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef], resultOrException)
         case "exit"  => cond = false
       }
     }
@@ -74,7 +74,7 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
     }
 
     it("should output invocation details") {
-      parseAndRun("-d -t 1 A") { (out, detail, stack) =>
+      parseAndRun("-d -t 1 -l 1 A") { (out, detail, stack) =>
         out.split("\n") should contain("INFO : You can get invocation detail from " + detail)
 
         val date = """\d{4}-\d{2}-\d{2}"""
@@ -88,6 +88,25 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
         Source.fromFile(detail).getLines() foreach {
           _ should fullyMatch regex ((date :: time :: elapse :: thread :: thisObject :: name :: arguments :: result :: Nil)
             .mkString(" "))
+        }
+      }
+    }
+
+    it("should output invocation details with exception stack trace") {
+      parseAndRun("-d -t 1 -l 1 A", new Exception) { (out, detail, stack) =>
+        val date = """\d{4}-\d{2}-\d{2}"""
+        val time = """\d{2}:\d{2}:\d{2}"""
+        val elapse = """\d+ms"""
+        val thread = """\[[^\]]+\]"""
+        val thisObject = """com\.github\.zhongl\.test\.A@[\da-f]+"""
+        val name = """com\.github\.zhongl\.test\.A\.m"""
+        val arguments = """\[\]"""
+        val result = "java\\.lang\\.Exception"
+        val log = (date :: time :: elapse :: thread :: thisObject :: name :: arguments :: result :: Nil).mkString(" ")
+        Source.fromFile(detail).getLines() foreach {
+          _ should {
+            fullyMatch regex log or fullyMatch regex ("\\tat .+")
+          }
         }
       }
     }

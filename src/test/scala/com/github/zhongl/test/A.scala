@@ -23,3 +23,4 @@ package com.github.zhongl.test
 class A {
   def m() {}
 }
+

@@ -8,7 +8,7 @@ import collection.JavaConversions._
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Prop(out: PrintOut) extends Command("prop", "display system properties", out) with Completer {
+class Prop(out: PrintOut) extends Command("prop", "display system properties.", out) with Completer {
 
   private val regexable = flag("-e" :: "--regex" :: Nil, "enable name as regex pattern.")
 

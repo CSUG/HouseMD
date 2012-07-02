@@ -76,8 +76,8 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       maxClassLoaderLength = math.max(maxClassLoaderLength, statistic.loader.length)
       maxMethodSignLength = math.max(maxMethodSignLength, statistic.methodSign.length)
 
-      statistics = statistics find {!_.filter(context)} match {
-        case Some(s) => statistics - s + (s + statistic)
+      statistics = statistics find {_.filter(context)} match {
+        case Some(s) => (statistics - s) + (s + statistic)
         case None    => statistics + statistic
       }
     }

@@ -19,7 +19,7 @@ package com.github.zhongl.housemd.command
 import instrument.Instrumentation
 import management.ManagementFactory
 import com.github.zhongl.yascli.PrintOut
-import com.github.zhongl.housemd.misc.Reflections._
+import com.github.zhongl.housemd.misc.ReflectionUtils._
 import java.util.Date
 import collection.immutable.SortedSet
 import com.github.zhongl.housemd.instrument.{Hook, Context}

@@ -56,6 +56,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
     classNameOf[Env] ::
     classNameOf[Inspect] ::
     classNameOf[Prop] ::
+    classNameOf[Resources] ::
     Nil
 
   private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()

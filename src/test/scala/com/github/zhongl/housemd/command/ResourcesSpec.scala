@@ -20,11 +20,11 @@ class ResourcesSpec extends FunSpec with ShouldMatchers{
 
       val resources = new Resources(inst, PrintOut(out))
 
-      resources parse("/com/github/zhongl/test/A.class".split("\\s+"))
+      resources parse(".*res\\.xml".split("\\s+"))
 
       resources run()
 
-      out.toString should be ("res.xml")
+      out.toString should be ("com/github/zhongl/test/res.xml\n")
     }
   }
 

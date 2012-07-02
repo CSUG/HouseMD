@@ -19,7 +19,7 @@ package com.github.zhongl.housemd.command
 import instrument.Instrumentation
 import scala.annotation.tailrec
 import com.github.zhongl.yascli.{Command, PrintOut}
-import com.github.zhongl.housemd.misc.Reflections._
+import com.github.zhongl.housemd.misc.ReflectionUtils._
 import com.github.zhongl.housemd.misc.Utils._
 
 

@@ -3,6 +3,10 @@ package com.github.zhongl.housemd.command
 import instrument.Instrumentation
 import com.github.zhongl.yascli.{Command, PrintOut}
 import collection.JavaConversions._
+import org.reflections.Reflections
+import org.reflections.util.{ClasspathHelper, ConfigurationBuilder}
+import org.reflections.scanners.ResourcesScanner
+import com.google.common.base.Predicate
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -10,20 +14,20 @@ import collection.JavaConversions._
 class Resources (inst: Instrumentation, out: PrintOut)
   extends Command("resources", "list source paths by resource name.", out) {
 
-  private val resourceName = parameter[String]("name", "resource name.")
+  private val regex = parameter[String]("regex", "resource name regex pattern.")
 
   private object Loader {
     def unapply(c: Class[_]) = if (c.getClassLoader == null) None else Some(c.getClassLoader)
   }
 
   def run() {
-    val name = resourceName()
+    val r = regex()
     val loaders = inst.getAllLoadedClasses collect {case Loader(cl) => cl }
-    loaders foreach println
-    println(name)
-    val enumerations = loaders.distinct map {_.getResources(name)}
-    val urls = for (e <- enumerations; url <- e) yield url
+    val config = new ConfigurationBuilder().setUrls(ClasspathHelper.forClassLoader(loaders: _*)).setScanners(new ResourcesScanner())
+    val reflections = new Reflections(config)
 
-    urls.distinct foreach println
+    val files = reflections.getResources(java.util.regex.Pattern.compile(r))
+
+    files foreach println
   }
 }

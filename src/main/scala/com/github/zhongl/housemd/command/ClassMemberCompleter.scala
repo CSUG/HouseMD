@@ -18,7 +18,7 @@ package com.github.zhongl.housemd.command
 
 import java.lang.reflect.{Field, Method}
 import java.util.List
-import com.github.zhongl.housemd.misc.Reflections._
+import com.github.zhongl.housemd.misc.ReflectionUtils._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>

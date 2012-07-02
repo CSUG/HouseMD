@@ -1,6 +1,6 @@
 package com.github.zhongl.housemd.command
 
-import com.github.zhongl.housemd.misc.Reflections._
+import com.github.zhongl.housemd.misc.ReflectionUtils._
 import jline.console.completer.Completer
 import instrument.Instrumentation
 

@@ -23,10 +23,10 @@ import com.github.zhongl.housemd.instrument.Advice
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class ReflectionsSpec extends FunSpec with ShouldMatchers {
-  describe("Reflection") {
+class ReflectionUtilsSpec extends FunSpec with ShouldMatchers {
+  describe("ReflectionUtils") {
     it("should define Advice") {
-      Reflections.loadOrDefine(classOf[Advice], new ClassLoader() {
+      ReflectionUtils.loadOrDefine(classOf[Advice], new ClassLoader() {
         override def loadClass(name: String) = {
           if (name == classOf[Advice].getName) throw new ClassNotFoundException()
           else super.loadClass(name)
@@ -36,17 +36,17 @@ class ReflectionsSpec extends FunSpec with ShouldMatchers {
 
     it("shoulde get object native string"){
       val o = new Object()
-      Reflections.toNativeString(o) should be (o.toString)
+      ReflectionUtils.toNativeString(o) should be (o.toString)
     }
 
     it("shoulde get or force to native string") {
       val o = new Object()
-      Reflections.getOrForceToNativeString(o) should be (o.toString)
+      ReflectionUtils.getOrForceToNativeString(o) should be (o.toString)
     }
 
     it("should force to native string") {
       val s = "hello"
-      Reflections.getOrForceToNativeString(s) should be (Reflections.toNativeString(s))
+      ReflectionUtils.getOrForceToNativeString(s) should be (ReflectionUtils.toNativeString(s))
     }
   }
 

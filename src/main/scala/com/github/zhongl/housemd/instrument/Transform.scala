@@ -21,7 +21,7 @@ import java.security.ProtectionDomain
 import java.util.concurrent.atomic.AtomicInteger
 import actors.Actor._
 
-import com.github.zhongl.housemd.misc.Reflections._
+import com.github.zhongl.housemd.misc.ReflectionUtils._
 import com.github.zhongl.yascli.Loggable
 import java.lang.System.{currentTimeMillis => now}
 import actors.TIMEOUT

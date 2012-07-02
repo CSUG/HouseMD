@@ -29,6 +29,7 @@ object Build extends sbt.Build {
   import Unmanaged._
 
   val VERSION = "0.2.3"
+  val excludeAssemblyJars = Seq("tools.jar", "dom4j-1.6.1.jar","javassist-3.12.1.GA.jar","xml-apis-1.0.b2.jar")
 
   lazy val upload = TaskKey[Unit]("upload","upload assembly jar to github downloads")
 
@@ -53,7 +54,7 @@ object Build extends sbt.Build {
       ),
       test in assembly := {},
       parallelExecution in Test := false,
-      excludedJars in assembly <<= (fullClasspath in assembly) map { _ filter {_.data.getName == "tool.jar"} }
+      excludedJars in assembly <<= (fullClasspath in assembly) map { _ filter {f => excludeAssemblyJars.contains(f.data.getName)} }
     )
   )
 
@@ -99,6 +100,10 @@ object Build extends sbt.Build {
     )
 
     lazy val compileLibs = Seq(
+      "javax.servlet"     % "servlet-api"   % "2.5",
+      "org.slf4j"         % "slf4j-api"     % "1.6.1",
+      "org.slf4j"         % "slf4j-simple"  % "1.6.1",
+      "org.reflections"   %  "reflections"  % "0.9.8",
       "asm"               %  "asm"          % "3.3.1",
       "asm"               %  "asm-commons"  % "3.3.1",
       "com.github.zhongl" %% "yascli"       % "0.1.0",

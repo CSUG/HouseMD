@@ -24,7 +24,7 @@ import java.lang.reflect.{Method, Modifier}
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 
-object Reflections {
+object ReflectionUtils {
 
   private val S = classOf[String]
 

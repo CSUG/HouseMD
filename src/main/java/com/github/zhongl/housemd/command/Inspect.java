@@ -28,7 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.github.zhongl.housemd.misc.Reflections.simpleNameOf;
+import static com.github.zhongl.housemd.misc.ReflectionUtils.*;
 import static com.github.zhongl.yascli.JavaConvertions.manifest;
 import static com.github.zhongl.yascli.JavaConvertions.none;
 

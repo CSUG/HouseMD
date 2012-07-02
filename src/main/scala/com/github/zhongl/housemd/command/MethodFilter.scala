@@ -17,7 +17,7 @@
 package com.github.zhongl.housemd.command
 
 import java.lang.reflect.Type
-import com.github.zhongl.housemd.misc.Reflections._
+import com.github.zhongl.housemd.misc.ReflectionUtils._
 
 
 /**

@@ -36,17 +36,20 @@ class Loaded(val inst: Instrumentation, out: PrintOut)
     val k = classSimpleName()
     val matched = inst.getAllLoadedClasses filter {simpleNameOf(_) == k}
     if (matched.isEmpty) println("No matched class")
-    else matched foreach { c => println(c.getName + originOf(c)); if (hierarchyable()) layout(c.getClassLoader) }
+    else matched foreach { c =>
+      println(c.getName + originOf(c))
+      if (hierarchyable()) layout(Option(c.getClassLoader))
+    }
   }
 
   @tailrec
-  private def layout(cl: ClassLoader, lastIndents: String = "- ") {
+  private def layout(cl: Option[ClassLoader], lastIndents: String = "- ") {
     cl match {
-      case null => Unit
-      case _    =>
+      case Some(loader) =>
         val indents = tab + lastIndents
         println(indents + getOrForceToNativeString(cl))
-        layout(cl.getParent, indents)
+        layout(Option(loader.getParent), indents)
+      case None         =>
     }
   }
 

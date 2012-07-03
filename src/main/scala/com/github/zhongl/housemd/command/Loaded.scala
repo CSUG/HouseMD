@@ -37,7 +37,7 @@ class Loaded(val inst: Instrumentation, out: PrintOut)
     val matched = inst.getAllLoadedClasses filter {simpleNameOf(_) == k}
     if (matched.isEmpty) println("No matched class")
     else matched foreach { c =>
-      println(c.getName + originOf(c))
+      println(c.getName + " -> " + sourceOf(Manifest.classType(c)))
       if (hierarchyable()) layout(Option(c.getClassLoader))
     }
   }
@@ -47,13 +47,11 @@ class Loaded(val inst: Instrumentation, out: PrintOut)
     cl match {
       case Some(loader) =>
         val indents = tab + lastIndents
-        println(indents + getOrForceToNativeString(cl))
+        println(indents + getOrForceToNativeString(loader))
         layout(Option(loader.getParent), indents)
       case None         =>
     }
   }
-
-  private def originOf(c: Class[_]): String = " -> " + sourceOf(c)
 
 }
 

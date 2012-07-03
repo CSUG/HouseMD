@@ -17,8 +17,8 @@
 package com.github.zhongl.housemd.misc
 
 import java.io.{ByteArrayOutputStream, InputStream}
-import java.util.concurrent.TimeUnit._
 import scala.Array
+import java.net.URL
 
 
 /**
@@ -27,6 +27,15 @@ import scala.Array
 
 object Utils {
   lazy val FileRE = """(file:)?([^!]+)!?.*""".r
+
+  private val noPath = "null"
+
+  private[misc] object File {
+    def unapply(url:URL) = url.getFile match {
+      case FileRE(_, source) => Some(source)
+      case _ => None
+    }
+  }
 
   def toBytes(stream: InputStream): Array[Byte] = {
     val bytes = new ByteArrayOutputStream
@@ -38,29 +47,16 @@ object Utils {
     bytes.toByteArray
   }
 
-  def sourceOf(klass: Class[_]): String = {
-    try {
-      val file = klass.getResource("/" + klass.getName.replace('.', '/') + ".class").getFile
-      extractSource(file)
-    } catch {
-      case _ => "null"
-    }
+  def locationOf[T:Manifest] = Option(manifest[T].erasure.getProtectionDomain.getCodeSource) match {
+    case Some(codeSource) => Option(codeSource.getLocation)
+    case None             => Option(manifest[T].erasure.getResource(resourceNameOf[T]))
   }
 
-  def extractSource(file: String) = {
-    val FileRE(_, source) = file
-    source
-  }
+  def resourceNameOf[T:Manifest] = "/" + manifest[T].erasure.getName.replace('.', '/') + ".class"
 
-  def convertToTimestamp(millis: Long) = {
-    var r = millis
-    val hours = MILLISECONDS.toHours(r)
-    r -= HOURS.toMillis(hours)
-    val minutes = MILLISECONDS.toMinutes(r)
-    r -= MINUTES.toMillis(minutes)
-    val seconds = MILLISECONDS.toSeconds(r)
-
-    Array(hours, minutes, seconds)
+  def sourceOf[T:Manifest] = locationOf[T] match {
+    case Some(File(path)) => path
+    case None => noPath
   }
 
   def classNameOf[T: Manifest] = manifest[T].erasure.getName

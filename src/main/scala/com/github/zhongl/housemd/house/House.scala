@@ -47,7 +47,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
   private val pid  = parameter[String]("pid", "id of process to be diagnosing.")
 
 
-  private lazy val agentJarFile = sourceOf(getClass)
+  private lazy val agentJarFile = sourceOf(Manifest.classType(getClass))
   private lazy val agentOptions = agentJarFile ::
     classNameOf[Telephone] ::
     port() ::

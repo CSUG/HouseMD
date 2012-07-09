@@ -37,11 +37,14 @@ public class Duck {
             protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
                 Class<?> loadedClass = findLoadedClass(name);
                 if (loadedClass != null) return loadedClass;
-                if (name.startsWith("java") || name.startsWith("sun") || name.startsWith("com.sun"))
+
+                try {
+                    Class<?> aClass = findClass(name);
+                    if (resolve) resolveClass(aClass);
+                    return aClass;
+                } catch (Exception e) {
                     return super.loadClass(name, resolve);
-                Class<?> aClass = findClass(name);
-                if (resolve) resolveClass(aClass);
-                return aClass;
+                }
             }
         };
 

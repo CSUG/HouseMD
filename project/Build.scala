@@ -38,6 +38,7 @@ object Build extends sbt.Build {
       "-keepclasseswithmembers public class * { public static void main(java.lang.String[]); }",
       "-keep class * implements org.xml.sax.EntityResolver",
       "-keep class com.github.zhongl.housemd.** { *;} ",
+      "-keep class com.github.zhongl.yascli.** { *;} ",
       "-keepclassmembers class * { ** MODULE$;}",
       """-keepclassmembernames class scala.concurrent.forkjoin.ForkJoinPool {
           long eventCount;

@@ -19,6 +19,7 @@ package com.github.zhongl.housemd.misc
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 import com.github.zhongl.housemd.instrument.Advice
+import com.github.zhongl.test.A
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -34,19 +35,27 @@ class ReflectionUtilsSpec extends FunSpec with ShouldMatchers {
       })
     }
 
-    it("shoulde get object native string"){
+    it("shoulde get object native string") {
       val o = new Object()
-      ReflectionUtils.toNativeString(o) should be (o.toString)
+      ReflectionUtils.toNativeString(o) should be(o.toString)
     }
 
     it("shoulde get or force to native string") {
       val o = new Object()
-      ReflectionUtils.getOrForceToNativeString(o) should be (o.toString)
+      ReflectionUtils.getOrForceToNativeString(o) should be(o.toString)
     }
 
     it("should force to native string") {
       val s = "hello"
-      ReflectionUtils.getOrForceToNativeString(s) should be (ReflectionUtils.toNativeString(s))
+      ReflectionUtils.getOrForceToNativeString(s) should be(ReflectionUtils.toNativeString(s))
+    }
+
+    it("should include <init> if it is a class") {
+      ReflectionUtils.constructorAndMethodNamesOf(classOf[A]) should contain ("<init>")
+    }
+
+    it("should not include <init> if it is a interface") {
+      ReflectionUtils.constructorAndMethodNamesOf(classOf[Runnable]) should not contain ("<init>")
     }
   }
 

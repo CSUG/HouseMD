@@ -45,6 +45,7 @@ class MethodFilterCompleterSpec extends FunSpec with ShouldMatchers {
       val candidates = new java.util.ArrayList[CharSequence]()
       c.complete("CCC.m", 5, candidates) should be(4)
       candidates should {
+        contain("<init>".asInstanceOf[CharSequence])
         contain("m1".asInstanceOf[CharSequence])
         contain("m22".asInstanceOf[CharSequence])
       }

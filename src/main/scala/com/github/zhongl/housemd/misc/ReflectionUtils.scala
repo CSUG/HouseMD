@@ -66,7 +66,7 @@ object ReflectionUtils {
     case `t` => T
     case `b` => B
     case `c` => C
-    case _ => k
+    case _   => k
   }
 
   def toNativeString(instance: AnyRef) =
@@ -101,5 +101,10 @@ object ReflectionUtils {
   def isAbstract(m: Method) = Modifier.isAbstract(m.getModifiers)
 
   def isFromBootClassLoader(c: Class[_]) = c.getClassLoader == null
+
+  def constructorAndMethodNamesOf(c: Class[_]): Array[String] = {
+    val names = c.getDeclaredMethods.map(_.getName)
+    if (!c.isInterface) names :+ "<init>" else names
+  }
 
 }

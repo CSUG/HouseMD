@@ -113,8 +113,11 @@ class Trace(val inst: Instrumentation, out: PrintOut)
 
     private val NaN = "-"
 
-    private lazy val thisObjectString =
-      if (context.thisObject == null) "[Static Method]" else getOrForceToNativeString(context.thisObject)
+    private lazy val thisObjectString = context match {
+      case c if c.thisObject == null => "[Static Method]"
+      case c if isInit(c.methodName) => "[Initialize Method]"
+      case _                         => getOrForceToNativeString(context.thisObject)
+    }
 
     private lazy val avgElapseMillis =
       if (totalTimes == 0) NaN else if (totalElapseMills < totalTimes) "<1" else totalElapseMills / totalTimes
@@ -126,7 +129,7 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       this.context.methodName == context.methodName &&
       this.context.arguments.size == context.arguments.size &&
       this.context.descriptor == context.descriptor &&
-      this.context.thisObject == context.thisObject
+      (isInit(context.methodName) || this.context.thisObject == context.thisObject)
 
     def reps(maxMethodSignLength: Int, maxClassLoaderLength: Int) =
       "%1$-" + maxMethodSignLength + "s    %2$-" + maxClassLoaderLength + "s    %3$#9s    %4$#9sms    %5$s" format(
@@ -135,6 +138,8 @@ class Trace(val inst: Instrumentation, out: PrintOut)
         totalTimes,
         avgElapseMillis,
         thisObjectString)
+
+    private def isInit(method: String) = method == "<init>"
 
   }
 
@@ -159,7 +164,7 @@ class DetailWriter(writer: BufferedWriter) {
     writer.newLine()
 
     context.resultOrException match {
-      case Some(x) if x.isInstanceOf[Throwable] => x.asInstanceOf[Throwable].getStackTrace.foreach {s =>
+      case Some(x) if x.isInstanceOf[Throwable] => x.asInstanceOf[Throwable].getStackTrace.foreach { s =>
         writer.write("\tat " + s)
         writer.newLine()
       }

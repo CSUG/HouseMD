@@ -14,24 +14,8 @@
  *  limitations under the License.
  */
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.lang.*;
-import java.lang.Class;
-import java.lang.ClassLoader;
-import java.lang.ClassNotFoundException;
-import java.lang.Exception;
-import java.lang.IllegalAccessException;
-import java.lang.InstantiationException;
-import java.lang.Integer;
-import java.lang.NoSuchMethodException;
-import java.lang.Object;
-import java.lang.Override;
-import java.lang.String;
-import java.lang.System;
-import java.lang.Thread;
-import java.lang.reflect.InvocationTargetException;
 
 public class TraceTarget {
 
@@ -40,7 +24,8 @@ public class TraceTarget {
 
         while (true) {
             addOne(0);
-            o.getClass().getMethod("m", String.class).invoke(o, (String)null);
+            o.getClass().getMethod("m", String.class).invoke(o, (String) null);
+            new E(1);
             try {
                 Thread.sleep(500L);
             } catch (Exception e) {
@@ -79,7 +64,7 @@ public class TraceTarget {
         }
 
         @Override
-        public String toString(){
+        public String toString() {
             return "CL";
         }
     }
@@ -108,7 +93,7 @@ public class TraceTarget {
 
     public final static class B extends D implements C {
         private String s;
-        private int i;
+        private int    i;
 
         public void mC(String s) {
             this.s = s;
@@ -128,5 +113,9 @@ public class TraceTarget {
         }
 
         public abstract void mD2(int i, int j);
+    }
+
+    public static class E {
+        public E(int i) {}
     }
 }

@@ -16,7 +16,7 @@
 
 package com.github.zhongl.housemd.command
 
-import java.lang.reflect.{Field, Method}
+import java.lang.reflect.Field
 import java.util.List
 import com.github.zhongl.housemd.misc.ReflectionUtils._
 
@@ -47,23 +47,19 @@ trait ClassMemberCompleter extends ClassSimpleNameCompleter {
 
 trait MethodFilterCompleter extends ClassMemberCompleter {
 
-  object MethodName {
-    def unapply(m: Method) = Some(m.getName)
-  }
-
-  private def allDeclaredMethodsOf(classSimpleName: String)(collect: Array[Method] => Array[String]) =
+  private def allDeclaredMethodsOf(classSimpleName: String)(collect: Array[String] => Array[String]) =
     inst.getAllLoadedClasses collect {
-      case c@ClassSimpleName(n) if (n == classSimpleName || n + "+" == classSimpleName) => collect(c.getDeclaredMethods)
+      case c@ClassSimpleName(n) if (n == classSimpleName || n + "+" == classSimpleName) => collect(constructorAndMethodNamesOf(c))
     }
 
   override protected def completeAll(classSimpleName: String, cursor: Int, candidates: List[CharSequence]) =
-    allDeclaredMethodsOf(classSimpleName) {_ map {_.getName}} match {
+    allDeclaredMethodsOf(classSimpleName) {a => a} match {
       case Array() => -1
       case all     => all.flatten.sorted foreach {candidates.add}; cursor
     }
 
   override protected def complete(simpleName: String, prefix: String, cursor: Int, candidates: List[CharSequence]) =
-    allDeclaredMethodsOf(simpleName) {_ collect {case MethodName(m) if m.startsWith(prefix) => m }} match {
+    allDeclaredMethodsOf(simpleName) {_ collect {case m if m.startsWith(prefix) => m }} match {
       case Array() => -1
       case all     => all.flatten.sorted foreach {candidates.add}; cursor - prefix.length
     }

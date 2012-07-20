@@ -16,8 +16,8 @@
 
 package com.github.zhongl.housemd.command
 
-import java.lang.reflect.Type
 import com.github.zhongl.housemd.misc.ReflectionUtils._
+import java.lang.reflect.Type
 
 
 /**
@@ -32,7 +32,7 @@ class MethodFilter(classSimpleName: String, methodName: String = "*") {
     if (!filterOnly(c)) false
     else {
       val filter = lazyFilter(true)(_)
-      c.getDeclaredMethods.find { m => filter(m.getName) }.isDefined
+      constructorAndMethodNamesOf(c).find { m => filter(m) }.isDefined
     }
   }
 
@@ -44,8 +44,8 @@ class MethodFilter(classSimpleName: String, methodName: String = "*") {
     if (classSimpleName.endsWith("+")) {
       val realname = classSimpleName.dropRight(1)
       (simpleNameOf(className) == realname ||
-       superClassName != null && simpleNameOf(superClassName) == realname) ||
-      interfaceNames.find(simpleNameOf(_) == realname).isDefined
+        superClassName != null && simpleNameOf(superClassName) == realname) ||
+        interfaceNames.find(simpleNameOf(_) == realname).isDefined
     } else {
       simpleNameOf(className) == classSimpleName
     }

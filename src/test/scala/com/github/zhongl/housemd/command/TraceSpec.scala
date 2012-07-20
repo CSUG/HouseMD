@@ -52,7 +52,9 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
     while (cond) {
       host.receiveWithin(10) {
         case TIMEOUT =>
-          invoke(classOf[A].getName, "m", "()V", new A, Array.empty[AnyRef], resultOrException)
+          val a = new A
+          invoke(classOf[A].getName, "<init>", "()V", a, Array.empty[AnyRef], resultOrException)
+          invoke(classOf[A].getName, "m", "()V", a, Array.empty[AnyRef], resultOrException)
         case "exit"  => cond = false
       }
     }
@@ -63,8 +65,8 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
   describe("Trace") {
     it("should display statistics") {
       parseAndRun("-t 3 A.m") { (out, detail, stack) =>
-        val methodFullName = """[\.\w\(\),\$ ]+"""
-        val objectToString = """[\.\w,@\$ ]+"""
+        val methodFullName = """[\.\w\(\),\$ <>]+"""
+        val objectToString = """[\.\w,@\$ \[\]]+"""
         val number = """\d+\s+"""
         val elapse = """<?\d+ms"""
         out.split("\n").filter(s => !s.startsWith("INFO") && !s.isEmpty).tail foreach {
@@ -82,7 +84,7 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
         val elapse = """\d+ms"""
         val thread = """\[[^\]]+\]"""
         val thisObject = """com\.github\.zhongl\.test\.A@[\da-f]+"""
-        val name = """com\.github\.zhongl\.test\.A\.m"""
+        val name = """com\.github\.zhongl\.test\.A\.(m|<init>)"""
         val arguments = """\[\]"""
         val result = "void"
         Source.fromFile(detail).getLines() foreach {
@@ -99,7 +101,7 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
         val elapse = """\d+ms"""
         val thread = """\[[^\]]+\]"""
         val thisObject = """com\.github\.zhongl\.test\.A@[\da-f]+"""
-        val name = """com\.github\.zhongl\.test\.A\.m"""
+        val name = """com\.github\.zhongl\.test\.A\.(m|<init>)"""
         val arguments = """\[\]"""
         val result = "java\\.lang\\.Exception"
         val log = (date :: time :: elapse :: thread :: thisObject :: name :: arguments :: result :: Nil).mkString(" ")

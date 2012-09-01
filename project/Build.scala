@@ -28,7 +28,7 @@ object Build extends sbt.Build {
   import Dependencies._
   import Unmanaged._
 
-  val VERSION             = "0.2.3"
+  val VERSION             = "0.2.4"
   val javaHome            = sys.props("java.home").replace("/jre", "")
 
   lazy val upload = TaskKey[Unit]("upload", "upload assembly jar to github downloads")

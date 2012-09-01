@@ -26,7 +26,7 @@ import management.ManagementFactory
 import java.io.File
 
 /**
- * Telephone is used by Duck to communicate with House$.
+ * Telephone is used by Duck to communicate with HouseMD.
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
@@ -35,8 +35,7 @@ class Telephone(inst: Instrumentation, port: Int, classes: Array[Class[Command]]
   def run() {
     val socket = new Socket("localhost", port)
     val reader = new ConsoleReader(socket.getInputStream, socket.getOutputStream)
-    val name = ManagementFactory.getRuntimeMXBean.getName
-    val history = new FileHistory(new File("/tmp/housemd/" + name + "/.history"))
+    val history = new FileHistory(new File("/tmp/housemd/.history"))
     reader.setHistory(history)
 
     try {

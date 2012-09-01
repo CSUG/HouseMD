@@ -16,6 +16,8 @@
 
 package com.github.zhongl.housemd.instrument
 
+import java.util
+
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -40,7 +42,7 @@ object Context {
 
   implicit val map2Context = apply(_: Map[String, AnyRef])
 
-  def apply(map: Map[String, AnyRef]) = new Context(
+  def apply(map: util.Map[String, AnyRef]) = new Context(
     map.get(Advice.CLASS).asInstanceOf[String],
     map.get(Advice.METHOD).asInstanceOf[String],
     map.get(Advice.CLASS_LOADER).asInstanceOf[ClassLoader],

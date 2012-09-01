@@ -181,9 +181,8 @@ class StackWriter(writer: BufferedWriter) {
   def write(context: Context) {
     // TODO Avoid duplicated stack
 
-    val arguments = context.arguments.map(o => simpleNameOf(o.getClass)).mkString("(", " ", ")")
     val head = "%1$s.%2$s%3$s call by thread [%4$s]"
-      .format(context.className, context.methodName, arguments, context.thread.getName)
+      .format(context.className, context.methodName, context.descriptor, context.thread.getName)
 
     writer.write(head)
     writer.newLine()

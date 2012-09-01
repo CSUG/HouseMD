@@ -118,7 +118,7 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
         out.split("\n") should contain("INFO : You can get invocation stack from " + stack)
 
         val lines = Source.fromFile(stack).getLines().toList.dropRight(1)
-        val head = """com\.github\.zhongl\.test\.A\.m\(\) call by thread \[[\w-]+\]""".r
+        val head = """com\.github\.zhongl\.test\.A\.m\(\)V call by thread \[[\w-]+\]""".r
         val st = """\t\S+\(\S+:\d+\)""".r
         lines.tail foreach {
           _ match {

@@ -24,6 +24,7 @@ import jline.TerminalFactory
 import jline.console.history.FileHistory
 import management.ManagementFactory
 import java.io.File
+import com.github.zhongl.housemd.command.Last
 
 /**
  * Telephone is used by Duck to communicate with HouseMD.
@@ -31,6 +32,7 @@ import java.io.File
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 class Telephone(inst: Instrumentation, port: Int, classes: Array[Class[Command]]) extends Runnable {
+
 
   def run() {
     val socket = new Socket("localhost", port)
@@ -40,13 +42,13 @@ class Telephone(inst: Instrumentation, port: Int, classes: Array[Class[Command]]
 
     try {
       new Shell(name = "housemd", description = "a runtime diagnosis tool of jvm.", reader = reader) {
-        override protected def commands = Quit :: helpCommand :: classes.map {toCommand(_, PrintOut(reader))}.toList
+        private val lastCommand = new Last(out)
+
+        override protected def commands = Quit :: helpCommand :: lastCommand :: classes.map {toCommand(_, PrintOut(reader))}.toList
 
         override def error(a: Any) {
           super.error(a)
-          if (a.isInstanceOf[Throwable]) {
-            a.asInstanceOf[Throwable].getStackTrace foreach { s => println("\t" + s) }
-          }
+          if (a.isInstanceOf[Throwable]) lastCommand.keep(a.asInstanceOf[Throwable])
         }
 
       } main (Array.empty[String])

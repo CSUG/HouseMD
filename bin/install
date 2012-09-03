@@ -2,7 +2,7 @@
 
 CHECKSUM="checksum"
 
-curl -Lk https://api.github.com/repos/zhongl/HouseMD/downloads | grep -E "[0-9a-f]+\s+[^ \"]+" -o > $CHECKSUM
+curl -Lk https://api.github.com/repos/zhongl/HouseMD/downloads | grep -E "[0-9a-f]+\s+[^ \"]+" -o | head -1 > $CHECKSUM
 
 JAR_NAME=`cat $CHECKSUM | grep -E housemd.+ -o`
 

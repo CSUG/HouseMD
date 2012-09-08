@@ -12,7 +12,7 @@ if not exist logs (mkdir logs)
 
 set TOOL_JAR=%JAVA_HOME%\lib\tools.jar
 if exist %TOOL_JAR% (set BOOT_CLASSPATH=-Xbootclasspath/a:%TOOL_JAR%)
-%JAVA_HOME%\bin\java %BOOT_CLASSPATH% -jar %~dp0housemd.jar %*
+%JAVA_HOME%\bin\java -Djline.terminal=jline.UnsupportedTerminal %BOOT_CLASSPATH% -jar %~dp0housemd.jar %*
 
 :end
 rem do nothing.

@@ -38,25 +38,28 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 ## Pre-requirement
 
 - JDK 6 +
+- [sbt](https://github.com/harrah/xsbt)
 
-## One-command install (On Linux or MacOSX)
+## Build from code
 
-    > curl -Lk https://raw.github.com/zhongl/HouseMD/master/bin/install | bash
+    $ git clone https://github.com/zhongl/HouseMD.git housemd
+    $ cd housemd
+    $ sbt proguard
 
-- Windows are not supported yet.
+A runnable jar named `housemd_x.x.x-x.x.x.min.jar` should be generated blow `target/scala-x.x.x/`
 
-## Normal install
+> Caution: Windows are not supported yet.
 
-- Click [here](https://github.com/zhongl/HouseMD/downloads) download lastest version executable jar
-- Run it as:
+## Run it
 
-    > java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd-assembly-x.x.x.jar
+    $ java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd_x.x.x-x.x.x.min.jar [OPTIONS] <pid>
 
 > Caution: In Mac OSX, the `-Xbootclasspath` is no needed.
+> You can created launch script as a shortcut.
 
 # How to use
 
-First all, type:
+First all, suppose you created launch script file named `housemd`, type:
 
     > ./housemd -h
 

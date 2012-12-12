@@ -82,31 +82,33 @@ It's inspiration came from <a href="http://kenai.com/projects/btrace">BTrace</a>
 
 <ul>
 <li>JDK 6 +</li>
-</ul><h2>One-command install (On Linux or MacOSX)</h2>
+<li><a href="https://github.com/harrah/xsbt">sbt</a></li>
+</ul><h2>Build from code</h2>
 
-<pre><code>&gt; curl -Lk https://raw.github.com/zhongl/HouseMD/master/bin/install | bash
+<pre><code>$ git clone https://github.com/zhongl/HouseMD.git housemd
+$ cd housemd
+$ sbt proguard
 </code></pre>
 
-<ul>
-<li>Windows are not supported yet.</li>
-</ul><h2>Normal install</h2>
-
-<ul>
-<li>Click <a href="https://github.com/zhongl/HouseMD/downloads">here</a> download lastest version executable jar</li>
-<li>
-<p>Run it as:</p>
+<p>A runnable jar named <code>housemd_x.x.x-x.x.x.min.jar</code> should be generated blow <code>target/scala-x.x.x/</code></p>
 
 <blockquote>
-<p>java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd-assembly-x.x.x.jar</p>
+<p>Caution: Windows are not supported yet.</p>
 </blockquote>
-</li>
-</ul><blockquote>
-<p>Caution: In Mac OSX, the <code>-Xbootclasspath</code> is no needed.</p>
+
+<h2>Run it</h2>
+
+<pre><code>$ java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd_x.x.x-x.x.x.min.jar [OPTIONS] &lt;pid&gt;
+</code></pre>
+
+<blockquote>
+<p>Caution: In Mac OSX, the <code>-Xbootclasspath</code> is no needed.
+You can created launch script as a shortcut.</p>
 </blockquote>
 
 <h1>How to use</h1>
 
-<p>First all, type:</p>
+<p>First all, suppose you created launch script file named <code>housemd</code>, type:</p>
 
 <pre><code>&gt; ./housemd -h
 </code></pre>

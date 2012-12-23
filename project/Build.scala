@@ -23,7 +23,7 @@ object Build extends sbt.Build {
   import Dependencies._
   import Unmanaged._
 
-  val VERSION  = "0.2.6"
+  val VERSION  = "0.3.0"
   val javaHome = sys.props("java.home").replace("/jre", "")
 
   lazy val proguard = proguardSettings ++ Seq(
@@ -76,7 +76,7 @@ object Build extends sbt.Build {
       name := "housemd",
       organization := "com.github.zhongl",
       version := VERSION,
-      scalaVersion := "2.9.2",
+      scalaVersion := "2.10.0-RC5",
       scalacOptions ++= Seq("-unchecked", "-deprecation"),
       resolvers += "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository",
       libraryDependencies := compileLibs ++ testLibs,
@@ -94,14 +94,15 @@ object Build extends sbt.Build {
   object Dependencies {
     lazy val testLibs = Seq(
       "org.mockito" % "mockito-all" % "1.9.0" % "test",
-      "org.scalatest" %% "scalatest" % "1.7.2" % "test"
+      "org.scalatest" % "scalatest_2.10.0-RC5" % "1.8-B1" % "test"
     )
 
     lazy val compileLibs = Seq(
-      "asm" % "asm" % "3.3.1",
-      "asm" % "asm-commons" % "3.3.1",
-      "com.github.zhongl" %% "yascli" % "0.1.0",
-      "org.scala-lang" % "scala-library" % "2.9.2"
+      "org.ow2.asm" % "asm" % "4.0",
+      "org.ow2.asm" % "asm-commons" % "4.0",
+      "com.github.zhongl" % "yascli_2.10" % "0.2.0",
+      "com.typesafe.akka" %% "akka-actor" % "2.1.0-RC5" cross CrossVersion.full,
+      "org.scala-lang" % "scala-library" % "2.10.0-RC5"
     )
   }
 

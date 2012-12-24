@@ -174,7 +174,7 @@ class DetailWriter(writer: BufferedWriter) {
   }
 
   def close() {
-    try {writer.close()} catch {case _ => }
+    try {writer.close()} catch {case _: Throwable => }
   }
 }
 
@@ -192,6 +192,6 @@ class StackWriter(writer: BufferedWriter) {
   }
 
   def close() {
-    try {writer.close()} catch {case _ => }
+    try {writer.close()} catch {case _: Throwable => }
   }
 }

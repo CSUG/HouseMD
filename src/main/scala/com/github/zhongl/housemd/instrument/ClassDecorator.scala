@@ -31,7 +31,7 @@ object ClassDecorator {
   }
 
   def classAdapter(cw: ClassWriter, className: String, filter: (String => Boolean)) =
-    new ClassAdapter(cw) {
+    new ClassVisitor(ASM4, cw) {
 
       override def visitMethod(acc: Int, name: String, desc: String, sign: String, exces: Array[String]) = {
         val mv = super.visitMethod(acc, name, desc, sign, exces)
@@ -41,7 +41,7 @@ object ClassDecorator {
       private def isNotAbstract(acc: Int) = (Opcodes.ACC_ABSTRACT & acc) == 0
 
       private[this] def methodAdapter(mv: MethodVisitor, access: Int, methodName: String, desc: String) =
-        new AdviceAdapter(mv, access, methodName, desc) {
+        new AdviceAdapter(ASM4, mv, access, methodName, desc) {
           val advice = Type.getType(classOf[Advice])
           val enter  = Method.getMethod(Advice.ON_METHOD_BEGIN)
           val exit   = Method.getMethod(Advice.ON_METHOD_END)

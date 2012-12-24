@@ -53,15 +53,14 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
 
   private lazy val agentJarFile = sourceOf(Manifest.classType(getClass))
   private lazy val agentOptions = agentJarFile ::
-                                  classNameOf[Telephone] ::
-                                  port() ::
-                                  classNameOf[Trace] ::
-                                  classNameOf[Loaded] ::
-                                  classNameOf[Env] ::
-                                  classNameOf[Inspect] ::
-                                  classNameOf[Prop] ::
-                                  classNameOf[Resources] ::
-                                  Nil
+    classNameOf[Telephone] ::
+    port() ::
+    classNameOf[Trace] ::
+    classNameOf[Loaded] ::
+    classNameOf[Env] ::
+    classNameOf[Prop] ::
+    classNameOf[Resources] ::
+    Nil
 
   private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))
@@ -96,7 +95,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
       vm.loadAgent(agentJarFile, agentOptions mkString " ")
       vm.detach()
 
-      mobilephone.start()
+      //      mobilephone.start()
     } catch {
       case e: Throwable => error(e); silentClose(errorDetailWriter)
     }

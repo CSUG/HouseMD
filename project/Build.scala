@@ -77,6 +77,7 @@ object Build extends sbt.Build {
       organization := "com.github.zhongl",
       version := VERSION,
       scalaVersion := "2.10.0-RC5",
+      javacOptions ++= Seq("-source", "6", "-target", "6"),
       scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:_"),
       resolvers += "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository",
       libraryDependencies := compileLibs ++ testLibs,

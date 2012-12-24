@@ -18,17 +18,14 @@ package com.github.zhongl.housemd.command;
 
 import com.github.zhongl.yascli.Command;
 import com.github.zhongl.yascli.PrintOut;
+import java.util.*;
 import jline.console.completer.Completer;
 import scala.Function0;
-
-import java.util.*;
 
 import static com.github.zhongl.yascli.JavaConvertions.*;
 
 
-/**
- * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
- */
+/** @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a> */
 public class Env extends Command implements Completer {
 
     private final Function0 regexable = flag(list("-e", "--regex"), "enable name as regex pattern.");

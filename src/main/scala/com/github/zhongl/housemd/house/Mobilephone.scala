@@ -20,11 +20,8 @@ import java.net.InetSocketAddress
 import java.io.{IOException, OutputStream, InputStream}
 import java.nio.channels._
 import annotation.tailrec
-import collection.JavaConversions._
-import actors.Actor._
 import com.github.zhongl.housemd.misc.Utils._
 import java.nio.ByteBuffer
-import actors.{Actor, OutputChannel, TIMEOUT}
 
 
 /**
@@ -32,7 +29,7 @@ import actors.{Actor, OutputChannel, TIMEOUT}
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Mobilephone(port: Int, handle: PartialFunction[Signal, Any]) extends Actor {
+class Mobilephone(port: Int, handle: PartialFunction[Signal, Any]) {
 
   private val server   = ServerSocketChannel.open()
   private val selector = Selector.open()
@@ -42,42 +39,42 @@ class Mobilephone(port: Int, handle: PartialFunction[Signal, Any]) extends Actor
   server.register(selector, SelectionKey.OP_ACCEPT)
 
   def act() {
-    val a = self
-    val hook = sys.addShutdownHook { a !? PowerOff }
-    var killer = Option.empty[OutputChannel[Any]]
-
-    def select() {
-      val selected = selector.select(500L)
-      if (selected > 0) {
-        selector.selectedKeys() foreach {
-          case k if k.isAcceptable => accept(k, selector)
-          case k if k.isReadable   => read(k)
-          case k if k.isWritable   => if (killer.isEmpty) write(k) else sendExit(k)
-          case ignore              =>
-        }
-        selector.selectedKeys().clear()
-      }
-    }
-
-    def endCall() {
-      if (killer.isEmpty) hook.remove()
-      self ! EndCall
-    }
-
-    loop {
-      reactWithin(1L) {
-        case PowerOff => killer = Some(sender)
-        case EndCall  =>
-          handle(HangUp)
-          killer foreach { o => o !() } // reply to killer for termination
-          exit()
-        case TIMEOUT  =>
-          try {select()} catch {
-            case Closed => endCall()
-            case t      => handle(BreakOff(t)); hook.remove(); endCall()
-          }
-      }
-    }
+    //    val a = self
+    //    val hook = sys.addShutdownHook {a !? PowerOff}
+    //    var killer = Option.empty[OutputChannel[Any]]
+    //
+    //    def select() {
+    //      val selected = selector.select(500L)
+    //      if (selected > 0) {
+    //        selector.selectedKeys() foreach {
+    //          case k if k.isAcceptable => accept(k, selector)
+    //          case k if k.isReadable   => read(k)
+    //          case k if k.isWritable   => if (killer.isEmpty) write(k) else sendExit(k)
+    //          case ignore              =>
+    //        }
+    //        selector.selectedKeys().clear()
+    //      }
+    //    }
+    //
+    //    def endCall() {
+    //      if (killer.isEmpty) hook.remove()
+    //      self ! EndCall
+    //    }
+    //
+    //    loop {
+    //      reactWithin(1L) {
+    //        case PowerOff => killer = Some(sender)
+    //        case EndCall  =>
+    //          handle(HangUp)
+    //          killer foreach { o => o !() } // reply to killer for termination
+    //          exit()
+    //        case TIMEOUT  =>
+    //          try {select()} catch {
+    //            case Closed => endCall()
+    //            case t      => handle(BreakOff(t)); hook.remove(); endCall()
+    //          }
+    //      }
+    //    }
   }
 
   private def sendExit(key: SelectionKey) {

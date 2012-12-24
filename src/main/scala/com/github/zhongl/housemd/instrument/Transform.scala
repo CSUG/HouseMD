@@ -24,8 +24,6 @@ import com.github.zhongl.housemd.misc.ReflectionUtils._
 import com.github.zhongl.yascli.Loggable
 import java.lang.System.{currentTimeMillis => now}
 import java.util
-import scala.actors.Actor._
-import scala.actors._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -37,25 +35,9 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
     implicit val t = timeout
     implicit val l = log
     implicit val h = hook
+    implicit val f = filter
 
-    val candidates = inst.getAllLoadedClasses filter {
-      c =>
-
-        @inline
-        def skipClass(description: String)(cause: Class[_] => Boolean) =
-          if (cause(c)) {log.warn("Skip %1$s %2$s" format(c, description)); false } else true
-
-        @inline
-        def isNotBelongsHouseMD = skipClass("belongs to HouseMD") { _.getName.startsWith("com.github.zhongl.housemd") }
-
-        @inline
-        def isNotInterface = skipClass("") { _.isInterface }
-
-        @inline
-        def isNotFromBootClassLoader = skipClass("loaded from bootclassloader") { isFromBootClassLoader }
-
-        filter(c) && isNotBelongsHouseMD && isNotInterface && isNotFromBootClassLoader
-    }
+    val candidates = doFilter(inst.getAllLoadedClasses)
 
     if (candidates.isEmpty) {
       log.println("No matched class")
@@ -74,29 +56,48 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
 
   }
 
+  def doFilter(classes: Array[Class[_]])(implicit log: Loggable, filter: Filter) = classes filter {
+    c =>
+
+      @inline
+      def skipClass(description: String)(cause: Class[_] => Boolean) =
+        if (cause(c)) {log.warn("Skip %1$s %2$s" format(c, description)); false } else true
+
+      @inline
+      def isNotBelongsHouseMD = skipClass("belongs to HouseMD") { _.getName.startsWith("com.github.zhongl.housemd") }
+
+      @inline
+      def isNotInterface = skipClass("") { _.isInterface }
+
+      @inline
+      def isNotFromBootClassLoader = skipClass("loaded from bootclassloader") { isFromBootClassLoader }
+
+      filter(c) && isNotBelongsHouseMD && isNotInterface && isNotFromBootClassLoader
+  }
+
   private def handleAdviceEvent(implicit timeout: Seconds, log: Loggable, h: Hook) {
     val start = now
     val timoutMillis = timeout.toMillis
 
     try {
-      while (true) {
-
-        receiveWithin(500) {
-          case TIMEOUT            => // ignore
-          case OverLimit          => throw OverLimitBreak
-          case EnterWith(context) => h.enterWith(context)
-          case ExitWith(context)  => h.exitWith(context)
-          case x                  => // ignore last unread messages, error("Unknown case: " + x)
-        }
-
-        val t = now
-        h.heartbeat(t)
-        if (t - start >= timoutMillis) throw TimeoutBreak
-      }
+      //      while (true) {
+      //
+      //        receiveWithin(500) {
+      //          case TIMEOUT            => // ignore
+      //          case OverLimit          => throw OverLimitBreak
+      //          case EnterWith(context) => h.enterWith(context)
+      //          case ExitWith(context)  => h.exitWith(context)
+      //          case x                  => // ignore last unread messages, error("Unknown case: " + x)
+      //        }
+      //
+      //        val t = now
+      //        h.heartbeat(t)
+      //        if (t - start >= timoutMillis) throw TimeoutBreak
+      //      }
     } catch {
       case OverLimitBreak => h.finalize(None); log.info("Ended by overlimit")
       case TimeoutBreak   => h.finalize(None); log.info("Ended by timeout")
-      case t              => h.finalize(Some(t)); throw t
+      case t: Throwable   => h.finalize(Some(t)); throw t
     }
   }
 
@@ -106,7 +107,7 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
         try {
           if (classes.contains(klass)) ClassDecorator.decorate(bytecode, name, filter.curried(klass)) else null
         } catch {
-          case e => log.error(e); null
+          case e: Throwable => log.error(e); null
         }
       }
     }
@@ -121,7 +122,7 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
           inst.retransformClasses(c)
           log.info("Probe " + c)
         } catch {
-          case e => log.warn("Failed to probe " + c + " because of " + e)
+          case e: Throwable => log.warn("Failed to probe " + c + " because of " + e)
         }
     }
   }
@@ -135,7 +136,7 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
           inst.retransformClasses(c)
           log.info("Reset " + c)
         } catch {
-          case e => log.warn("Failed to reset " + c + " because of " + e)
+          case e: Throwable => log.warn("Failed to reset " + c + " because of " + e)
         }
     }
   }
@@ -146,15 +147,15 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
   private def advice(limit: Int) = new Advice() {
 
     val count = new AtomicInteger()
-    val host  = self
+    //    val host  = self
 
     def enterWith(context: util.Map[String, AnyRef]) {
-      host ! EnterWith(context)
+      //      host ! EnterWith(context)
     }
 
     def exitWith(context: util.Map[String, AnyRef]) {
-      host ! ExitWith(context)
-      if (count.incrementAndGet() >= limit) host ! OverLimit
+      //      host ! ExitWith(context)
+      //      if (count.incrementAndGet() >= limit) host ! OverLimit
     }
   }
 

@@ -65,11 +65,12 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
     if (ManagementFactory.getOperatingSystemMXBean.getName.toLowerCase.contains("window")) {
       throw new IllegalStateException("Sorry, Windows is not supported now.")
     }
+
+    implicit val system = ActorSystem("console")
     try {
       val vm = VirtualMachine.attach(pid())
 
-      val system = ActorSystem("console")
-      system.actorOf(Props(new IPhone4s(port(), actor(system, "House")(new Act {
+      system.actorOf(Props(new IPhone4s(port(), actor("House")(new Act {
         become {
           case msg: String => println(s"received: $msg")
         }
@@ -81,9 +82,11 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
       vm.loadAgent(agentJarFile, agentOptions mkString " ")
       vm.detach()
 
-      //      mobilephone.start()
     } catch {
-      case e: Throwable => error(e); silentClose(errorDetailWriter)
+      case e: Throwable =>
+        system.shutdown()
+        error(e)
+        silentClose(errorDetailWriter)
     }
   }
 

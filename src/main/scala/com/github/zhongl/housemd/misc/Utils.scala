@@ -47,22 +47,22 @@ object Utils {
     bytes.toByteArray
   }
 
-  def locationOf[T: Manifest] = Option(manifest[T].erasure.getProtectionDomain.getCodeSource) match {
+  def locationOf[T: Manifest] = Option(manifest[T].runtimeClass.getProtectionDomain.getCodeSource) match {
     case Some(codeSource) => Option(codeSource.getLocation)
-    case None             => Option(manifest[T].erasure.getResource(resourceNameOf[T]))
+    case None             => Option(manifest[T].runtimeClass.getResource(resourceNameOf[T]))
   }
 
-  def resourceNameOf[T: Manifest] = "/" + manifest[T].erasure.getName.replace('.', '/') + ".class"
+  def resourceNameOf[T: Manifest] = "/" + manifest[T].runtimeClass.getName.replace('.', '/') + ".class"
 
   def sourceOf[T: Manifest] = locationOf[T] match {
     case Some(File(path)) => path
     case None             => noPath
   }
 
-  def classNameOf[T: Manifest] = manifest[T].erasure.getName
+  def classNameOf[T: Manifest] = manifest[T].runtimeClass.getName
 
   def silentClose(closable: {def close()}) {
-    if (closable != null) try {closable.close()} catch {case _ => /*ignore*/ }
+    if (closable != null) try {closable.close()} catch {case _: Throwable => /*ignore*/ }
   }
 
 }

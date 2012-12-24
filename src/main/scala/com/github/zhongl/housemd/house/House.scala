@@ -19,8 +19,6 @@ package com.github.zhongl.housemd.house
 import com.sun.tools.attach.VirtualMachine
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
 import jline.NoInterruptUnixTerminal
-import com.github.zhongl.housemd._
-import command._
 import misc.Utils._
 import duck.Telephone
 import management.ManagementFactory
@@ -52,15 +50,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
 
 
   private lazy val agentJarFile = sourceOf(Manifest.classType(getClass))
-  private lazy val agentOptions = agentJarFile ::
-    classNameOf[Telephone] ::
-    port() ::
-    classNameOf[Trace] ::
-    classNameOf[Loaded] ::
-    classNameOf[Env] ::
-    classNameOf[Prop] ::
-    classNameOf[Resources] ::
-    Nil
+  private lazy val agentOptions = (new File(agentJarFile)).getParent :: classNameOf[Telephone] :: port() :: Nil
 
   private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))
@@ -91,6 +81,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
       })
 
       info("Welcome to HouseMD " + version)
+      info(s"loading $agentJarFile with $agentOptions")
 
       vm.loadAgent(agentJarFile, agentOptions mkString " ")
       vm.detach()

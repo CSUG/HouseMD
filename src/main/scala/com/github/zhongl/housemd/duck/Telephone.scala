@@ -17,50 +17,46 @@
 package com.github.zhongl.housemd.duck
 
 import instrument.Instrumentation
-import java.net.Socket
-import jline.console.ConsoleReader
-import com.github.zhongl.yascli.{Shell, PrintOut, Command}
-import jline.TerminalFactory
-import jline.console.history.FileHistory
-import java.io.File
-import com.github.zhongl.housemd.command.Last
+import com.github.zhongl.yascli.{PrintOut, Command}
 
 /**
- * Telephone is used by Duck to communicate with HouseMD.
+ * Telephone is used by Cameron to communicate with HouseMD.
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Telephone(inst: Instrumentation, port: Int, classes: Array[Class[Command]]) extends Runnable {
+class Telephone(port: String, inst: Instrumentation) {
 
 
   def run() {
-    val socket = new Socket("localhost", port)
-    val reader = new ConsoleReader(socket.getInputStream, socket.getOutputStream)
-    val history = new FileHistory(new File("/tmp/housemd/.history"))
-    reader.setHistory(history)
-
-    try {
-      new Shell(name = "housemd", description = "a runtime diagnosis tool of jvm.", reader = reader) {
-        private val lastCommand = new Last(out)
-
-        override protected def commands = Quit :: helpCommand :: lastCommand :: classes
-          .map { toCommand(_, PrintOut(reader)) }
-          .toList
-
-        override def error(a: Any) {
-          super.error(a)
-          if (a.isInstanceOf[Throwable]) lastCommand.keep(a.asInstanceOf[Throwable])
-        }
-
-      } main (Array.empty[String])
-    } finally {
-      TerminalFactory.reset()
-      history.flush()
-      socket.shutdownOutput()
-      socket.shutdownInput()
-      socket.close()
-    }
+    //    val socket = new Socket("localhost", port)
+    //    val reader = new ConsoleReader(socket.getInputStream, socket.getOutputStream)
+    //    val history = new FileHistory(new File("/tmp/housemd/.history"))
+    //    reader.setHistory(history)
+    //
+    //    try {
+    //      new Shell(name = "housemd", description = "a runtime diagnosis tool of jvm.", reader = reader) {
+    //        private val lastCommand = new Last(out)
+    //
+    //        override protected def commands = Quit :: helpCommand :: lastCommand :: classes
+    //          .map { toCommand(_, PrintOut(reader)) }
+    //          .toList
+    //
+    //        override def error(a: Any) {
+    //          super.error(a)
+    //          if (a.isInstanceOf[Throwable]) lastCommand.keep(a.asInstanceOf[Throwable])
+    //        }
+    //
+    //      } main (Array.empty[String])
+    //    } finally {
+    //      TerminalFactory.reset()
+    //      history.flush()
+    //      socket.shutdownOutput()
+    //      socket.shutdownInput()
+    //      socket.close()
+    //    }
   }
+
+  def dial() { println("dial ...") }
 
   private def toCommand(c: Class[Command], out: PrintOut) = {
     val I = classOf[Instrumentation]

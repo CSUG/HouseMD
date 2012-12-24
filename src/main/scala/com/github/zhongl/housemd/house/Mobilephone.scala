@@ -25,7 +25,7 @@ import java.nio.ByteBuffer
 
 
 /**
- * Mobilephone is used by House$ to communicate with Duck
+ * Mobilephone is used by House$ to communicate with Cameron
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */

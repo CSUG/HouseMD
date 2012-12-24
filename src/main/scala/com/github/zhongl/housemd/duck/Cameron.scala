@@ -24,18 +24,19 @@ import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
 
 /**
- * [[com.github.zhongl.housemd.duck.IPhone4]] is the cellphone used by Cameron to communicate with [[com.github.zhongl.housemd.house.House]].
+ * Doctor [[com.github.zhongl.housemd.duck.Cameron]] usually diagnose patient with [[com.github.zhongl.housemd.house.House]].
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class IPhone4(port: String, inst: Instrumentation) {
+class Cameron(port: String, inst: Instrumentation) {
 
-  def dial() {
-    val loader: ClassLoader = getClass.getClassLoader
+  def diagnose() {
+    val loader = getClass.getClassLoader
+    val config = loadConfigFrom(loader)
 
-    implicit val system = ActorSystem("agent", ConfigFactory.load(loader), loader)
+    implicit val system = ActorSystem("hospital", config, loader)
 
-    actor("Cameron")(new Act {
+    actor("iPhone")(new Act {
       val handler = IOManager(context.system).connect("localhost", port.toInt)
       become {
         case Connected(socket, address) => println("Connected!")
@@ -49,6 +50,16 @@ class IPhone4(port: String, inst: Instrumentation) {
       }
     })
 
+  }
+
+  private def loadConfigFrom(loader: ClassLoader) = {
+    def load(name: String) = ConfigFactory.load(loader, name)
+
+    val defaultConfig = load("default.conf")
+
+    // TODO test it
+    if (loader.getResource("housemd.conf") == null) defaultConfig
+    else load("housemd.conf").withFallback(defaultConfig)
   }
 }
 

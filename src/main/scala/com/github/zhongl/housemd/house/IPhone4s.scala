@@ -22,7 +22,7 @@ import akka.util.ByteString
 
 
 /**
- * [[com.github.zhongl.housemd.house.IPhone4s]] is used by [[com.github.zhongl.housemd.house.House]] to communicate with Cameron.
+ * [[com.github.zhongl.housemd.house.IPhone4s]] is used by [[com.github.zhongl.housemd.house.House]] to communicate with Agent.
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */

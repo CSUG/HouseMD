@@ -25,7 +25,7 @@ import actors.Actor._
 import actors.TIMEOUT
 import com.github.zhongl.yascli.PrintOut
 import com.github.zhongl.test._
-import com.github.zhongl.housemd.duck.Cameron
+import com.github.zhongl.housemd.duck.Agent
 import com.github.zhongl.housemd.instrument.{Context, Hook}
 
 /**
@@ -58,7 +58,7 @@ class TransformCommandSpec extends FunSpec with ShouldMatchers with AdviceReflec
     val out = new ByteArrayOutputStream
     val inst = mock(classOf[Instrumentation])
 
-    doReturn(Array(classOf[I], classOf[A], classOf[F], classOf[String], classOf[Cameron]))
+    doReturn(Array(classOf[I], classOf[A], classOf[F], classOf[String], classOf[Agent]))
       .when(inst)
       .getAllLoadedClasses
 
@@ -128,7 +128,7 @@ class TransformCommandSpec extends FunSpec with ShouldMatchers with AdviceReflec
       parseAndRun("Duck") {
         out =>
           out.split("\n") should {
-            contain("WARN : Skip " + classOf[Cameron] + " belongs to HouseMD.")
+            contain("WARN : Skip " + classOf[Agent] + " belongs to HouseMD.")
             contain("No matched class")
           }
       }

@@ -68,7 +68,7 @@ object Build extends sbt.Build {
       libraryDependencies := compileLibs ++ testLibs,
       packageOptions += Package.ManifestAttributes(
         ("Main-Class", "com.github.zhongl.housemd.house.House"),
-        ("Agent-Class", "com.github.zhongl.housemd.duck.Cameron"),
+        ("Agent-Class", "com.github.zhongl.housemd.duck.Agent"),
         ("Can-Retransform-Classes", "true"),
         ("Can-Redefine-Classes", "true"),
         ("Signature-Version", VERSION)

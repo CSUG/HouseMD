@@ -25,24 +25,20 @@ import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-/**
- * Every time doctor {@link Cameron} is first one who call {@link House} for help.
- *
- * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl</a>
- */
-public class Cameron {
+/** @author <a href="mailto:zhong.lunfu@gmail.com">zhongl</a> */
+public class Agent {
 
     public static void agentmain(String argumentsLine, Instrumentation instrumentation) throws Exception {
         final int CLASSPATH = 0;
-        final int PHONE_CLASS_NAME = 1;
-        final int PHONE_NUMBER = 2;
+        final int DUCK_NAME = 1;
+        final int PORT = 2;
         final Logger logger = Logger.getLogger("HouseMD");
 
         String[] arguments = argumentsLine.split("\\s+");
-        logger.info("Cameron found the patient and dial to House: " + Arrays.toString(arguments));
+        logger.info("Loading with arguments: " + Arrays.toString(arguments));
 
         // Using this customed ClassLoader could remove all classes came from HouseMD after PermGen GC.
-        Class<?> phoneClass = new URLClassLoader(urls(arguments[CLASSPATH])) {
+        Class<?> duck = new URLClassLoader(urls(arguments[CLASSPATH])) {
             @Override
             protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
                 Class<?> loadedClass = findLoadedClass(name);
@@ -56,14 +52,14 @@ public class Cameron {
                     return super.loadClass(name, resolve);
                 }
             }
-        }.loadClass(arguments[PHONE_CLASS_NAME]);
+        }.loadClass(arguments[DUCK_NAME]);
 
-        phoneClass.getMethod("dial").invoke(phone(phoneClass, arguments[PHONE_NUMBER], instrumentation));
-        logger.info("Cameron has connected to House");
+        duck.getMethod("diagnose").invoke(who(duck, arguments[PORT], instrumentation));
+        logger.info("Loaded");
     }
 
-    private static Object phone(Class<?> phoneClass, String number, Instrumentation instrumentation) throws Exception {
-        return phoneClass.getConstructor(String.class, Instrumentation.class).newInstance(number, instrumentation);
+    private static Object who(Class<?> aClass, String port, Instrumentation instrumentation) throws Exception {
+        return aClass.getConstructor(String.class, Instrumentation.class).newInstance(port, instrumentation);
     }
 
     private static URL[] urls(String classpath) throws MalformedURLException {

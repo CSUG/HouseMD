@@ -99,7 +99,6 @@ object Build extends sbt.Build {
     )
 
     lazy val compileLibs = Seq(
-      "org.ow2.asm" % "asm" % "4.0",
       "org.ow2.asm" % "asm-commons" % "4.0",
       "com.github.zhongl" % "yascli_2.10" % "0.2.0",
       "com.typesafe.akka" %% "akka-actor" % "2.1.0-RC5" cross CrossVersion.full,

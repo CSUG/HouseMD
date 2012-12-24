@@ -35,7 +35,7 @@ public class Cameron {
     public static void agentmain(String argumentsLine, Instrumentation instrumentation) throws Exception {
         final int CLASSPATH = 0;
         final int PHONE_CLASS_NAME = 1;
-        final int PHONE_NUMBER = 0;
+        final int PHONE_NUMBER = 2;
         final Logger logger = Logger.getLogger("HouseMD");
 
         String[] arguments = argumentsLine.split("\\s+");

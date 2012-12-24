@@ -18,12 +18,13 @@ package com.github.zhongl.housemd.house
 
 import com.sun.tools.attach.VirtualMachine
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
-import jline.NoInterruptUnixTerminal
 import com.github.zhongl.housemd.misc.Utils._
-import com.github.zhongl.housemd.duck.Telephone
+import com.github.zhongl.housemd.duck.IPhone4
 import management.ManagementFactory
 import java.io.{FileInputStream, FileWriter, BufferedWriter, File}
 import java.util.jar.{Attributes, JarInputStream}
+import akka.actor.ActorDSL._
+import akka.actor.{Props, ActorSystem}
 
 
 /**
@@ -50,7 +51,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
 
 
   private lazy val agentJarFile = sourceOf(Manifest.classType(getClass))
-  private lazy val agentOptions = (new File(agentJarFile)).getParent :: classNameOf[Telephone] :: port() :: Nil
+  private lazy val agentOptions = (new File(agentJarFile)).getParent :: classNameOf[IPhone4] :: port() :: Nil
 
   private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))
@@ -65,20 +66,14 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
       throw new IllegalStateException("Sorry, Windows is not supported now.")
     }
     try {
-      val terminal = new NoInterruptUnixTerminal()
-      terminal.init()
-      val sout = terminal.wrapOutIfNeeded(System.out)
-      val sin = terminal.wrapInIfNeeded(System.in)
       val vm = VirtualMachine.attach(pid())
 
-      val mobilephone = new Mobilephone(port(), {
-        case PickUp              => info("connection established on " + port())
-        case ListenTo(earphone)  => earphone(sout)
-        case SpeakTo(microphone) => microphone(sin)
-        case BreakOff(reason)    => error("connection breaked causeby"); error(reason)
-        case HangUp              => terminal.restore(); silentClose(errorDetailWriter); info("bye")
-
-      })
+      val system = ActorSystem("console")
+      system.actorOf(Props(new IPhone4s(port(), actor(system, "House")(new Act {
+        become {
+          case msg: String => println(s"received: $msg")
+        }
+      }))))
 
       info("Welcome to HouseMD " + version)
       info(s"loading $agentJarFile with $agentOptions")

@@ -41,7 +41,22 @@ public class Cameron {
         String[] arguments = argumentsLine.split("\\s+");
         logger.info("Cameron found the patient and dial to House: " + Arrays.toString(arguments));
 
-        Class<?> phoneClass = new URLClassLoader(urls(arguments[CLASSPATH])).loadClass(arguments[PHONE_CLASS_NAME]);
+        // Using this customed ClassLoader could remove all classes came from HouseMD after PermGen GC.
+        Class<?> phoneClass = new URLClassLoader(urls(arguments[CLASSPATH])) {
+            @Override
+            protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+                Class<?> loadedClass = findLoadedClass(name);
+                if (loadedClass != null) return loadedClass;
+
+                try {
+                    Class<?> aClass = findClass(name);
+                    if (resolve) resolveClass(aClass);
+                    return aClass;
+                } catch (Exception e) {
+                    return super.loadClass(name, resolve);
+                }
+            }
+        }.loadClass(arguments[PHONE_CLASS_NAME]);
 
         phoneClass.getMethod("dial").invoke(phone(phoneClass, arguments[PHONE_NUMBER], instrumentation));
         logger.info("Cameron has connected to House");

@@ -56,7 +56,7 @@ class Telephone(port: String, inst: Instrumentation) {
     //    }
   }
 
-  def dial() { println("dial ...") }
+  def dial() { println("telephone classloader: " + getClass.getClassLoader) }
 
   private def toCommand(c: Class[Command], out: PrintOut) = {
     val I = classOf[Instrumentation]

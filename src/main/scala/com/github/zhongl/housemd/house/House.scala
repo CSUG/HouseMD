@@ -19,8 +19,8 @@ package com.github.zhongl.housemd.house
 import com.sun.tools.attach.VirtualMachine
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
 import jline.NoInterruptUnixTerminal
-import misc.Utils._
-import duck.Telephone
+import com.github.zhongl.housemd.misc.Utils._
+import com.github.zhongl.housemd.duck.Telephone
 import management.ManagementFactory
 import java.io.{FileInputStream, FileWriter, BufferedWriter, File}
 import java.util.jar.{Attributes, JarInputStream}

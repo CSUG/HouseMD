@@ -36,9 +36,7 @@ object Build extends sbt.Build {
       "-keep class akka.** { *;} ",
       "-keepclassmembers class * { ** MODULE$;}"
     ),
-    proguardLibraryJars := {
-      (jdkJarPath: PathFinder).get
-    }
+    proguardLibraryJars := { (jdkJarPath: PathFinder).get }
   )
 
   private def jdkJarPath = {
@@ -61,7 +59,7 @@ object Build extends sbt.Build {
       name := "housemd",
       organization := "com.github.zhongl",
       version := VERSION,
-      scalaVersion := "2.10.0-RC5",
+      scalaVersion := "2.10.0",
       javacOptions ++= Seq("-source", "6", "-target", "6"),
       scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:_"),
       resolvers += "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository",
@@ -80,14 +78,15 @@ object Build extends sbt.Build {
   object Dependencies {
     lazy val testLibs = Seq(
       "org.mockito" % "mockito-all" % "1.9.0" % "test",
-      "org.scalatest" % "scalatest_2.10.0-RC5" % "1.8-B1" % "test"
+      "com.typesafe.akka" % "akka-actor-tests_2.10" % "2.1.0" % "test",
+      "org.scalatest" % "scalatest_2.10" % "1.9.1" % "test"
     )
 
     lazy val compileLibs = Seq(
       "org.ow2.asm" % "asm-commons" % "4.0",
       "com.github.zhongl" % "yascli_2.10" % "0.2.0",
-      "com.typesafe.akka" %% "akka-actor" % "2.1.0-RC5" cross CrossVersion.full,
-      "org.scala-lang" % "scala-library" % "2.10.0-RC5"
+      "com.typesafe.akka" % "akka-actor_2.10" % "2.1.0",
+      "org.scala-lang" % "scala-library" % "2.10.0"
     )
   }
 

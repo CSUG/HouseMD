@@ -24,7 +24,7 @@ object Build extends sbt.Build {
   import Unmanaged._
 
   val VERSION  = "0.3.0"
-  val javaHome = sys.props("java.home").replace("/jre", "")
+  val javaHome = sys.props("java.home")
 
   lazy val proguard = proguardSettings ++ Seq(
     proguardOptions := Seq(
@@ -40,7 +40,7 @@ object Build extends sbt.Build {
   )
 
   private def jdkJarPath = {
-    val home = new java.io.File(sys.props("java.home"))
+    val home = new java.io.File(javaHome)
     val rtJar = home / "lib" / "rt.jar"
     val toolsJar = home.getParentFile / "lib" / "tools.jar"
     val classesJar = home.getParentFile / "Classes" / "classes.jar"
@@ -91,7 +91,7 @@ object Build extends sbt.Build {
   }
 
   object Unmanaged {
-    lazy val toolsFile         = file(javaHome + "/lib/tools.jar")
+    lazy val toolsFile         = file(javaHome + "/../lib/tools.jar")
     lazy val classpathSettings =
       if (toolsFile.exists()) Seq(
         unmanagedClasspath in Compile += Attributed.blank(toolsFile),

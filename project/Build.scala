@@ -23,7 +23,7 @@ object Build extends sbt.Build {
   import Dependencies._
   import Unmanaged._
 
-  val VERSION = "0.2.4"
+  val VERSION  = "0.2.4"
   val javaHome = sys.props("java.home").replace("/jre", "")
 
   lazy val proguard = proguardSettings ++ Seq(
@@ -106,9 +106,9 @@ object Build extends sbt.Build {
   }
 
   object Unmanaged {
-    lazy val toolsFile = file(javaHome + "/lib/tools.jar")
+    lazy val toolsFile         = file(javaHome + "/lib/tools.jar")
     lazy val classpathSettings =
-      if (sys.props("os.name").contains("Linux")) Seq(
+      if (toolsFile.exists()) Seq(
         unmanagedClasspath in Compile += Attributed.blank(toolsFile),
         unmanagedClasspath in Test <<= unmanagedClasspath in Compile
       )

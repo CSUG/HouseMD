@@ -16,11 +16,11 @@
 
 package com.github.zhongl.housemd
 
-import akka.actor.{Props, ActorSystem}
-import akka.actor.ActorDSL._
+import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import java.lang.instrument.Instrumentation
-import sys.ShutdownHookThread
+import java.lang.reflect.Modifier._
+
 
 /**
  * Doctor [[com.github.zhongl.housemd.Cameron]] usually diagnose patient with [[com.github.zhongl.housemd.House]].
@@ -30,7 +30,6 @@ import sys.ShutdownHookThread
 class Cameron(port: String, inst: Instrumentation) {
 
   import Diagnosis._
-  import IPhone._
 
   def diagnose() {
     val number = port.toInt
@@ -38,15 +37,27 @@ class Cameron(port: String, inst: Instrumentation) {
     val config = loadConfigFrom(loader)
     val system = ActorSystem("hospital", config, loader)
 
-    actor(system)(new Act {
-      whenStarting { context.actorOf(Props[IPhone]) ! Dial(number) }
-      become { case Instruction(name, arguments) => sender ! perform(name, arguments) }
-    })
+    //    actor(system)(new Act {
+    //      whenStarting { context.actorOf(Props[IPhone]) ! Dial(number) }
+    //      become { case Instruction(name, arguments) => sender ! perform(name, arguments) }
+    //    })
+    //
+    //    ShutdownHookThread {
+    //      system.shutdown()
+    //      system.awaitTermination()
+    //    }
+    system.shutdown()
+    system.awaitTermination()
 
-    ShutdownHookThread {
-      system.shutdown()
-      system.awaitTermination()
+    // clean all ThreadLocal fields belongs to class loaded from this classloader to avoid PermGen memory leak.
+    for {
+      c <- inst.getAllLoadedClasses if c.getClassLoader == loader
+      f <- c.getDeclaredFields if classOf[ThreadLocal[_]].isAssignableFrom(f.getType) && isStatic(f.getModifiers)
+    } {
+      f.setAccessible(true)
+      f.get(null).asInstanceOf[ThreadLocal[_]].remove()
     }
+
   }
 
   private def perform(name: String, arguments: Array[String]) = {

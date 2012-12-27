@@ -8,6 +8,9 @@ import akka.util.ByteString
 
 /** @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a> */
 class IPhone extends Actor {
+
+  import IPhone._
+
   private val state                     = IO.IterateeRef.async()(context.dispatcher)
   private val manager                   = IOManager(context.system)
   private val serializer                = SerializationExtension(context.system).serializerFor(classOf[Serializable])
@@ -15,12 +18,13 @@ class IPhone extends Actor {
   private var user    : ActorRef        = _
 
   def receive = {
-    case Dial(number)                  => manager connect local(number); user = sender
-    case Standby(number)               => manager listen local(number); user = sender
     case IO.NewClient(server)          => state flatMap (_ => getThrough(server.accept()))
     case IO.Connected(socket, address) => state flatMap (_ => getThrough(socket))
     case IO.Read(socket, bytes)        => state(IO Chunk bytes)
     case IO.Closed(socket, cause)      => context.system.shutdown()
+    case Dial(number)                  => manager connect local(number); user = sender
+    case Standby(number)               => manager listen local(number); user = sender
+    case Hangup                        => context.system.shutdown()
     case feedback: AnyRef              => opposite.write(encode(feedback))
   }
 
@@ -49,10 +53,15 @@ class IPhone extends Actor {
   }
 }
 
-case class Dial(number: Int)
+object IPhone {
 
-case class Standby(number: Int)
+  case class Dial(number: Int)
 
-case object GetThrough
+  case class Standby(number: Int)
 
-case class Instruction(name: String, arguments: Array[String])
+  case object Hangup
+
+  case object GetThrough
+
+}
+

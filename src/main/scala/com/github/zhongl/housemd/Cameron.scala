@@ -14,42 +14,45 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd.duck
+package com.github.zhongl.housemd
 
-import instrument.Instrumentation
-import akka.actor.{ActorSystem, IOManager}
+import akka.actor.{Props, ActorSystem}
 import akka.actor.ActorDSL._
-import akka.actor.IO._
-import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
+import java.lang.instrument.Instrumentation
+import sys.ShutdownHookThread
 
 /**
- * Doctor [[com.github.zhongl.housemd.duck.Cameron]] usually diagnose patient with [[com.github.zhongl.housemd.house.House]].
+ * Doctor [[com.github.zhongl.housemd.Cameron]] usually diagnose patient with [[com.github.zhongl.housemd.house.House]].
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 class Cameron(port: String, inst: Instrumentation) {
 
+  import Diagnosis._
+  import IPhone._
+
   def diagnose() {
+    val number = port.toInt
     val loader = getClass.getClassLoader
     val config = loadConfigFrom(loader)
+    val system = ActorSystem("hospital", config, loader)
 
-    implicit val system = ActorSystem("hospital", config, loader)
-
-    actor("iPhone")(new Act {
-      val handler = IOManager(context.system).connect("localhost", port.toInt)
-      become {
-        case Connected(socket, address) => println("Connected!")
-        case Read(socket, bytes)        =>
-          println(bytes.decodeString("UTF-8").trim)
-          socket.asWritable.write(ByteString("Nop, bye!"))
-          socket.asWritable.close()
-        case Closed(socket, cause)      =>
-          handler.close()
-          context.system.shutdown()
-      }
+    actor(system)(new Act {
+      whenStarting { context.actorOf(Props[IPhone]) ! Dial(number) }
+      become { case Instruction(name, arguments) => sender ! perform(name, arguments) }
     })
 
+    ShutdownHookThread {
+      system.shutdown()
+      system.awaitTermination()
+    }
+  }
+
+  def perform(name: String, arguments: Array[String]) = {
+    val content = s"$name $arguments"
+    println(content)
+    Feedback(content)
   }
 
   private def loadConfigFrom(loader: ClassLoader) = {

@@ -9,13 +9,14 @@ import akka.util.ByteString
 /** @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a> */
 class IPhone extends Actor {
 
-  import IPhone._
-
   private val state                     = IO.IterateeRef.async()(context.dispatcher)
   private val manager                   = IOManager(context.system)
   private val serializer                = SerializationExtension(context.system).serializerFor(classOf[Serializable])
   private var opposite: IO.SocketHandle = _
   private var user    : ActorRef        = _
+
+  import IPhone._
+  import Diagnosis._
 
   def receive = {
     case IO.NewClient(server)          => state flatMap (_ => getThrough(server.accept()))
@@ -25,7 +26,7 @@ class IPhone extends Actor {
     case Dial(number)                  => manager connect local(number); user = sender
     case Standby(number)               => manager listen local(number); user = sender
     case Hangup                        => context.system.shutdown()
-    case feedback: AnyRef              => opposite.write(encode(feedback))
+    case term: Term                    => opposite.write(encode(term))
   }
 
   private def local(number: Int) = new InetSocketAddress(number)
@@ -43,14 +44,16 @@ class IPhone extends Actor {
     } yield user ! (serializer fromBinary content)
   }
 
-  private def toInt(bs: ByteString) = bs.iterator.getInt
-
-  private def toArray(bs: ByteString) = bs.toArray
-
   private def encode(value: AnyRef) = {
     val content = serializer.toBinary(value)
     ByteString.newBuilder.putInt(content.length).putBytes(content).result()
   }
+
+  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+
+  private def toInt(bs: ByteString) = bs.iterator.getInt
+
+  private def toArray(bs: ByteString) = bs.toArray
 }
 
 object IPhone {

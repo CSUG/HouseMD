@@ -19,18 +19,13 @@ package com.github.zhongl.housemd.house
 import com.sun.tools.attach.VirtualMachine
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
 import com.github.zhongl.housemd.misc.Utils._
-import com.github.zhongl.housemd.duck.Cameron
 import management.ManagementFactory
 import java.io.{FileInputStream, FileWriter, BufferedWriter, File}
 import java.util.jar.{Attributes, JarInputStream}
 import akka.actor.ActorDSL._
-import akka.actor.{IOManager, ActorSystem}
-import akka.actor.IO._
-import akka.util.ByteString
-import akka.actor.IO.Closed
-import akka.actor.IO.NewClient
-import akka.actor.IO.Read
-import akka.actor.IO.Error
+import akka.actor.{ActorRef, Props, ActorSystem}
+import com.github.zhongl.housemd._
+import com.github.zhongl.housemd.Diagnosis.Instruction
 
 
 /**
@@ -72,24 +67,21 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
       throw new IllegalStateException("Sorry, Windows is not supported now.")
     }
 
-    implicit val system = ActorSystem("console")
+    val system = ActorSystem("hospital")
 
     try {
-      actor("iPhone")(new Act {
-        val handler = IOManager(context.system).listen("0.0.0.0", port())
+      actor(system)(new Act {
+
+        import IPhone._
+        import Diagnosis._
+
+        whenStarting { context.actorOf(Props[IPhone]) ! Standby(port()) }
 
         become {
-          case NewClient(server)     => server.accept().write(ByteString("What's up?"))
-          case Read(socket, bytes)   => println(bytes.decodeString("UTF-8").trim)
-          case Closed(socket, cause) =>
-            handler.close()
-            cause match {
-              case Error(throwable) => error(throwable)
-              case EOF              =>
-              case Chunk(_)         =>
-            }
-            context.system.shutdown()
+          case GetThrough => setupConsoleReaderWith(sender)
+          case term: Term => println(term); sender ! Hangup
         }
+
       })
 
       val vm = VirtualMachine.attach(pid())
@@ -108,9 +100,12 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
     }
   }
 
-  override def help = "version: " + version + '\n' + super.help
+  private def setupConsoleReaderWith(ref: ActorRef) {
+    println("getthrough")
+    ref ! Instruction("name", Array("arg"))
+  }
 
-  private lazy val version = {
+  private def version = {
     val stream = new JarInputStream(new FileInputStream(agentJarFile))
     try {
       val attributes = stream.getManifest.getMainAttributes

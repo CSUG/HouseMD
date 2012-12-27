@@ -82,7 +82,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
     }
   }
 
-  def standby()(implicit system: ActorSystem) = actor(system)(new Act {
+  private def standby()(implicit system: ActorSystem) = actor(system)(new Act {
 
     import IPhone._
     import Diagnosis._
@@ -96,7 +96,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
 
   })
 
-  def bootAgent() {
+  private def bootAgent() {
     val vm = VirtualMachine.attach(pid())
 
     info("Welcome to HouseMD " + version)

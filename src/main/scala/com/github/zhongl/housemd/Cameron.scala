@@ -49,7 +49,7 @@ class Cameron(port: String, inst: Instrumentation) {
     }
   }
 
-  def perform(name: String, arguments: Array[String]) = {
+  private def perform(name: String, arguments: Array[String]) = {
     val content = s"$name $arguments"
     println(content)
     Feedback(content)

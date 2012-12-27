@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd.duck;
+package com.github.zhongl.housemd;
 
 import java.io.File;
 import java.io.FilenameFilter;

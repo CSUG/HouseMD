@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.github.zhongl.housemd.house
+package com.github.zhongl.housemd
 
 import com.sun.tools.attach.VirtualMachine
 import com.github.zhongl.yascli.{PrintOut, Command, Application}
@@ -24,7 +24,6 @@ import java.io.{FileInputStream, FileWriter, BufferedWriter, File}
 import java.util.jar.{Attributes, JarInputStream}
 import akka.actor.ActorDSL._
 import akka.actor.{ActorRef, Props, ActorSystem}
-import com.github.zhongl.housemd._
 import com.github.zhongl.housemd.Diagnosis.Instruction
 
 

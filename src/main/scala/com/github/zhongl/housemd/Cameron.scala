@@ -23,7 +23,7 @@ import java.lang.instrument.Instrumentation
 import sys.ShutdownHookThread
 
 /**
- * Doctor [[com.github.zhongl.housemd.Cameron]] usually diagnose patient with [[com.github.zhongl.housemd.house.House]].
+ * Doctor [[com.github.zhongl.housemd.Cameron]] usually diagnose patient with [[com.github.zhongl.housemd.House]].
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */

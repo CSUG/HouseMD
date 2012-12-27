@@ -25,8 +25,8 @@ import actors.Actor._
 import actors.TIMEOUT
 import com.github.zhongl.yascli.PrintOut
 import com.github.zhongl.test._
-import com.github.zhongl.housemd.duck.Agent
 import com.github.zhongl.housemd.instrument.{Context, Hook}
+import com.github.zhongl.housemd.Agent
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>

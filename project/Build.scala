@@ -65,8 +65,8 @@ object Build extends sbt.Build {
       resolvers += "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository",
       libraryDependencies := compileLibs ++ testLibs,
       packageOptions += Package.ManifestAttributes(
-        ("Main-Class", "com.github.zhongl.housemd.house.House"),
-        ("Agent-Class", "com.github.zhongl.housemd.duck.Agent"),
+        ("Main-Class", "com.github.zhongl.housemd.House"),
+        ("Agent-Class", "com.github.zhongl.housemd.Agent"),
         ("Can-Retransform-Classes", "true"),
         ("Can-Redefine-Classes", "true"),
         ("Signature-Version", VERSION)

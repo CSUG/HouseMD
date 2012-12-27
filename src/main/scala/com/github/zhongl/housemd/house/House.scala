@@ -48,9 +48,12 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
   private val port = option[Int]("-p" :: "--port" :: Nil, "set console local socket server port number.", 54321)
   private val pid  = parameter[String]("pid", "id of process to be diagnosing.")
 
+<<<<<<< HEAD
   private val printVersion = flag("-v" :: "--version" :: Nil, "show version.")
 
 
+=======
+>>>>>>> Clean code.
   private lazy val agentJarFile = sourceOf(Manifest.classType(getClass))
   private lazy val agentOptions = (new File(agentJarFile)).getParent :: classNameOf[Cameron] :: port() :: Nil
 
@@ -67,37 +70,41 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
       throw new IllegalStateException("Sorry, Windows is not supported now.")
     }
 
-    val system = ActorSystem("hospital")
+    implicit val system = ActorSystem("hospital")
 
     try {
-      actor(system)(new Act {
-
-        import IPhone._
-        import Diagnosis._
-
-        whenStarting { context.actorOf(Props[IPhone]) ! Standby(port()) }
-
-        become {
-          case GetThrough => setupConsoleReaderWith(sender)
-          case term: Term => println(term); sender ! Hangup
-        }
-
-      })
-
-      val vm = VirtualMachine.attach(pid())
-
-      info("Welcome to HouseMD " + version)
-      info(s"loading $agentJarFile with $agentOptions")
-
-      vm.loadAgent(agentJarFile, agentOptions mkString " ")
-      vm.detach()
-
+      standby()
+      bootAgent()
     } catch {
       case e: Throwable =>
         system.shutdown()
         error(e)
         silentClose(errorDetailWriter)
     }
+  }
+
+  def standby()(implicit system: ActorSystem) = actor(system)(new Act {
+
+    import IPhone._
+    import Diagnosis._
+
+    whenStarting { context.actorOf(Props[IPhone]) ! Standby(port()) }
+
+    become {
+      case GetThrough => setupConsoleReaderWith(sender)
+      case term: Term => println(term); sender ! Hangup
+    }
+
+  })
+
+  def bootAgent() {
+    val vm = VirtualMachine.attach(pid())
+
+    info("Welcome to HouseMD " + version)
+    info(s"loading $agentJarFile with $agentOptions")
+
+    vm.loadAgent(agentJarFile, agentOptions mkString (" "))
+    vm.detach()
   }
 
   private def setupConsoleReaderWith(ref: ActorRef) {
@@ -126,5 +133,3 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
   }
 
 }
-
-

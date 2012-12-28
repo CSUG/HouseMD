@@ -20,14 +20,13 @@ import akka.actor.{Props, ActorSystem}
 import akka.actor.ActorDSL._
 import com.typesafe.config.ConfigFactory
 import java.lang.instrument.Instrumentation
-import java.lang.reflect.Modifier._
 
 /**
  * Doctor [[com.github.zhongl.housemd.Cameron]] usually diagnose patient with [[com.github.zhongl.housemd.House]].
  *
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Cameron(port: String, inst: Instrumentation) {
+class Cameron(port: String, inst: Instrumentation, shutdownHook: Runnable) {
 
   import Diagnosis._
   import IPhone._
@@ -43,20 +42,7 @@ class Cameron(port: String, inst: Instrumentation) {
       become { case Instruction(name, arguments) => sender ! perform(name, arguments) }
     })
 
-    system.awaitTermination()
-    cleanAllThreadLocalFieldsThoseClassLoadedBy(loader)
-  }
-
-
-  private def cleanAllThreadLocalFieldsThoseClassLoadedBy(loader: ClassLoader) {
-    // clean all ThreadLocal fields belongs to class loaded from this classloader to avoid PermGen memory leak.
-    for {
-      c <- inst.getAllLoadedClasses if c.getClassLoader == loader
-      f <- c.getDeclaredFields if classOf[ThreadLocal[_]].isAssignableFrom(f.getType) && isStatic(f.getModifiers)
-    } {
-      f.setAccessible(true)
-      f.get(null).asInstanceOf[ThreadLocal[_]].remove()
-    }
+    try {system.awaitTermination()} finally {shutdownHook.run() }
   }
 
   private def perform(name: String, arguments: Array[String]) = {

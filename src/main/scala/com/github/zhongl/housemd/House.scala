@@ -54,7 +54,7 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
 =======
 >>>>>>> Clean code.
   private lazy val agentJarFile = sourceOf(Manifest.classType(getClass))
-  private lazy val agentOptions = (new File(agentJarFile)).getParent :: classNameOf[Cameron] :: port() :: Nil
+  private lazy val agentOptions = (new File(agentJarFile)).getParent :: port() :: Nil
 
   private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))

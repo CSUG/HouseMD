@@ -19,47 +19,32 @@ package com.github.zhongl.housemd;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
-import java.util.logging.Logger;
 
 /** @author <a href="mailto:zhong.lunfu@gmail.com">zhongl</a> */
 public class Agent {
 
-    public static void agentmain(String argumentsLine, Instrumentation instrumentation) throws Exception {
-        final int CLASSPATH = 0;
-        final int DUCK_NAME = 1;
-        final int PORT = 2;
-        final Logger logger = Logger.getLogger("HouseMD");
+    public static void agentmain(String argsLine, Instrumentation inst) throws Exception {
+        String[] arguments = argsLine.split("\\s+");
+        String classpath = arguments[0];
+        String port = arguments[1];
 
-        String[] arguments = argumentsLine.split("\\s+");
-        logger.info("Loading with arguments: " + Arrays.toString(arguments));
+        System.out.println("HouseMD - Loading with arguments: " + Arrays.toString(arguments));
 
-        // Using this customed ClassLoader could remove all classes came from HouseMD after PermGen GC.
-        Class<?> duck = new URLClassLoader(urls(arguments[CLASSPATH])) {
-            @Override
-            protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-                Class<?> loadedClass = findLoadedClass(name);
-                if (loadedClass != null) return loadedClass;
+        PermGenGCFriendlyClassLoader loader = new PermGenGCFriendlyClassLoader(urls(classpath), inst);
+        Class<?> c = loader.loadClass("com.github.zhongl.housemd.Cameron");
 
-                try {
-                    Class<?> aClass = findClass(name);
-                    if (resolve) resolveClass(aClass);
-                    return aClass;
-                } catch (Exception e) {
-                    return super.loadClass(name, resolve);
-                }
-            }
-        }.loadClass(arguments[DUCK_NAME]);
+        Object cameron = c.getConstructor(String.class, Instrumentation.class, Runnable.class)
+                .newInstance(port, inst, loader.cleanTask);
 
-        duck.getMethod("diagnose").invoke(who(duck, arguments[PORT], instrumentation));
-        logger.info("Loaded");
-    }
+        c.getMethod("diagnose").invoke(cameron);
 
-    private static Object who(Class<?> aClass, String port, Instrumentation instrumentation) throws Exception {
-        return aClass.getConstructor(String.class, Instrumentation.class).newInstance(port, instrumentation);
+        System.out.println("HouseMD - Loaded");
     }
 
     private static URL[] urls(String classpath) throws MalformedURLException {
@@ -87,4 +72,49 @@ public class Agent {
 
     private static URL url(File file) throws MalformedURLException {return file.toURI().toURL();}
 
+    private static class PermGenGCFriendlyClassLoader extends URLClassLoader {
+
+        private final Runnable cleanTask;
+
+        private PermGenGCFriendlyClassLoader(URL[] urls, final Instrumentation inst) {
+            super(urls);
+            cleanTask = new Runnable() {
+                @Override
+                public void run() {
+                    // break strong reference from ThreadLocal avoid PermGen leak
+                    for (Class<?> c : inst.getAllLoadedClasses()) {
+                        if (notContains(c)) continue;
+                        Field[] fields = c.getDeclaredFields();
+                        for (Field f : fields) {
+                            if (!isThreadLocal(f)) continue;
+                            System.out.println(f);
+                            f.setAccessible(true);
+                            try { ((ThreadLocal) f.get(null)).remove(); } catch (Exception ignore) {}
+                        }
+                    }
+                }
+            };
+        }
+
+        @Override
+        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            Class<?> loadedClass = findLoadedClass(name);
+            if (loadedClass != null) return loadedClass;
+
+            try {
+                // Load HouseMD(or dependencies)'s classes here first.
+                Class<?> aClass = findClass(name);
+                if (resolve) resolveClass(aClass);
+                return aClass;
+            } catch (Exception e) {
+                return super.loadClass(name, resolve);
+            }
+        }
+
+        private boolean notContains(Class<?> c) {return c.getClassLoader() != this;}
+
+        private boolean isThreadLocal(Field f) {
+            return ThreadLocal.class.isAssignableFrom(f.getType()) && Modifier.isStatic(f.getModifiers());
+        }
+    }
 }

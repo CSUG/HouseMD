@@ -71,50 +71,51 @@ public class Agent {
     }
 
     private static URL url(File file) throws MalformedURLException {return file.toURI().toURL();}
+}
 
-    private static class PermGenGCFriendlyClassLoader extends URLClassLoader {
+class PermGenGCFriendlyClassLoader extends URLClassLoader {
 
-        private final Runnable cleanTask;
+    final Runnable cleanTask;
 
-        private PermGenGCFriendlyClassLoader(URL[] urls, final Instrumentation inst) {
-            super(urls);
-            cleanTask = new Runnable() {
-                @Override
-                public void run() {
-                    // break strong reference from ThreadLocal avoid PermGen leak
-                    for (Class<?> c : inst.getAllLoadedClasses()) {
-                        if (notContains(c)) continue;
-                        Field[] fields = c.getDeclaredFields();
-                        for (Field f : fields) {
-                            if (!isThreadLocal(f)) continue;
-                            System.out.println(f);
-                            f.setAccessible(true);
-                            try { ((ThreadLocal) f.get(null)).remove(); } catch (Exception ignore) {}
-                        }
+    PermGenGCFriendlyClassLoader(URL[] urls, final Instrumentation inst) {
+        super(urls);
+        cleanTask = new Runnable() {
+            @Override
+            public void run() {
+                // break strong reference from ThreadLocal avoid PermGen leak
+                for (Class<?> c : inst.getAllLoadedClasses()) {
+                    if (notContains(c)) continue;
+                    Field[] fields = c.getDeclaredFields();
+                    for (Field f : fields) {
+                        if (!isThreadLocal(f)) continue;
+                        f.setAccessible(true);
+                        try {
+                            ((ThreadLocal) f.get(null)).remove();
+                        } catch (Exception ignore) {}
                     }
                 }
-            };
-        }
-
-        @Override
-        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            Class<?> loadedClass = findLoadedClass(name);
-            if (loadedClass != null) return loadedClass;
-
-            try {
-                // Load HouseMD(or dependencies)'s classes here first.
-                Class<?> aClass = findClass(name);
-                if (resolve) resolveClass(aClass);
-                return aClass;
-            } catch (Exception e) {
-                return super.loadClass(name, resolve);
             }
-        }
+        };
+    }
 
-        private boolean notContains(Class<?> c) {return c.getClassLoader() != this;}
+    @Override
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        Class<?> loadedClass = findLoadedClass(name);
+        if (loadedClass != null) return loadedClass;
 
-        private boolean isThreadLocal(Field f) {
-            return ThreadLocal.class.isAssignableFrom(f.getType()) && Modifier.isStatic(f.getModifiers());
+        try {
+            // Load HouseMD(or dependencies)'s classes here first.
+            Class<?> aClass = findClass(name);
+            if (resolve) resolveClass(aClass);
+            return aClass;
+        } catch (Exception e) {
+            return super.loadClass(name, resolve);
         }
+    }
+
+    private boolean notContains(Class<?> c) {return c.getClassLoader() != this;}
+
+    private boolean isThreadLocal(Field f) {
+        return ThreadLocal.class.isAssignableFrom(f.getType()) && Modifier.isStatic(f.getModifiers());
     }
 }

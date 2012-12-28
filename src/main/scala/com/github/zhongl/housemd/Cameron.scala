@@ -16,11 +16,11 @@
 
 package com.github.zhongl.housemd
 
-import akka.actor.ActorSystem
+import akka.actor.{Props, ActorSystem}
+import akka.actor.ActorDSL._
 import com.typesafe.config.ConfigFactory
 import java.lang.instrument.Instrumentation
 import java.lang.reflect.Modifier._
-
 
 /**
  * Doctor [[com.github.zhongl.housemd.Cameron]] usually diagnose patient with [[com.github.zhongl.housemd.House]].
@@ -30,6 +30,7 @@ import java.lang.reflect.Modifier._
 class Cameron(port: String, inst: Instrumentation) {
 
   import Diagnosis._
+  import IPhone._
 
   def diagnose() {
     val number = port.toInt
@@ -37,27 +38,26 @@ class Cameron(port: String, inst: Instrumentation) {
     val config = loadConfigFrom(loader)
     val system = ActorSystem("hospital", config, loader)
 
-    //    actor(system)(new Act {
-    //      whenStarting { context.actorOf(Props[IPhone]) ! Dial(number) }
-    //      become { case Instruction(name, arguments) => sender ! perform(name, arguments) }
-    //    })
-    //
-    //    ShutdownHookThread {
-    //      system.shutdown()
-    //      system.awaitTermination()
-    //    }
-    system.shutdown()
-    system.awaitTermination()
+    actor(system)(new Act {
+      whenStarting { context.actorOf(Props[IPhone]) ! Dial(number) }
+      become { case Instruction(name, arguments) => sender ! perform(name, arguments) }
+    })
 
+    system.awaitTermination()
+    cleanAllThreadLocalFieldsThoseClassLoadedBy(loader)
+  }
+
+
+  private def cleanAllThreadLocalFieldsThoseClassLoadedBy(loader: ClassLoader) {
     // clean all ThreadLocal fields belongs to class loaded from this classloader to avoid PermGen memory leak.
     for {
       c <- inst.getAllLoadedClasses if c.getClassLoader == loader
       f <- c.getDeclaredFields if classOf[ThreadLocal[_]].isAssignableFrom(f.getType) && isStatic(f.getModifiers)
     } {
+      println(f)
       f.setAccessible(true)
       f.get(null).asInstanceOf[ThreadLocal[_]].remove()
     }
-
   }
 
   private def perform(name: String, arguments: Array[String]) = {

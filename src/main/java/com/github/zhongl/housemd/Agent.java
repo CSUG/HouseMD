@@ -73,6 +73,7 @@ public class Agent {
     private static URL url(File file) throws MalformedURLException {return file.toURI().toURL();}
 }
 
+// TODO change: PermGen GC friendly
 class PermGenGCFriendlyClassLoader extends URLClassLoader {
 
     final Runnable cleanTask;

@@ -51,12 +51,12 @@ class Cameron(port: String, inst: Instrumentation, shutdownHook: Runnable) {
     Feedback(content)
   }
 
+  // TODO change: config file
   private def loadConfigFrom(loader: ClassLoader) = {
     def load(name: String) = ConfigFactory.load(loader, name)
 
     val defaultConfig = load("default.conf")
 
-    // TODO test it
     if (loader.getResource("housemd.conf") == null) defaultConfig
     else load("housemd.conf").withFallback(defaultConfig)
   }

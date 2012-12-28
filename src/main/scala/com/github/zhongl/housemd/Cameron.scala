@@ -54,7 +54,6 @@ class Cameron(port: String, inst: Instrumentation) {
       c <- inst.getAllLoadedClasses if c.getClassLoader == loader
       f <- c.getDeclaredFields if classOf[ThreadLocal[_]].isAssignableFrom(f.getType) && isStatic(f.getModifiers)
     } {
-      println(f)
       f.setAccessible(true)
       f.get(null).asInstanceOf[ThreadLocal[_]].remove()
     }

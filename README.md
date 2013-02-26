@@ -37,8 +37,13 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 
 ## Pre-requirement
 
-- JDK 6 +
+- JDK 6 
 - [sbt](https://github.com/harrah/xsbt)
+
+## Install from [jenv](https://github.com/linux-china/jenv)
+
+- install [jenv](https://github.com/linux-china/jenv)
+- execute command line: `$ jenv install housemd`
 
 ## Build from code
 

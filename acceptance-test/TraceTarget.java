@@ -24,7 +24,7 @@ public class TraceTarget {
 
         while (true) {
             addOne(0);
-            o.getClass().getMethod("m", String.class).invoke(o, (String) null);
+            o.getClass().getMethod("m", String.class).invoke(o, "");
             new E(1);
             try {
                 Thread.sleep(500L);
@@ -81,7 +81,7 @@ public class TraceTarget {
             this.s = s;
         }
 
-        public void m(int i, String s) {
+        public final void m(/*int i, String s*/) {
         }
 
         public final void m(String s) {

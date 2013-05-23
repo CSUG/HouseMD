@@ -26,6 +26,8 @@ import com.github.zhongl.yascli.Loggable
 import java.lang.System.{currentTimeMillis => now}
 import actors.TIMEOUT
 import java.util
+import scala.actors.Actor._
+import scala.actors._
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>

@@ -38,13 +38,13 @@ case class Context(
 
 object Context {
 
-  implicit val map2Context:(java.util.Map[String,AnyRef] => Context) = apply(_: java.util.Map[String, AnyRef])
+  implicit val map2Context: (java.util.Map[String, AnyRef] => Context) = apply(_: java.util.Map[String, AnyRef])
 
   def apply(map: java.util.Map[String, AnyRef]) = new Context(
     map.get(Advice.CLASS).asInstanceOf[String],
     map.get(Advice.METHOD).asInstanceOf[String],
     map.get(Advice.CLASS_LOADER).asInstanceOf[ClassLoader],
-    map.get(Advice.ARGUMENTS).asInstanceOf[Array[AnyRef]].map(_.toString),
+    map.get(Advice.ARGUMENTS).asInstanceOf[Array[AnyRef]] map (Option(_).getOrElse("null").toString),
     map.get(Advice.DESCRIPTOR).asInstanceOf[String],
     map.get(Advice.VOID_RETURN).asInstanceOf[Boolean],
     map.get(Advice.THIS),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ object Build extends sbt.Build {
   import Dependencies._
   import Unmanaged._
 
-  val VERSION  = "0.2.4"
+  val VERSION  = "0.2.5"
   val javaHome = sys.props("java.home").replace("/jre", "")
 
   lazy val proguard = proguardSettings ++ Seq(

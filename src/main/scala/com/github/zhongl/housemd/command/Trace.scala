@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ class Trace(val inst: Instrumentation, out: PrintOut)
       maxClassLoaderLength = math.max(maxClassLoaderLength, statistic.loader.length)
       maxMethodSignLength = math.max(maxMethodSignLength, statistic.methodSign.length)
 
-      statistics = statistics find {_.filter(context)} match {
+      statistics = statistics find { _.filter(context) } match {
         case Some(s) => (statistics - s) + (s + statistic)
         case None    => statistics + statistic
       }
@@ -125,11 +125,11 @@ class Trace(val inst: Instrumentation, out: PrintOut)
     def +(s: Statistic) = new Statistic(context, totalTimes + s.totalTimes, totalElapseMills + s.totalElapseMills)
 
     def filter(context: Context) = this.context.loader == context.loader &&
-      this.context.className == context.className &&
-      this.context.methodName == context.methodName &&
-      this.context.arguments.size == context.arguments.size &&
-      this.context.descriptor == context.descriptor &&
-      (isInit(context.methodName) || this.context.thisObject == context.thisObject)
+                                   this.context.className == context.className &&
+                                   this.context.methodName == context.methodName &&
+                                   this.context.arguments.size == context.arguments.size &&
+                                   this.context.descriptor == context.descriptor &&
+                                   (isInit(context.methodName) || this.context.thisObject == context.thisObject)
 
     def reps(maxMethodSignLength: Int, maxClassLoaderLength: Int) =
       "%1$-" + maxMethodSignLength + "s    %2$-" + maxClassLoaderLength + "s    %3$#9s    %4$#9sms    %5$s" format(
@@ -164,9 +164,10 @@ class DetailWriter(writer: BufferedWriter) {
     writer.newLine()
 
     context.resultOrException match {
-      case Some(x) if x.isInstanceOf[Throwable] => x.asInstanceOf[Throwable].getStackTrace.foreach { s =>
-        writer.write("\tat " + s)
-        writer.newLine()
+      case Some(x) if x.isInstanceOf[Throwable] => x.asInstanceOf[Throwable].getStackTrace.foreach {
+        s =>
+          writer.write("\tat " + s)
+          writer.newLine()
       }
       case _                                    =>
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.github.zhongl.housemd.misc.ReflectionUtils.*;
+import static com.github.zhongl.housemd.misc.ReflectionUtils.simpleNameOf;
 import static com.github.zhongl.yascli.JavaConvertions.manifest;
 import static com.github.zhongl.yascli.JavaConvertions.none;
 

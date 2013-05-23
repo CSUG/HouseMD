@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
     trace.stackFile.delete()
 
     val host = self
-    actor {trace.run(); host ! "exit"}
+    actor { trace.run(); host ! "exit" }
 
     var cond = true
     while (cond) {
@@ -64,76 +64,81 @@ class TraceSpec extends FunSpec with ShouldMatchers with AdviceReflection {
 
   describe("Trace") {
     it("should display statistics") {
-      parseAndRun("-t 3 A.m") { (out, detail, stack) =>
-        val methodFullName = """[\.\w\(\),\$ <>]+"""
-        val objectToString = """[\.\w,@\$ \[\]]+"""
-        val number = """\d+\s+"""
-        val elapse = """<?\d+ms"""
-        out.split("\n").filter(s => !s.startsWith("INFO") && !s.isEmpty).tail foreach {
-          _ should fullyMatch regex (methodFullName + objectToString + number + elapse + objectToString)
-        }
+      parseAndRun("-t 3 A.m") {
+        (out, detail, stack) =>
+          val methodFullName = """[\.\w\(\),\$ <>]+"""
+          val objectToString = """[\.\w,@\$ \[\]]+"""
+          val number = """\d+\s+"""
+          val elapse = """<?\d+ms"""
+          out.split("\n").filter(s => !s.startsWith("INFO") && !s.isEmpty).tail foreach {
+            _ should fullyMatch regex (methodFullName + objectToString + number + elapse + objectToString)
+          }
       }
     }
 
     it("should output invocation details") {
-      parseAndRun("-d -t 1 -l 1 A") { (out, detail, stack) =>
-        out.split("\n") should contain("INFO : You can get invocation detail from " + detail)
+      parseAndRun("-d -t 1 -l 1 A") {
+        (out, detail, stack) =>
+          out.split("\n") should contain("INFO : You can get invocation detail from " + detail)
 
-        val date = """\d{4}-\d{2}-\d{2}"""
-        val time = """\d{2}:\d{2}:\d{2}"""
-        val elapse = """\d+ms"""
-        val thread = """\[[^\]]+\]"""
-        val thisObject = """com\.github\.zhongl\.test\.A@[\da-f]+"""
-        val name = """com\.github\.zhongl\.test\.A\.(m|<init>)"""
-        val arguments = """\[\]"""
-        val result = "void"
-        Source.fromFile(detail).getLines() foreach {
-          _ should fullyMatch regex ((date :: time :: elapse :: thread :: thisObject :: name :: arguments :: result :: Nil)
-            .mkString(" "))
-        }
+          val date = """\d{4}-\d{2}-\d{2}"""
+          val time = """\d{2}:\d{2}:\d{2}"""
+          val elapse = """\d+ms"""
+          val thread = """\[[^\]]+\]"""
+          val thisObject = """com\.github\.zhongl\.test\.A@[\da-f]+"""
+          val name = """com\.github\.zhongl\.test\.A\.(m|<init>)"""
+          val arguments = """\[\]"""
+          val result = "void"
+          Source.fromFile(detail).getLines() foreach {
+            _ should fullyMatch regex ((date :: time :: elapse :: thread :: thisObject :: name :: arguments :: result :: Nil)
+              .mkString(" "))
+          }
       }
     }
 
     it("should output invocation details with exception stack trace") {
-      parseAndRun("-d -t 1 -l 1 A", new Exception) { (out, detail, stack) =>
-        val date = """\d{4}-\d{2}-\d{2}"""
-        val time = """\d{2}:\d{2}:\d{2}"""
-        val elapse = """\d+ms"""
-        val thread = """\[[^\]]+\]"""
-        val thisObject = """com\.github\.zhongl\.test\.A@[\da-f]+"""
-        val name = """com\.github\.zhongl\.test\.A\.(m|<init>)"""
-        val arguments = """\[\]"""
-        val result = "java\\.lang\\.Exception"
-        val log = (date :: time :: elapse :: thread :: thisObject :: name :: arguments :: result :: Nil).mkString(" ")
-        Source.fromFile(detail).getLines() foreach {
-          _ should {
-            fullyMatch regex log or fullyMatch regex ("\\tat .+")
+      parseAndRun("-d -t 1 -l 1 A", new Exception) {
+        (out, detail, stack) =>
+          val date = """\d{4}-\d{2}-\d{2}"""
+          val time = """\d{2}:\d{2}:\d{2}"""
+          val elapse = """\d+ms"""
+          val thread = """\[[^\]]+\]"""
+          val thisObject = """com\.github\.zhongl\.test\.A@[\da-f]+"""
+          val name = """com\.github\.zhongl\.test\.A\.(m|<init>)"""
+          val arguments = """\[\]"""
+          val result = "java\\.lang\\.Exception"
+          val log = (date :: time :: elapse :: thread :: thisObject :: name :: arguments :: result :: Nil).mkString(" ")
+          Source.fromFile(detail).getLines() foreach {
+            _ should {
+              fullyMatch regex log or fullyMatch regex ("\\tat .+")
+            }
           }
-        }
       }
     }
 
     it("should output invocation stack") {
-      parseAndRun("-s -l 1 A") { (out, detail, stack) =>
-        out.split("\n") should contain("INFO : You can get invocation stack from " + stack)
+      parseAndRun("-s -l 1 A") {
+        (out, detail, stack) =>
+          out.split("\n") should contain("INFO : You can get invocation stack from " + stack)
 
-        val lines = Source.fromFile(stack).getLines().toList.dropRight(1)
-        val head = """com\.github\.zhongl\.test\.A\.m\(\)V call by thread \[[\w-]+\]""".r
-        val st = """\t\S+\(\S+:\d+\)""".r
-        lines.tail foreach {
-          _ match {
-            case head() =>
-            case st()   =>
-            case ""     =>
-            case _      => fail()
+          val lines = Source.fromFile(stack).getLines().toList.dropRight(1)
+          val head = """com\.github\.zhongl\.test\.A\.m\(\)V call by thread \[[\w-]+\]""".r
+          val st = """\t\S+\(\S+:\d+\)""".r
+          lines.tail foreach {
+            _ match {
+              case head() =>
+              case st()   =>
+              case ""     =>
+              case _      => fail()
+            }
           }
-        }
       }
     }
 
     it("should only include package com.github") {
-      parseAndRun("-p com\\.github String") { (out, detail, stack) =>
-        out should not be ("No matched class")
+      parseAndRun("-p com\\.github String") {
+        (out, detail, stack) =>
+          out should not be ("No matched class")
       }
     }
 

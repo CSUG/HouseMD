@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,14 +33,16 @@ import java.util.jar.{Attributes, JarInputStream}
  */
 object House extends Command("housemd", "a runtime diagnosis tool of JVM.", PrintOut(System.out)) with Application {
 
-  implicit private val string2Port = { value: String =>
-    val p = value.toInt
-    if (p > 1024 && p < 65536) p else throw new IllegalArgumentException(", it should be between 1025 and 65535")
+  implicit private val string2Port = {
+    value: String =>
+      val p = value.toInt
+      if (p > 1024 && p < 65536) p else throw new IllegalArgumentException(", it should be between 1025 and 65535")
   }
 
-  implicit private val string2File = { value: String =>
-    val file = new File(value)
-    if (file.exists() && file.isFile) file else throw new IllegalArgumentException(", it should be an existed file")
+  implicit private val string2File = {
+    value: String =>
+      val file = new File(value)
+      if (file.exists() && file.isFile) file else throw new IllegalArgumentException(", it should be an existed file")
   }
 
   private val port = option[Int]("-p" :: "--port" :: Nil, "set console local socket server port number.", 54321)
@@ -49,15 +51,15 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
 
   private lazy val agentJarFile = sourceOf(Manifest.classType(getClass))
   private lazy val agentOptions = agentJarFile ::
-    classNameOf[Telephone] ::
-    port() ::
-    classNameOf[Trace] ::
-    classNameOf[Loaded] ::
-    classNameOf[Env] ::
-    classNameOf[Inspect] ::
-    classNameOf[Prop] ::
-    classNameOf[Resources] ::
-    Nil
+                                  classNameOf[Telephone] ::
+                                  port() ::
+                                  classNameOf[Trace] ::
+                                  classNameOf[Loaded] ::
+                                  classNameOf[Env] ::
+                                  classNameOf[Inspect] ::
+                                  classNameOf[Prop] ::
+                                  classNameOf[Resources] ::
+                                  Nil
 
   private lazy val errorDetailFile   = "/tmp/housemd.err." + pid()
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))

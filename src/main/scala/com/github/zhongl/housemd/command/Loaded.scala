@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,11 +34,12 @@ class Loaded(val inst: Instrumentation, out: PrintOut)
 
   override def run() {
     val k = classSimpleName()
-    val matched = inst.getAllLoadedClasses filter {simpleNameOf(_) == k}
+    val matched = inst.getAllLoadedClasses filter { simpleNameOf(_) == k }
     if (matched.isEmpty) println("No matched class")
-    else matched foreach { c =>
-      println(c.getName + " -> " + sourceOf(Manifest.classType(c)))
-      if (hierarchyable()) layout(Option(c.getClassLoader))
+    else matched foreach {
+      c =>
+        println(c.getName + " -> " + sourceOf(Manifest.classType(c)))
+        if (hierarchyable()) layout(Option(c.getClassLoader))
     }
   }
 

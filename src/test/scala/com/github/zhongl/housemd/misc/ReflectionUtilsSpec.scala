@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class ReflectionUtilsSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should include <init> if it is a class") {
-      ReflectionUtils.constructorAndMethodNamesOf(classOf[A]) should contain ("<init>")
+      ReflectionUtils.constructorAndMethodNamesOf(classOf[A]) should contain("<init>")
     }
 
     it("should not include <init> if it is a interface") {

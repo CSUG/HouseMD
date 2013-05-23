@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,41 +30,45 @@ import annotation.tailrec
 class LoadedSpec extends FunSpec with ShouldMatchers {
   describe("Loaded") {
     it("should display the source jar of String") {
-      parseAndRun("String") {_ should startWith("java.lang.String -> ")}
+      parseAndRun("String") { _ should startWith("java.lang.String -> ") }
     }
 
     it("should display the classloader hierarchies") {
-      parseAndRun("-h Loaded") { out =>
-        val lines = out.split("\n")
-        lines.head should startWith("com.github.zhongl.housemd.command.Loaded -> ")
+      parseAndRun("-h Loaded") {
+        out =>
+          val lines = out.split("\n")
+          lines.head should startWith("com.github.zhongl.housemd.command.Loaded -> ")
 
-        @tailrec
-        def eq(list: List[String], classLoader: ClassLoader) {
-          list match {
-            case head :: tail => head should endWith(classLoader.toString); eq(tail, classLoader.getParent)
-            case Nil          => // end
+          @tailrec
+          def eq(list: List[String], classLoader: ClassLoader) {
+            list match {
+              case head :: tail => head should endWith(classLoader.toString); eq(tail, classLoader.getParent)
+              case Nil          => // end
+            }
           }
-        }
 
-        eq(lines.tail.toList, classOf[Loaded].getClassLoader)
+          eq(lines.tail.toList, classOf[Loaded].getClassLoader)
       }
     }
 
     it("should complete class simple name") {
-      complete("Lo") { (cursor, candidates) =>
-        cursor should be(0)
-        candidates should contain("Loaded".asInstanceOf[CharSequence])
+      complete("Lo") {
+        (cursor, candidates) =>
+          cursor should be(0)
+          candidates should contain("Loaded".asInstanceOf[CharSequence])
       }
-      complete("-h Lo") { (cursor, candidates) =>
-        cursor should be(3)
-        candidates should contain("Loaded".asInstanceOf[CharSequence])
+      complete("-h Lo") {
+        (cursor, candidates) =>
+          cursor should be(3)
+          candidates should contain("Loaded".asInstanceOf[CharSequence])
       }
     }
 
     it("should complete all class simple name") {
-      complete("") { (cursor, candidates) =>
-        cursor should be(0)
-        candidates should not be ('empty)
+      complete("") {
+        (cursor, candidates) =>
+          cursor should be(0)
+          candidates should not be ('empty)
       }
     }
 

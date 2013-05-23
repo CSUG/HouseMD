@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,26 +16,14 @@
 
 package com.github.zhongl.housemd.command;
 
-import static com.github.zhongl.yascli.JavaConvertions.defaultConverter;
-import static com.github.zhongl.yascli.JavaConvertions.get;
-import static com.github.zhongl.yascli.JavaConvertions.is;
-import static com.github.zhongl.yascli.JavaConvertions.list;
-import static com.github.zhongl.yascli.JavaConvertions.manifest;
-import static com.github.zhongl.yascli.JavaConvertions.none;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
-
+import com.github.zhongl.yascli.Command;
+import com.github.zhongl.yascli.PrintOut;
 import jline.console.completer.Completer;
 import scala.Function0;
 
-import com.github.zhongl.yascli.Command;
-import com.github.zhongl.yascli.PrintOut;
+import java.util.*;
+
+import static com.github.zhongl.yascli.JavaConvertions.*;
 
 
 /**

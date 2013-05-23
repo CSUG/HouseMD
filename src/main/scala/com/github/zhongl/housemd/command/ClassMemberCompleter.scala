@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,15 +53,15 @@ trait MethodFilterCompleter extends ClassMemberCompleter {
     }
 
   override protected def completeAll(classSimpleName: String, cursor: Int, candidates: List[CharSequence]) =
-    allDeclaredMethodsOf(classSimpleName) {a => a} match {
+    allDeclaredMethodsOf(classSimpleName) { a => a } match {
       case Array() => -1
-      case all     => all.flatten.sorted foreach {candidates.add}; cursor
+      case all     => all.flatten.sorted foreach { candidates.add }; cursor
     }
 
   override protected def complete(simpleName: String, prefix: String, cursor: Int, candidates: List[CharSequence]) =
-    allDeclaredMethodsOf(simpleName) {_ collect {case m if m.startsWith(prefix) => m }} match {
+    allDeclaredMethodsOf(simpleName) { _ collect { case m if m.startsWith(prefix) => m } } match {
       case Array() => -1
-      case all     => all.flatten.sorted foreach {candidates.add}; cursor - prefix.length
+      case all     => all.flatten.sorted foreach { candidates.add }; cursor - prefix.length
     }
 }
 
@@ -74,14 +74,14 @@ trait FieldFilterCompleter extends ClassMemberCompleter {
     }
 
   override protected def completeAll(classSimpleName: String, cursor: Int, candidates: List[CharSequence]) =
-    allDeclaredFieldsOf(classSimpleName) {_ map {_.getName}} match {
+    allDeclaredFieldsOf(classSimpleName) { _ map { _.getName } } match {
       case Array() => -1
-      case all     => all.flatten.sorted foreach {candidates.add}; cursor
+      case all     => all.flatten.sorted foreach { candidates.add }; cursor
     }
 
   override protected def complete(simpleName: String, prefix: String, cursor: Int, candidates: List[CharSequence]) =
-    allDeclaredFieldsOf(simpleName) {_ collect {case f if f.getName.startsWith(prefix) => f.getName }} match {
+    allDeclaredFieldsOf(simpleName) { _ collect { case f if f.getName.startsWith(prefix) => f.getName } } match {
       case Array() => -1
-      case all     => all.flatten.sorted foreach {candidates.add}; cursor - prefix.length
+      case all     => all.flatten.sorted foreach { candidates.add }; cursor - prefix.length
     }
 }

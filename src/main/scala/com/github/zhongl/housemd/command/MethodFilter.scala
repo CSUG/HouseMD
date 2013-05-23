@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class MethodFilter(classSimpleName: String, methodName: String = "*") {
     }
   }
 
-  private def lazyFilter(cond: => Boolean)(m: String) = if (cond) {methodName == "*" || methodName == m} else false
+  private def lazyFilter(cond: => Boolean)(m: String) = if (cond) {methodName == "*" || methodName == m } else false
 
   private def lazyFilter(c: Class[_]): (String => Boolean) = lazyFilter(filterOnly(c))
 
@@ -44,8 +44,8 @@ class MethodFilter(classSimpleName: String, methodName: String = "*") {
     if (classSimpleName.endsWith("+")) {
       val realname = classSimpleName.dropRight(1)
       (simpleNameOf(className) == realname ||
-        superClassName != null && simpleNameOf(superClassName) == realname) ||
-        interfaceNames.find(simpleNameOf(_) == realname).isDefined
+       superClassName != null && simpleNameOf(superClassName) == realname) ||
+      interfaceNames.find(simpleNameOf(_) == realname).isDefined
     } else {
       simpleNameOf(className) == classSimpleName
     }
@@ -70,7 +70,7 @@ object MethodFilter {
     }
   }
 
-  implicit val string2MethodFilters = (_: String).split("\\s+") map {apply}
+  implicit val string2MethodFilters = (_: String).split("\\s+") map { apply }
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ class TransformCommandSpec extends FunSpec with ShouldMatchers with AdviceReflec
     concrete.parse(arguments.split("\\s+"))
 
     val host = self
-    actor {concrete.run(); host ! "exit"}
+    actor { concrete.run(); host ! "exit" }
 
     var cond = true
     while (cond) {
@@ -83,56 +83,63 @@ class TransformCommandSpec extends FunSpec with ShouldMatchers with AdviceReflec
 
   describe("TransformCommand") {
     it("should probe final class") {
-      parseAndRun("-l 1 F.m") { out =>
-        out.split("\n").filter(!_.startsWith("INFO")) foreach {
-          _ should fullyMatch regex ("F.+")
-        }
+      parseAndRun("-l 1 F.m") {
+        out =>
+          out.split("\n").filter(!_.startsWith("INFO")) foreach {
+            _ should fullyMatch regex ("F.+")
+          }
       }
     }
 
     it("should reset by overlimit") {
-      parseAndRun("-l 1 -t 3 A") { out =>
-        out.split("\n").dropRight(1).last should be("INFO : Ended by overlimit")
+      parseAndRun("-l 1 -t 3 A") {
+        out =>
+          out.split("\n").dropRight(1).last should be("INFO : Ended by overlimit")
       }
     }
 
     it("should reset by timeout") {
-      parseAndRun("-l 100000 -t 1 A") { out =>
-        out.split("\n").dropRight(1).last should be("INFO : Ended by timeout")
+      parseAndRun("-l 100000 -t 1 A") {
+        out =>
+          out.split("\n").dropRight(1).last should be("INFO : Ended by timeout")
       }
     }
 
     it("should not probe class loaded by boot classloader") {
-      parseAndRun("String") { out =>
-        out.split("\n").head should be("WARN : Skip " + classOf[String] + " loaded from bootclassloader")
+      parseAndRun("String") {
+        out =>
+          out.split("\n").head should be("WARN : Skip " + classOf[String] + " loaded from bootclassloader")
       }
     }
 
     it("should not probe interface") {
-      parseAndRun("I") { out =>
-        out.split("\n") should {
-          contain("WARN : Skip " + classOf[I])
-          contain("No matched class")
-        }
+      parseAndRun("I") {
+        out =>
+          out.split("\n") should {
+            contain("WARN : Skip " + classOf[I])
+            contain("No matched class")
+          }
       }
     }
 
     it("should not probe classes belongs to HouseMD") {
-      parseAndRun("Duck") { out =>
-        out.split("\n") should {
-          contain("WARN : Skip " + classOf[Duck] + " belongs to HouseMD.")
-          contain("No matched class")
-        }
+      parseAndRun("Duck") {
+        out =>
+          out.split("\n") should {
+            contain("WARN : Skip " + classOf[Duck] + " belongs to HouseMD.")
+            contain("No matched class")
+          }
       }
     }
 
     it("should probe F by I+") {
-      parseAndRun("-l 1 I+") { out =>
-        val withoutInfo = out.split("\n").filter(!_.startsWith("INFO"))
-        withoutInfo.head should be("WARN : Skip " + classOf[I] + " ")
-        withoutInfo.tail foreach {
-          _ should fullyMatch regex ("F.+")
-        }
+      parseAndRun("-l 1 I+") {
+        out =>
+          val withoutInfo = out.split("\n").filter(!_.startsWith("INFO"))
+          withoutInfo.head should be("WARN : Skip " + classOf[I] + " ")
+          withoutInfo.tail foreach {
+            _ should fullyMatch regex ("F.+")
+          }
       }
     }
 

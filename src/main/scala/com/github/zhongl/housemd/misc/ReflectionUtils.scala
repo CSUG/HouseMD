@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ object ReflectionUtils {
   def getOrForceToNativeString(instance: AnyRef) =
     if (instance.toString.startsWith(instance.getClass + "@")) instance.toString else toNativeString(instance)
 
-  /**see https://github.com/zhongl/HouseMD/issues/17 */
+  /** see https://github.com/zhongl/HouseMD/issues/17 */
   def loadOrDefine(clazz: Class[_], inClassLoader: ClassLoader) = {
     val name = clazz.getName
     try {

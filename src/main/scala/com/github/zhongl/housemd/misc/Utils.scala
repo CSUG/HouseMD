@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@ object Utils {
   private val noPath = "null"
 
   private[misc] object File {
-    def unapply(url:URL) = url.getFile match {
+    def unapply(url: URL) = url.getFile match {
       case FileRE(_, source) => Some(source)
-      case _ => None
+      case _                 => None
     }
   }
 
@@ -47,16 +47,16 @@ object Utils {
     bytes.toByteArray
   }
 
-  def locationOf[T:Manifest] = Option(manifest[T].erasure.getProtectionDomain.getCodeSource) match {
+  def locationOf[T: Manifest] = Option(manifest[T].erasure.getProtectionDomain.getCodeSource) match {
     case Some(codeSource) => Option(codeSource.getLocation)
     case None             => Option(manifest[T].erasure.getResource(resourceNameOf[T]))
   }
 
-  def resourceNameOf[T:Manifest] = "/" + manifest[T].erasure.getName.replace('.', '/') + ".class"
+  def resourceNameOf[T: Manifest] = "/" + manifest[T].erasure.getName.replace('.', '/') + ".class"
 
-  def sourceOf[T:Manifest] = locationOf[T] match {
+  def sourceOf[T: Manifest] = locationOf[T] match {
     case Some(File(path)) => path
-    case None => noPath
+    case None             => noPath
   }
 
   def classNameOf[T: Manifest] = manifest[T].erasure.getName

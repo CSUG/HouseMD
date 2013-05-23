@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -56,11 +56,13 @@ class InspectSpec extends FunSpec with ShouldMatchers with AdviceReflection {
         host.receiveWithin(10) {
           case TIMEOUT =>
             invoke(classOf[A].getName, "m", "()V", g, Array.empty[AnyRef], null)
-          case "exit" => cond = false
+          case "exit"  => cond = false
         }
       }
 
-      out.toString.split("\n").filter(l => !l.isEmpty && !l.startsWith("INFO")) should contain("G.i 5 " + g + " " + g.getClass.getClassLoader)
+      out.toString.split("\n").filter(l => !l.isEmpty && !l.startsWith("INFO")) should contain("G.i 5 " + g + " " + g
+        .getClass
+        .getClassLoader)
     }
   }
 
@@ -71,7 +73,7 @@ class InspectSpec extends FunSpec with ShouldMatchers with AdviceReflection {
     doReturn(Array(classOf[G])).when(inst).getAllLoadedClasses
 
     val candidates = new util.ArrayList[CharSequence]()
-    inspect.complete("G.", 2, candidates) should be (2)
+    inspect.complete("G.", 2, candidates) should be(2)
 
     candidates should contain("i".asInstanceOf[CharSequence])
   }
@@ -83,7 +85,7 @@ class InspectSpec extends FunSpec with ShouldMatchers with AdviceReflection {
     doReturn(Array(classOf[Duck])).when(inst).getAllLoadedClasses
 
     val candidates = new util.ArrayList[CharSequence]()
-    inspect.complete("Duc", 3, candidates) should be (0)
+    inspect.complete("Duc", 3, candidates) should be(0)
 
     candidates should contain("Duck".asInstanceOf[CharSequence])
   }

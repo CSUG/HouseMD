@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,12 +19,10 @@ package com.github.zhongl.housemd.instrument
 import java.lang.instrument.{ClassFileTransformer, Instrumentation}
 import java.security.ProtectionDomain
 import java.util.concurrent.atomic.AtomicInteger
-import actors.Actor._
 
 import com.github.zhongl.housemd.misc.ReflectionUtils._
 import com.github.zhongl.yascli.Loggable
 import java.lang.System.{currentTimeMillis => now}
-import actors.TIMEOUT
 import java.util
 import scala.actors.Actor._
 import scala.actors._
@@ -40,22 +38,23 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
     implicit val l = log
     implicit val h = hook
 
-    val candidates = inst.getAllLoadedClasses filter { c =>
+    val candidates = inst.getAllLoadedClasses filter {
+      c =>
 
-      @inline
-      def skipClass(description: String)(cause: Class[_] => Boolean) =
-        if (cause(c)) {log.warn("Skip %1$s %2$s" format(c, description)); false} else true
+        @inline
+        def skipClass(description: String)(cause: Class[_] => Boolean) =
+          if (cause(c)) {log.warn("Skip %1$s %2$s" format(c, description)); false } else true
 
-      @inline
-      def isNotBelongsHouseMD = skipClass("belongs to HouseMD") {_.getName.startsWith("com.github.zhongl.housemd")}
+        @inline
+        def isNotBelongsHouseMD = skipClass("belongs to HouseMD") { _.getName.startsWith("com.github.zhongl.housemd") }
 
-      @inline
-      def isNotInterface = skipClass("") {_.isInterface}
+        @inline
+        def isNotInterface = skipClass("") { _.isInterface }
 
-      @inline
-      def isNotFromBootClassLoader = skipClass("loaded from bootclassloader") {isFromBootClassLoader}
+        @inline
+        def isNotFromBootClassLoader = skipClass("loaded from bootclassloader") { isFromBootClassLoader }
 
-      filter(c) && isNotBelongsHouseMD && isNotInterface && isNotFromBootClassLoader
+        filter(c) && isNotBelongsHouseMD && isNotInterface && isNotFromBootClassLoader
     }
 
     if (candidates.isEmpty) {
@@ -113,29 +112,31 @@ class Transform extends ((Instrumentation, Filter, Seconds, Int, Loggable, Hook)
     }
 
   private def probe(classes: Array[Class[_]], advice: Advice)(implicit inst: Instrumentation, log: Loggable) {
-    classes foreach { c =>
-      try {
-        loadOrDefineAdviceClassFrom(c.getClassLoader)
-          .getMethod(Advice.SET_DELEGATE, classOf[Object])
-          .invoke(null, advice)
-        inst.retransformClasses(c)
-        log.info("Probe " + c)
-      } catch {
-        case e => log.warn("Failed to probe " + c + " because of " + e)
-      }
+    classes foreach {
+      c =>
+        try {
+          loadOrDefineAdviceClassFrom(c.getClassLoader)
+            .getMethod(Advice.SET_DELEGATE, classOf[Object])
+            .invoke(null, advice)
+          inst.retransformClasses(c)
+          log.info("Probe " + c)
+        } catch {
+          case e => log.warn("Failed to probe " + c + " because of " + e)
+        }
     }
   }
 
   // FIXME : reduce duplication between probe and reset .
   private def reset(classes: Array[Class[_]])(implicit inst: Instrumentation, log: Loggable) {
-    classes foreach { c =>
-      try {
-        loadOrDefineAdviceClassFrom(c.getClassLoader).getMethod(Advice.SET_DEFAULT_DELEGATE).invoke(null)
-        inst.retransformClasses(c)
-        log.info("Reset " + c)
-      } catch {
-        case e => log.warn("Failed to reset " + c + " because of " + e)
-      }
+    classes foreach {
+      c =>
+        try {
+          loadOrDefineAdviceClassFrom(c.getClassLoader).getMethod(Advice.SET_DEFAULT_DELEGATE).invoke(null)
+          inst.retransformClasses(c)
+          log.info("Reset " + c)
+        } catch {
+          case e => log.warn("Failed to reset " + c + " because of " + e)
+        }
     }
   }
 

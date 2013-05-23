@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 zhongl
+ * Copyright 2013 zhongl
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import jline.console.ConsoleReader
 import com.github.zhongl.yascli.{Shell, PrintOut, Command}
 import jline.TerminalFactory
 import jline.console.history.FileHistory
-import management.ManagementFactory
 import java.io.File
 import com.github.zhongl.housemd.command.Last
 
@@ -44,7 +43,9 @@ class Telephone(inst: Instrumentation, port: Int, classes: Array[Class[Command]]
       new Shell(name = "housemd", description = "a runtime diagnosis tool of jvm.", reader = reader) {
         private val lastCommand = new Last(out)
 
-        override protected def commands = Quit :: helpCommand :: lastCommand :: classes.map {toCommand(_, PrintOut(reader))}.toList
+        override protected def commands = Quit :: helpCommand :: lastCommand :: classes
+          .map { toCommand(_, PrintOut(reader)) }
+          .toList
 
         override def error(a: Any) {
           super.error(a)

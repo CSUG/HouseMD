@@ -132,7 +132,7 @@ class Trace(val inst: Instrumentation, out: PrintOut)
                                    (isInit(context.methodName) || this.context.thisObject == context.thisObject)
 
     def reps(maxMethodSignLength: Int, maxClassLoaderLength: Int) =
-      "%1$-" + maxMethodSignLength + "s    %2$-" + maxClassLoaderLength + "s    %3$#9s    %4$#9sms    %5$s" format(
+      "%1$-" + maxMethodSignLength + "s    %2$-" + maxClassLoaderLength + "s    %3$9s    %4$9sms    %5$s" format(
         methodSign,
         loader,
         totalTimes,

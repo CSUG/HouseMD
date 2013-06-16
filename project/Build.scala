@@ -23,7 +23,7 @@ object Build extends sbt.Build {
   import Dependencies._
   import Unmanaged._
 
-  val VERSION  = "0.2.5"
+  val VERSION  = "0.2.6"
   val javaHome = sys.props("java.home").replace("/jre", "")
 
   lazy val proguard = proguardSettings ++ Seq(

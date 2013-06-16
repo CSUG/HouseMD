@@ -48,6 +48,8 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
   private val port = option[Int]("-p" :: "--port" :: Nil, "set console local socket server port number.", 54321)
   private val pid  = parameter[String]("pid", "id of process to be diagnosing.")
 
+  private val printVersion = flag("-v" :: "--version" :: Nil, "show version.")
+
 
   private lazy val agentJarFile = sourceOf(Manifest.classType(getClass))
   private lazy val agentOptions = agentJarFile ::
@@ -65,6 +67,11 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
   private lazy val errorDetailWriter = new BufferedWriter(new FileWriter(errorDetailFile))
 
   def run() {
+    if (printVersion()) {
+      println("v" + version)
+      return
+    }
+
     if (ManagementFactory.getOperatingSystemMXBean.getName.toLowerCase.contains("window")) {
       throw new IllegalStateException("Sorry, Windows is not supported now.")
     }
@@ -86,16 +93,18 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
 
       info("Welcome to HouseMD " + version)
 
-      vm.loadAgent(agentJarFile, agentOptions mkString (" "))
+      vm.loadAgent(agentJarFile, agentOptions mkString " ")
       vm.detach()
 
       mobilephone.start()
     } catch {
-      case e => error(e); silentClose(errorDetailWriter)
+      case e: Throwable => error(e); silentClose(errorDetailWriter)
     }
   }
 
-  private def version = {
+  override def help = "version: " + version + '\n' + super.help
+
+  private lazy val version = {
     val stream = new JarInputStream(new FileInputStream(agentJarFile))
     try {
       val attributes = stream.getManifest.getMainAttributes
@@ -107,9 +116,11 @@ object House extends Command("housemd", "a runtime diagnosis tool of JVM.", Prin
 
   override def error(a: Any) {
     super.error(a)
-    if (a.isInstanceOf[Throwable]) {
-      super.error("You can get more details in " + errorDetailFile)
-      a.asInstanceOf[Throwable].getStackTrace foreach { s => errorDetailWriter.write(s + "\n") }
+    a match {
+      case throwable: Throwable =>
+        super.error("You can get more details in " + errorDetailFile)
+        throwable.getStackTrace foreach { s => errorDetailWriter.write(s + "\n") }
+      case _                    =>
     }
   }
 

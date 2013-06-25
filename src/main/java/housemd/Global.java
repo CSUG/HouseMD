@@ -5,21 +5,22 @@ import sun.reflect.Reflection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+/**
+ * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
+ */
 public class Global {
     // Avoiding overflow by blocking queue
     public static final BlockingQueue<Object> QUEUE = new ArrayBlockingQueue<Object>(1000);
 
-    // HouseMD agent should load this class first
-    private static final Thread AGENT_THREAD = Thread.currentThread();
-
     // options enums
-    private static final int ELAPSE    = 0x01;
-    private static final int ARGS      = 0x02;
-    private static final int RESULT    = 0x04;
-    private static final int STACK     = 0x08;
-    private static final int EXCEPTION = 0x10;
-    private static final int THREAD    = 0x20;
+    public static final int ELAPSE    = 0x01;
+    public static final int ARGS      = 0x02;
+    public static final int RESULT    = 0x04;
+    public static final int STACK     = 0x08;
+    public static final int EXCEPTION = 0x10;
+    public static final int THREAD    = 0x20;
 
+    private static volatile Thread AGENT_THREAD = Thread.currentThread();
 
     public static void offer(String klass,
                              String method,

@@ -18,9 +18,8 @@ public class Global {
     public static final int RESULT    = 0x04;
     public static final int STACK     = 0x08;
     public static final int EXCEPTION = 0x10;
-    public static final int THREAD    = 0x20;
 
-    private static volatile Thread AGENT_THREAD = Thread.currentThread();
+    public static volatile Thread AGENT_THREAD = null;
 
     public static void offer(String klass,
                              String method,
@@ -40,11 +39,11 @@ public class Global {
                 descriptor,
                 self,
                 loader,
+                current,
                 (options & EXCEPTION) == EXCEPTION,
                 (options & ARGS) == ARGS ? args : null,
                 (options & RESULT) == RESULT ? result : null,
                 (options & ELAPSE) == ELAPSE ? elapse : -1L,
-                (options & THREAD) == THREAD ? current : null,
                 (options & STACK) == STACK ? currentStackTrace() : null
         });
     }

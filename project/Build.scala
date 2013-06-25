@@ -84,6 +84,8 @@ object Build extends sbt.Build {
 
     lazy val compileLibs = Seq(
       "org.ow2.asm" % "asm-commons" % "4.0",
+      "com.google.guava" % "guava" % "14.0.1",
+      "org.scalaz" % "scalaz-core_2.10" % "7.0.0",
       "com.github.zhongl" % "yascli_2.10" % "0.2.0",
       "com.typesafe.akka" % "akka-actor_2.10" % "2.1.4"
     )

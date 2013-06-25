@@ -9,8 +9,7 @@ import com.google.common.io.ByteStreams
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-class Foreman(conf: Map[String, String], inst: Instrumentation) extends (() => Unit) {
-
+class Foreman(conf: Map[String, String], inst: Instrumentation) {
 
   def apply() {
     inst.appendToBootstrapClassLoaderSearch(globalJar)

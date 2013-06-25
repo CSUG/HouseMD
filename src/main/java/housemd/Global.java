@@ -1,3 +1,5 @@
+package housemd;
+
 import sun.reflect.Reflection;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -43,7 +45,7 @@ public class Global {
                 (options & ELAPSE) == ELAPSE ? elapse : -1L,
                 (options & THREAD) == THREAD ? current : null,
                 (options & STACK) == STACK ? currentStackTrace() : null
-        })
+        });
     }
 
     /**

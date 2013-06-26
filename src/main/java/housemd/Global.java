@@ -33,7 +33,11 @@ public class Global {
         final Thread current = Thread.currentThread();
 
         if (QUEUE == self || Global.class == Reflection.getCallerClass(3) || AGENT_THREAD == current) {
-            if (AGENT_THREAD == null) QUEUE.offer(NULL_AGENT_THREAD);
+            return;
+        }
+
+        if (AGENT_THREAD == null) {
+            QUEUE.offer(NULL_AGENT_THREAD);
             return;
         }
 

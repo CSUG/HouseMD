@@ -10,8 +10,11 @@ import sun.misc.Unsafe
  */
 class ProbeSpec extends FunSpec with ShouldMatchers {
 
+  Global.AGENT_THREAD = new Thread()
+
   describe("A probe") {
     it("should get invocation context of ProbeTarget.nothing()") {
+
       val method = "nothing"
 
       probedTargetClass.getMethod(method).invoke(probedTargetInstance)
@@ -36,7 +39,6 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
     it("should get invocation context of ProbeTarget.error()") {
       val method = "error"
       var error: Throwable = null
-
 
       try {
         probedTargetClass.getMethod(method).invoke(probedTargetInstance)
@@ -94,7 +96,7 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
   lazy val probedTargetClass = {
     val klass = "housemd.ProbeTarget"
     val bytecode = Probe(klass,
-      m => m == "nothing" || m == "error" || m == "value",
+      m => m != "<init>",
       Global.OP_RESULT)(bytecodeOf("/housemd/ProbeTarget.class"))
     defineClass(klass, bytecode)
   }

@@ -5,9 +5,6 @@ import sun.reflect.Reflection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-/**
- * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
- */
 public class Global {
     public static final String NULL_AGENT_THREAD = "NULL_AGENT_THREAD";
 

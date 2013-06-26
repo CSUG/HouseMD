@@ -12,26 +12,9 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
 
   describe("A probe") {
     it("should get invocation context of ProbeTarget.nothing()") {
-
       val name = "nothing"
-
       Probed.method(name).invoke()
-
-      val event = Global.QUEUE.poll().asInstanceOf[Array[AnyRef]]
-
-      event should be(Array(
-        "housemd/ProbeTarget",
-        name,
-        "()V",
-        Probed.instance,
-        Probed.loader,
-        Thread.currentThread(),
-        false,
-        Array.empty,
-        null,
-        -1L,
-        null)
-      )
+      Global.QUEUE.poll() should be(event(method = name, descriptor = "()V", exception = false, result = null))
     }
 
     it("should get invocation context of ProbeTarget.error()") {
@@ -44,46 +27,29 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
         case t: Throwable => error = t.getCause
       }
 
-      val event = Global.QUEUE.poll().asInstanceOf[Array[AnyRef]]
-
-      event should be(Array(
-        "housemd/ProbeTarget",
-        name,
-        "()V",
-        Probed.instance,
-        Probed.loader,
-        Thread.currentThread(),
-        true,
-        Array.empty,
-        error,
-        -1L,
-        null)
-      )
+      Global.QUEUE.poll() should be(event(method = name, descriptor = "()V", exception = true, result = error))
 
     }
 
     it("should get invocation context of ProbeTarget.value()") {
       val name = "value"
-
       Probed.method(name).invoke()
-
-      val event = Global.QUEUE.poll().asInstanceOf[Array[AnyRef]]
-
-      event should be(Array(
-        "housemd/ProbeTarget",
-        name,
-        "()I",
-        Probed.instance,
-        Probed.loader,
-        Thread.currentThread(),
-        false,
-        Array.empty,
-        1,
-        -1L,
-        null)
-      )
-
+      Global.QUEUE.poll() should be(event(method = name, descriptor = "()I", exception = false, result = 1))
     }
   }
 
+
+  def event(method: String, descriptor: String, exception: Boolean, result: Any) = Array(
+    "housemd/ProbeTarget",
+    method,
+    descriptor,
+    Probed.instance,
+    Probed.loader,
+    Thread.currentThread(),
+    exception,
+    Array.empty,
+    result,
+    -1L,
+    null
+  )
 }

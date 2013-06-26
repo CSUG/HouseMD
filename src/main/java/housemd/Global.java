@@ -14,12 +14,12 @@ public class Global {
     // Avoiding overflow by blocking queue
     public static final BlockingQueue<Object> QUEUE = new ArrayBlockingQueue<Object>(1000);
 
-    // options enums
-    public static final int ELAPSE    = 0x01;
-    public static final int ARGS      = 0x02;
-    public static final int RESULT    = 0x04;
-    public static final int STACK     = 0x08;
-    public static final int EXCEPTION = 0x10;
+    // option codes
+    public static final int OP_ELAPSE    = 0x01;
+    public static final int OP_ARGS      = 0x02;
+    public static final int OP_RESULT    = 0x04;
+    public static final int OP_STACK     = 0x08;
+    public static final int OP_EXCEPTION = 0x10;
 
     public static volatile Thread AGENT_THREAD = null;
 
@@ -47,11 +47,11 @@ public class Global {
                 self,
                 loader,
                 current,
-                (options & EXCEPTION) == EXCEPTION,
-                (options & ARGS) == ARGS ? args : null,
-                (options & RESULT) == RESULT ? result : null,
-                (options & ELAPSE) == ELAPSE ? elapse : -1L,
-                (options & STACK) == STACK ? currentStackTrace() : null
+                (options & OP_EXCEPTION) == OP_EXCEPTION,
+                (options & OP_ARGS) == OP_ARGS ? args : null,
+                (options & OP_RESULT) == OP_RESULT ? result : null,
+                (options & OP_ELAPSE) == OP_ELAPSE ? elapse : -1L,
+                (options & OP_STACK) == OP_STACK ? currentStackTrace() : null
         });
     }
 

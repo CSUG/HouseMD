@@ -6,9 +6,9 @@ import org.objectweb.asm.Opcodes._
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
-trait Transformable {
+abstract class Transform extends (Bytecode => Bytecode) {
 
-  def transform(b: Bytecode): Bytecode = {
+  def apply(b: Bytecode): Bytecode = {
     val cw = new ClassWriter(ClassWriter.COMPUTE_MAXS)
     val cv = new ClassVisitor(ASM4, cw) {
       override def visitMethod(access: Int, name: String, desc: String, signature: String, exceptions: Array[String]) =

@@ -14,13 +14,7 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
     it("should get invocation context") {
       val method = "nothing"
 
-      val bytecode = Probe("housemd.ProbeTarget", _ == method, 0)(bytecodeOf("/housemd/ProbeTarget.class"))
-
-      val c = defineClass("housemd.ProbeTarget", bytecode)
-
-      val o = c.newInstance()
-
-      c.getMethod(method).invoke(o)
+      probedTargetClass.getMethod(method).invoke(probedTargetInstance)
 
       val event = Global.QUEUE.poll().asInstanceOf[Array[AnyRef]]
 
@@ -28,8 +22,8 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
         "housemd/ProbeTarget",
         method,
         "()V",
-        o,
-        o.getClass.getClassLoader,
+        probedTargetInstance,
+        probedTargetClass.getClassLoader,
         Thread.currentThread(),
         false,
         null,
@@ -38,8 +32,42 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
         null)
       )
     }
+
+    it("should get invocation context even if exception thrown") {
+      val method = "error"
+
+      try {
+        probedTargetClass.getMethod(method).invoke(probedTargetInstance)
+      } catch {
+        case _: Throwable =>
+      }
+
+      val event = Global.QUEUE.poll().asInstanceOf[Array[AnyRef]]
+
+      event should be(Array(
+        "housemd/ProbeTarget",
+        method,
+        "()V",
+        probedTargetInstance,
+        probedTargetClass.getClassLoader,
+        Thread.currentThread(),
+        true,
+        null,
+        null,
+        -1L,
+        null)
+      )
+
+    }
   }
 
+
+  lazy val probedTargetClass = {
+    val klass = "housemd.ProbeTarget"
+    defineClass(klass, Probe(klass, m => m == "nothing" || m == "error", 0)(bytecodeOf("/housemd/ProbeTarget.class")))
+  }
+
+  lazy val probedTargetInstance = probedTargetClass.newInstance()
 
   def defineClass(klass: String, bytecode: Array[Byte]): Class[_] = {
     val f = classOf[Unsafe].getDeclaredField("theUnsafe")

@@ -9,8 +9,6 @@ import scala.reflect.ClassTag
 
 trait Chase extends Decorator {
 
-  val OBJECT_TYPE = Type.getObjectType("java/lang/Object")
-
   def filter: MethodFilter
 
   /**
@@ -41,9 +39,15 @@ trait Chase extends Decorator {
       val start          = new Label
       val end            = new Label
       val getClassLoader = new Method("getClassLoader", "()Ljava/lang/ClassLoader;")
-      val offer          = new
-          Method("offer", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;Ljava/lang/ClassLoader;I[Ljava/lang/Object;Ljava/lang/Object;J)V")
-
+      val offer          = new Method("offer", "(Ljava/lang/String;" +
+                                               "Ljava/lang/String;" +
+                                               "Ljava/lang/String;" +
+                                               "Ljava/lang/Object;" +
+                                               "Ljava/lang/ClassLoader;" +
+                                               "I" +
+                                               "[Ljava/lang/Object;" +
+                                               "Ljava/lang/Object;" +
+                                               "J)V")
 
       override def onMethodEnter() {
         mark(start)
@@ -52,7 +56,20 @@ trait Chase extends Decorator {
       override def onMethodExit(opcode: Int) {
         if (opcode == ATHROW) return
 
+        invokeGlobalOffer(options) { dupResult(opcode, desc) }
+      }
 
+      override def visitMaxs(maxStack: Int, maxLocals: Int) {
+        mark(end)
+        catchException(start, end, `type`[Throwable])
+
+        invokeGlobalOffer(options | Global.OP_EXCEPTION) { dup() }
+
+        throwException()
+        super.visitMaxs(maxStack, maxLocals)
+      }
+
+      def invokeGlobalOffer(options: Int)(dupResultOrException: => Unit) {
         push(klass)
         push(method)
         push(desc)
@@ -60,39 +77,27 @@ trait Chase extends Decorator {
         loadClassLoader()
         push(options)
         loadArgArray()
-        dupResult(opcode)
+        dupResultOrException
         push(-1L) // elapse
 
         invokeStatic(`type`[Global], offer)
-
       }
 
-
       def loadClassLoader() {
-        push(`type`(klass)) // objs[4] = classloader
+        push(`type`(klass))
         invokeVirtual(`type`[Class[_]], getClassLoader)
       }
 
-      override def visitMaxs(maxStack: Int, maxLocals: Int) {
-        //        mark(end)
-        //        catchException(start, end, Type.getType(classOf[Throwable]))
-        //        dup()
-        //
-        //        invokeStatic(`type`[Global], exit)
-        //        throwException()
-        super.visitMaxs(maxStack, maxLocals)
-      }
+      def `type`(name: String) = Type.getObjectType(name)
 
       def `type`[T](implicit t: ClassTag[T]) = Type.getType(t.runtimeClass)
 
-      def `type`(name: String) = Type.getObjectType(name)
-
-      def dupResult(opcode: Int) {
+      def dupResult(opcode: Int, desc: String) {
         opcode match {
           case RETURN            => pushNull() // void
           case ARETURN           => dup() // object
-          case LRETURN | DRETURN => dup2(); box(getReturnType(methodDesc)) // long or double
-          case _                 => dup(); box(getReturnType(methodDesc)) // object or boolean or byte or char or short or int
+          case LRETURN | DRETURN => dup2(); box(getReturnType(desc)) // long or double
+          case _                 => dup(); box(getReturnType(desc)) // object or boolean or byte or char or short or int
         }
       }
 

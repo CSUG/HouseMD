@@ -2,8 +2,6 @@ package housemd
 
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
-import com.google.common.io.ByteStreams
-import sun.misc.Unsafe
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -15,21 +13,21 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
   describe("A probe") {
     it("should get invocation context of ProbeTarget.nothing()") {
 
-      val method = "nothing"
+      val name = "nothing"
 
-      probedTargetClass.getMethod(method).invoke(probedTargetInstance)
+      Probed.method(name).invoke()
 
       val event = Global.QUEUE.poll().asInstanceOf[Array[AnyRef]]
 
       event should be(Array(
         "housemd/ProbeTarget",
-        method,
+        name,
         "()V",
-        probedTargetInstance,
-        probedTargetClass.getClassLoader,
+        Probed.instance,
+        Probed.loader,
         Thread.currentThread(),
         false,
-        null,
+        Array.empty,
         null,
         -1L,
         null)
@@ -37,11 +35,11 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should get invocation context of ProbeTarget.error()") {
-      val method = "error"
+      val name = "error"
       var error: Throwable = null
 
       try {
-        probedTargetClass.getMethod(method).invoke(probedTargetInstance)
+        Probed.method(name).invoke()
       } catch {
         case t: Throwable => error = t.getCause
       }
@@ -50,13 +48,13 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
 
       event should be(Array(
         "housemd/ProbeTarget",
-        method,
+        name,
         "()V",
-        probedTargetInstance,
-        probedTargetClass.getClassLoader,
+        Probed.instance,
+        Probed.loader,
         Thread.currentThread(),
         true,
-        null,
+        Array.empty,
         error,
         -1L,
         null)
@@ -65,25 +63,21 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
     }
 
     it("should get invocation context of ProbeTarget.value()") {
-      val method = "value"
+      val name = "value"
 
-      try {
-        probedTargetClass.getMethod(method).invoke(probedTargetInstance)
-      } catch {
-        case _: Throwable =>
-      }
+      Probed.method(name).invoke()
 
       val event = Global.QUEUE.poll().asInstanceOf[Array[AnyRef]]
 
       event should be(Array(
         "housemd/ProbeTarget",
-        method,
+        name,
         "()I",
-        probedTargetInstance,
-        probedTargetClass.getClassLoader,
+        Probed.instance,
+        Probed.loader,
         Thread.currentThread(),
         false,
-        null,
+        Array.empty,
         1,
         -1L,
         null)
@@ -92,23 +86,4 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
     }
   }
 
-
-  lazy val probedTargetClass = {
-    val klass = "housemd.ProbeTarget"
-    val bytecode = Probe(klass,
-      m => m != "<init>",
-      Global.OP_RESULT)(bytecodeOf("/housemd/ProbeTarget.class"))
-    defineClass(klass, bytecode)
-  }
-
-  lazy val probedTargetInstance = probedTargetClass.newInstance()
-
-  def defineClass(klass: String, bytecode: Array[Byte]): Class[_] = {
-    val f = classOf[Unsafe].getDeclaredField("theUnsafe")
-    f.setAccessible(true)
-    val unsafe = f.get(null).asInstanceOf[Unsafe]
-    unsafe.defineClass(klass, bytecode, 0, bytecode.size)
-  }
-
-  def bytecodeOf(name: String) = ByteStreams.toByteArray(getClass.getResourceAsStream(name))
 }

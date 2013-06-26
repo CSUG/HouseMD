@@ -9,6 +9,8 @@ import java.util.concurrent.BlockingQueue;
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
  */
 public class Global {
+    public static final String NULL_AGENT_THREAD = "NULL_AGENT_THREAD";
+
     // Avoiding overflow by blocking queue
     public static final BlockingQueue<Object> QUEUE = new ArrayBlockingQueue<Object>(1000);
 
@@ -30,8 +32,13 @@ public class Global {
                              Object[] args,
                              Object result,
                              long elapse) {
+
         final Thread current = Thread.currentThread();
-        if (AGENT_THREAD == current || QUEUE == self || Global.class == Reflection.getCallerClass(3)) return;
+
+        if (QUEUE == self || Global.class == Reflection.getCallerClass(3) || AGENT_THREAD == current) {
+            if (AGENT_THREAD == null) QUEUE.offer(NULL_AGENT_THREAD);
+            return;
+        }
 
         QUEUE.offer(new Object[]{
                 klass,

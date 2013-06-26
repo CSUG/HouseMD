@@ -10,8 +10,8 @@ import sun.misc.Unsafe
  */
 class ProbeSpec extends FunSpec with ShouldMatchers {
 
-  describe("An probe") {
-    it("should get invocation context") {
+  describe("A probe") {
+    it("should get invocation context of ProbeTarget.nothing()") {
       val method = "nothing"
 
       probedTargetClass.getMethod(method).invoke(probedTargetInstance)
@@ -33,13 +33,15 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
       )
     }
 
-    it("should get invocation context even if exception thrown") {
+    it("should get invocation context of ProbeTarget.error()") {
       val method = "error"
+      var error: Throwable = null
+
 
       try {
         probedTargetClass.getMethod(method).invoke(probedTargetInstance)
       } catch {
-        case _: Throwable =>
+        case t: Throwable => error = t.getCause
       }
 
       val event = Global.QUEUE.poll().asInstanceOf[Array[AnyRef]]
@@ -53,7 +55,34 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
         Thread.currentThread(),
         true,
         null,
+        error,
+        -1L,
+        null)
+      )
+
+    }
+
+    it("should get invocation context of ProbeTarget.value()") {
+      val method = "value"
+
+      try {
+        probedTargetClass.getMethod(method).invoke(probedTargetInstance)
+      } catch {
+        case _: Throwable =>
+      }
+
+      val event = Global.QUEUE.poll().asInstanceOf[Array[AnyRef]]
+
+      event should be(Array(
+        "housemd/ProbeTarget",
+        method,
+        "()I",
+        probedTargetInstance,
+        probedTargetClass.getClassLoader,
+        Thread.currentThread(),
+        false,
         null,
+        1,
         -1L,
         null)
       )
@@ -64,7 +93,10 @@ class ProbeSpec extends FunSpec with ShouldMatchers {
 
   lazy val probedTargetClass = {
     val klass = "housemd.ProbeTarget"
-    defineClass(klass, Probe(klass, m => m == "nothing" || m == "error", 0)(bytecodeOf("/housemd/ProbeTarget.class")))
+    val bytecode = Probe(klass,
+      m => m == "nothing" || m == "error" || m == "value",
+      Global.OP_RESULT)(bytecodeOf("/housemd/ProbeTarget.class"))
+    defineClass(klass, bytecode)
   }
 
   lazy val probedTargetInstance = probedTargetClass.newInstance()

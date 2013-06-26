@@ -56,14 +56,32 @@ trait Chase extends Decorator {
       override def onMethodExit(opcode: Int) {
         if (opcode == ATHROW) return
 
-        invokeGlobalOffer(options) { dupResult(opcode, desc) }
+        val f = opcode match {
+          case RETURN            => () => pushNull() // void
+          case ARETURN           => // object
+            dup()
+            val i = newAndStoreLocal(getReturnType(desc))
+            () => loadLocal(i)
+          case LRETURN | DRETURN =>
+            dup2()
+            val i = newAndStoreLocal(getReturnType(desc))
+            () => {loadLocal(i); box(getReturnType(desc)) } // long or double
+          case _                 =>
+            dup()
+            val i = newAndStoreLocal(getReturnType(desc))
+            () => {loadLocal(i); box(getReturnType(desc)) } // object or boolean or byte or char or short or int
+        }
+
+
+        invokeGlobalOffer(options) { f() }
       }
 
       override def visitMaxs(maxStack: Int, maxLocals: Int) {
         mark(end)
         catchException(start, end, `type`[Throwable])
-
-        invokeGlobalOffer(options | Global.OP_EXCEPTION) { dup() }
+        dup()
+        val i = newAndStoreLocal(`type`[Throwable])
+        invokeGlobalOffer(options | Global.OP_EXCEPTION) { loadLocal(i) }
 
         throwException()
         super.visitMaxs(maxStack, maxLocals)
@@ -88,24 +106,22 @@ trait Chase extends Decorator {
         invokeVirtual(`type`[Class[_]], getClassLoader)
       }
 
-      def `type`(name: String) = Type.getObjectType(name)
+      def `type`(name: String) = getObjectType(name)
 
-      def `type`[T](implicit t: ClassTag[T]) = Type.getType(t.runtimeClass)
-
-      def dupResult(opcode: Int, desc: String) {
-        opcode match {
-          case RETURN            => pushNull() // void
-          case ARETURN           => dup() // object
-          case LRETURN | DRETURN => dup2(); box(getReturnType(desc)) // long or double
-          case _                 => dup(); box(getReturnType(desc)) // object or boolean or byte or char or short or int
-        }
-      }
+      def `type`[T](implicit t: ClassTag[T]) = getType(t.runtimeClass)
 
       def pushNull() { push(null.asInstanceOf[Type]) }
 
       def loadThisOrPushNullIfIsStatic() {
         if (is(ACC_STATIC)) pushNull() else loadThis()
       }
+
+      def newAndStoreLocal(t: Type) = {
+        val i = newLocal(t)
+        storeLocal(i)
+        i
+      }
     }
   }
+
 }

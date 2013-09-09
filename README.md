@@ -45,28 +45,13 @@ It's inspiration came from [BTrace](http://kenai.com/projects/btrace), but more 
 - install [jenv](https://github.com/linux-china/jenv)
 - execute command line: `$ jenv install housemd`
 
-## Build from code
-
-    $ git clone https://github.com/zhongl/HouseMD.git housemd
-    $ cd housemd
-    $ sbt proguard
-
-A runnable jar named `housemd_x.x.x-x.x.x.min.jar` should be generated blow `target/scala-x.x.x/`
-
 > Caution: Windows are not supported yet.
 
-## Run it
-
-    $ java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd_x.x.x-x.x.x.min.jar [OPTIONS] <pid>
-
-> Caution: In Mac OSX, the `-Xbootclasspath` is no needed.
-> You can created launch script as a shortcut.
 
 # How to use
 
-First all, suppose you created launch script file named `housemd`, type:
 
-    > ./housemd -h
+    > housemd -h
 
 A help infomation shows up like:
 
@@ -111,6 +96,24 @@ You can also input `help loaded` and get help infomation of `loaded` as blow:
             class name without package name.
 
 # More about commands
+
+
+# Build from code
+
+    $ git clone https://github.com/zhongl/HouseMD.git housemd
+    $ cd housemd
+    $ sbt proguard
+
+A runnable jar named `housemd_x.x.x-x.x.x.min.jar` should be generated blow `target/scala-x.x.x/`
+
+
+## Run it
+
+    $ java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd_x.x.x-x.x.x.min.jar [OPTIONS] <pid>
+
+> Caution: In Mac OSX, the `-Xbootclasspath` is no needed.
+> You can created launch script as a shortcut.
+
 
 [Click here](https://github.com/zhongl/housemd/wiki/usecases) to see the use cases.
 

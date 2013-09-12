@@ -97,6 +97,7 @@ You can also input `help loaded` and get help infomation of `loaded` as blow:
 
 # More about commands
 
+[Click here](https://github.com/zhongl/housemd/wiki/usecases) to see the use cases.
 
 # Build from code
 
@@ -113,8 +114,5 @@ A runnable jar named `housemd_x.x.x-x.x.x.min.jar` should be generated blow `tar
 
 > Caution: In Mac OSX, the `-Xbootclasspath` is no needed.
 > You can created launch script as a shortcut.
-
-
-[Click here](https://github.com/zhongl/housemd/wiki/usecases) to see the use cases.
 
 Having fun!

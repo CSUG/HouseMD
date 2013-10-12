@@ -8,7 +8,7 @@
     <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
 
-    <title>housemd by zhongl</title>
+    <title>housemd by CSUG</title>
   </head>
 
   <body>
@@ -19,9 +19,9 @@
         <h2>HouseMD is an awesome diagnosing tool better than BTrace.</h2>
 
         <section id="downloads">
-          <a href="https://github.com/zhongl/HouseMD/zipball/master" class="btn">Download as .zip</a>
-          <a href="https://github.com/zhongl/HouseMD/tarball/master" class="btn">Download as .tar.gz</a>
-          <a href="https://github.com/zhongl/HouseMD" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+          <a href="https://github.com/CSUG/HouseMD/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/CSUG/HouseMD/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/CSUG/HouseMD" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
         </section>
       </div>
     </header>
@@ -33,7 +33,8 @@
 <p>HouseMD is a interactive command-line tool for dianosing Java process in runtime.
 It's inspiration came from <a href="http://kenai.com/projects/btrace">BTrace</a>, but more easier to use and more safer.</p>
 
-<h1>Features</h1>
+<h1>
+<a name="features" class="anchor" href="#features"><span class="octicon octicon-link"></span></a>Features</h1>
 
 <ul>
 <li>Display loaded classes information
@@ -76,41 +77,32 @@ It's inspiration came from <a href="http://kenai.com/projects/btrace">BTrace</a>
 <li>Awesome features you can provide by forking me</li>
 </ul><p><a href="https://github.com/zhongl/HouseMD/blob/master/src/test/scala/com/github/zhongl/housemd">Test cases</a> would show more specification details.</p>
 
-<h1>Getting started</h1>
+<h1>
+<a name="getting-started" class="anchor" href="#getting-started"><span class="octicon octicon-link"></span></a>Getting started</h1>
 
-<h2>Pre-requirement</h2>
+<h2>
+<a name="pre-requirement" class="anchor" href="#pre-requirement"><span class="octicon octicon-link"></span></a>Pre-requirement</h2>
 
 <ul>
-<li>JDK 6 +</li>
+<li>JDK 6 </li>
 <li><a href="https://github.com/harrah/xsbt">sbt</a></li>
-</ul><h2>Build from code</h2>
+</ul><h2>
+<a name="install-from-jenv" class="anchor" href="#install-from-jenv"><span class="octicon octicon-link"></span></a>Install from <a href="https://github.com/linux-china/jenv">jenv</a>
+</h2>
 
-<pre><code>$ git clone https://github.com/zhongl/HouseMD.git housemd
-$ cd housemd
-$ sbt proguard
-</code></pre>
-
-<p>A runnable jar named <code>housemd_x.x.x-x.x.x.min.jar</code> should be generated blow <code>target/scala-x.x.x/</code></p>
-
-<blockquote>
+<ul>
+<li>install <a href="https://github.com/linux-china/jenv">jenv</a>
+</li>
+<li>execute command line: <code>$ jenv install housemd</code>
+</li>
+</ul><blockquote>
 <p>Caution: Windows are not supported yet.</p>
 </blockquote>
 
-<h2>Run it</h2>
+<h1>
+<a name="how-to-use" class="anchor" href="#how-to-use"><span class="octicon octicon-link"></span></a>How to use</h1>
 
-<pre><code>$ java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd_x.x.x-x.x.x.min.jar [OPTIONS] &lt;pid&gt;
-</code></pre>
-
-<blockquote>
-<p>Caution: In Mac OSX, the <code>-Xbootclasspath</code> is no needed.
-You can created launch script as a shortcut.</p>
-</blockquote>
-
-<h1>How to use</h1>
-
-<p>First all, suppose you created launch script file named <code>housemd</code>, type:</p>
-
-<pre><code>&gt; ./housemd -h
+<pre><code>&gt; housemd -h
 </code></pre>
 
 <p>A help infomation shows up like:</p>
@@ -158,9 +150,31 @@ Parameters:
         class name without package name.
 </code></pre>
 
-<h1>More about commands</h1>
+<h1>
+<a name="more-about-commands" class="anchor" href="#more-about-commands"><span class="octicon octicon-link"></span></a>More about commands</h1>
 
 <p><a href="https://github.com/zhongl/housemd/wiki/usecases">Click here</a> to see the use cases.</p>
+
+<h1>
+<a name="build-from-code" class="anchor" href="#build-from-code"><span class="octicon octicon-link"></span></a>Build from code</h1>
+
+<pre><code>$ git clone https://github.com/zhongl/HouseMD.git housemd
+$ cd housemd
+$ sbt proguard
+</code></pre>
+
+<p>A runnable jar named <code>housemd_x.x.x-x.x.x.min.jar</code> should be generated blow <code>target/scala-x.x.x/</code></p>
+
+<h2>
+<a name="run-it" class="anchor" href="#run-it"><span class="octicon octicon-link"></span></a>Run it</h2>
+
+<pre><code>$ java -Xbootclasspath/a:$JAVA_HOME/lib/tools.jar -jar housemd_x.x.x-x.x.x.min.jar [OPTIONS] &lt;pid&gt;
+</code></pre>
+
+<blockquote>
+<p>Caution: In Mac OSX, the <code>-Xbootclasspath</code> is no needed.
+You can created launch script as a shortcut.</p>
+</blockquote>
 
 <p>Having fun!</p>
       </section>

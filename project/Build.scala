@@ -101,7 +101,8 @@ object Build extends sbt.Build {
       "asm" % "asm" % "3.3.1",
       "asm" % "asm-commons" % "3.3.1",
       "com.github.zhongl" %% "yascli" % "0.1.0",
-      "org.scala-lang" % "scala-library" % "2.9.2"
+      "org.scala-lang" % "scala-library" % "2.9.2",
+      "com.cedarsoftware" % "json-io" % "2.7.3"
     )
   }
 

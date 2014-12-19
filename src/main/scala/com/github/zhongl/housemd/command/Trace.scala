@@ -158,13 +158,16 @@ class DetailWriter(writer: BufferedWriter) {
     val thread = "[" + context.thread.getName + "]"
     val thisObject = if (context.thisObject == null) "null" else context.thisObject.toString
     val method = context.className + "." + context.methodName
-    val arguments = context.arguments.mkString("[", " ", "]")
+    val arguments = context.arguments.mkString("[" + ObjUtils.parameterSeparator, ObjUtils.parameterSeparator, "]")
     val resultOrExcption = context.resultOrException match {
       case Some(x)                      => ObjUtils.toString(x)
       case None if context.isVoidReturn => "void"
       case None                         => "null"
     }
-    val line = (started :: elapse :: thread :: thisObject :: method :: arguments :: resultOrExcption :: Nil)
+
+    val argumentsAndResult = "Arguments: " + arguments + ObjUtils.parameterSeparator + "Result: " + resultOrExcption
+
+    val line = (started :: elapse :: thread :: thisObject :: method :: argumentsAndResult :: Nil)
       .mkString(" ")
     writer.write(line)
     writer.newLine()

@@ -16,6 +16,8 @@
 
 package com.github.zhongl.housemd.instrument
 
+import com.github.zhongl.housemd.misc.ObjUtils
+
 
 /**
  * @author <a href="mailto:zhong.lunfu@gmail.com">zhongl<a>
@@ -42,7 +44,7 @@ object Context {
     map.get(Advice.CLASS).asInstanceOf[String],
     map.get(Advice.METHOD).asInstanceOf[String],
     map.get(Advice.CLASS_LOADER).asInstanceOf[ClassLoader],
-    map.get(Advice.ARGUMENTS).asInstanceOf[Array[AnyRef]] map (Option(_).getOrElse("null").toString),
+    map.get(Advice.ARGUMENTS).asInstanceOf[Array[AnyRef]] map ObjUtils.toString,
     map.get(Advice.DESCRIPTOR).asInstanceOf[String],
     map.get(Advice.VOID_RETURN).asInstanceOf[Boolean],
     map.get(Advice.THIS),

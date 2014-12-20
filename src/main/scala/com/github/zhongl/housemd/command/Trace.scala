@@ -18,6 +18,8 @@ package com.github.zhongl.housemd.command
 
 import instrument.Instrumentation
 import management.ManagementFactory
+import com.cedarsoftware.util.io.JsonWriter
+import com.github.zhongl.housemd.misc.ObjUtils
 import com.github.zhongl.yascli.PrintOut
 import com.github.zhongl.housemd.misc.ReflectionUtils._
 import java.util.Date
@@ -42,6 +44,7 @@ class Trace(val inst: Instrumentation, out: PrintOut)
   val stackFile  = new File(outputRoot, "stack")
 
   private val detailable = flag("-d" :: "--detail" :: Nil, "enable append invocation detail to " + detailFile + ".")
+  private val detailInJson = flag("-j" :: "--json" :: Nil, "convert detail info into json format.")
   private val stackable  = flag("-s" :: "--stack" :: Nil, "enable append invocation calling stack to " + stackFile + ".")
 
   private val methodFilters = parameter[Array[MethodFilter]]("method-filter", "method filter pattern like \"ClassSimpleName.methodName\" or \"ClassSimpleName\".")
@@ -55,12 +58,15 @@ class Trace(val inst: Instrumentation, out: PrintOut)
 
     val enableDetail = detailable()
     val enableStack  = stackable()
+    val showDetailInJson  = detailInJson()
 
     implicit val statisticOrdering = Ordering.by((_: Statistic).methodSign)
 
     var statistics           = SortedSet.empty[Statistic]
     var maxMethodSignLength  = 0
     var maxClassLoaderLength = 0
+
+    if (showDetailInJson) ObjUtils.useJsonFormat() else ObjUtils.useToStringFormat()
 
     lazy val detailWriter = new DetailWriter(new BufferedWriter(new FileWriter(detailFile, true)))
     lazy val stackWriter  = new StackWriter(new BufferedWriter(new FileWriter(stackFile, true)))
@@ -152,13 +158,16 @@ class DetailWriter(writer: BufferedWriter) {
     val thread = "[" + context.thread.getName + "]"
     val thisObject = if (context.thisObject == null) "null" else context.thisObject.toString
     val method = context.className + "." + context.methodName
-    val arguments = context.arguments.mkString("[", " ", "]")
+    val arguments = context.arguments.mkString("[" + ObjUtils.parameterSeparator, ObjUtils.parameterSeparator, "]")
     val resultOrExcption = context.resultOrException match {
-      case Some(x)                      => x.toString
+      case Some(x)                      => ObjUtils.toString(x)
       case None if context.isVoidReturn => "void"
       case None                         => "null"
     }
-    val line = (started :: elapse :: thread :: thisObject :: method :: arguments :: resultOrExcption :: Nil)
+
+    val argumentsAndResult = "Arguments: " + arguments + ObjUtils.parameterSeparator + "Result: " + resultOrExcption
+
+    val line = (started :: elapse :: thread :: thisObject :: method :: argumentsAndResult :: Nil)
       .mkString(" ")
     writer.write(line)
     writer.newLine()
